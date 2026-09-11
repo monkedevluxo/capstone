@@ -1,0 +1,22 @@
+﻿=== T-006 · Prueba de aislamiento de red ===
+Fecha: 11-09-2026 11:52
+Equipo: DESKTOP-852UNJS
+
+--- Dentro de lab_interna (debe fallar) ---
+docker : ping: sendto: Network unreachable
+En línea: 6 Carácter: 1
++ docker run --rm --network sentinelai_lab_interna alpine ping -c 2 -W  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ping: sendto: Network unreachable:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PING 8.8.8.8 (8.8.8.8): 56 data bytes
+
+--- Red normal (debe responder) ---
+PING 8.8.8.8 (8.8.8.8): 56 data bytes
+64 bytes from 8.8.8.8: seq=0 ttl=63 time=27.755 ms
+64 bytes from 8.8.8.8: seq=1 ttl=63 time=19.056 ms
+
+--- 8.8.8.8 ping statistics ---
+2 packets transmitted, 2 packets received, 0% packet loss
+round-trip min/avg/max = 19.056/23.405/27.755 ms
