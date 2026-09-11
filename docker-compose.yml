@@ -1,0 +1,39 @@
+services:
+  juiceshop:
+    image: bkimminich/juice-shop:latest
+    container_name: sentinel-juiceshop
+    networks: [lab_interna]
+    restart: unless-stopped
+
+  zap:
+    image: zaproxy/zap-stable
+    container_name: sentinel-zap
+    networks: [lab_interna]
+    volumes:
+      - ./lab/salidas:/zap/wrk:rw
+    profiles: ["scan"]
+
+  db:
+    image: postgres:16-alpine
+    container_name: sentinel-db
+    environment:
+      POSTGRES_USER: sentinel
+      POSTGRES_PASSWORD: sentinel_local
+      POSTGRES_DB: sentinelai
+    networks: [lab_datos]
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sentinel"]
+      interval: 5s
+      retries: 10
+
+networks:
+  lab_interna:
+    internal: true
+  lab_datos:
+
+volumes:
+  pgdata:

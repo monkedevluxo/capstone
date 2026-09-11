@@ -1,0 +1,5 @@
+﻿lab/salidas/
+__pycache__/
+node_modules/
+.env
+*.pyc
