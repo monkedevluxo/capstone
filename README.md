@@ -195,13 +195,13 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 
 ## Equipo
 
-| Integrante | Rol |
-|---|---|
-| Felipe Cayún | Laboratorio y Validación* |
-| Joaquín Herrera | Arquitectura, IA y Parser* |
-| Luciano Zambrano | Backend, Datos, Dashboard* |
+| Integrante | Rol | Responsabilidades |
+|---|---|---|
+| Felipe Cayún | Laboratorio y Validación | Escaneos, golden set, informe exportable |
+| Joaquín Herrera | Arquitectura, IA y Parser | Parser de ZAP, nodo de inferencia, prompt |
+| Luciano Zambrano | Backend, Datos y Dashboard | Modelo de datos, API, dashboard |
 
-*Roles por confirmar
+El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.md`.
 
 **Docente:** Aníbal Sotelo
 
