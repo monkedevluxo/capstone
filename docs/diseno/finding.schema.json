@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sentinelai.duoc.cl/schemas/finding-1.0.0.json",
+  "title": "SentinelAI · Hallazgo normalizado",
+  "description": "Esquema unificado de un hallazgo de seguridad, independiente de la herramienta que lo produjo. Separa cuatro capas: lo que dijo la herramienta (source, evidence), lo unificado por SentinelAI (severity, location, dedupe), lo que agregó el modelo (ai) y lo que decidió una persona (validation).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "finding_id",
+    "scan_id",
+    "created_at",
+    "target",
+    "source",
+    "title",
+    "location",
+    "evidence",
+    "severity",
+    "classification",
+    "dedupe",
+    "status"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Versión del esquema con que se escribió este registro. Cambio incompatible = major."
+    },
+    "finding_id": { "$ref": "#/$defs/uuid" },
+    "scan_id": { "$ref": "#/$defs/uuid" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "updated_at": { "$ref": "#/$defs/timestampNullable" },
+
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_id", "name", "base_url", "environment"],
+      "properties": {
+        "target_id": { "$ref": "#/$defs/uuid" },
+        "name": { "type": "string", "minLength": 1, "examples": ["OWASP Juice Shop"] },
+        "base_url": { "type": "string", "format": "uri", "examples": ["http://juiceshop:3000"] },
+        "environment": {
+          "type": "string",
+          "enum": ["lab"],
+          "description": "Solo se admite 'lab'. El registro es explícito para dejar constancia de que nunca se escanea infraestructura de terceros (Ley 21.459)."
+        }
+      }
+    },
+
+    "source": {
+      "type": "object",
+      "description": "Lo que reportó la herramienta. Se persiste sin alterar.",
+      "additionalProperties": false,
+      "required": ["tool", "rule_id", "raw"],
+      "properties": {
+        "tool": { "type": "string", "enum": ["zap", "nikto", "openvas"] },
+        "tool_version": { "type": ["string", "null"] },
+        "rule_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identificador de la regla en la herramienta de origen. En ZAP es pluginid.",
+          "examples": ["40012"]
+        },
+        "rule_name": { "type": ["string", "null"], "examples": ["Cross Site Scripting (Reflected)"] },
+        "raw": {
+          "type": "object",
+          "description": "Bloque crudo de la herramienta, tal cual salió. No se normaliza, no se recorta y no se corrige. Es la evidencia que respalda todo lo demás."
+        }
+      }
+    },
+
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": ["string", "null"] },
+
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "path_template"],
+      "properties": {
+        "url": { "type": "string", "description": "URL concreta donde se detectó, tal como la reportó la herramienta." },
+        "path_template": {
+          "type": "string",
+          "description": "Ruta normalizada con los segmentos variables reemplazados por marcadores. Es lo que permite que /rest/products/1 y /rest/products/47 no cuenten como dos hallazgos distintos.",
+          "examples": ["/rest/products/{id}/reviews"]
+        },
+        "method": {
+          "type": ["string", "null"],
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", null]
+        },
+        "param": { "type": ["string", "null"], "description": "Parámetro afectado, si la herramienta lo identifica." },
+        "attack": { "type": ["string", "null"], "description": "Vector con que la herramienta gatilló el hallazgo." }
+      }
+    },
+
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snippet", "instance_count"],
+      "properties": {
+        "snippet": { "type": ["string", "null"], "description": "Fragmento que la herramienta señala como prueba." },
+        "request": { "type": ["string", "null"] },
+        "response": { "type": ["string", "null"] },
+        "instance_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cuántas URLs concretas se agruparon bajo este hallazgo."
+        },
+        "instances": {
+          "type": "array",
+          "maxItems": 50,
+          "description": "Muestra de las URLs agrupadas. Se limita para no inflar la base; instance_count conserva el total real.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["url"],
+            "properties": {
+              "url": { "type": "string" },
+              "method": { "type": ["string", "null"] },
+              "param": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+
+    "severity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_raw", "normalized"],
+      "properties": {
+        "tool_raw": { "type": "string", "description": "Severidad tal como la nombra la herramienta, sin traducir.", "examples": ["High"] },
+        "normalized": { "$ref": "#/$defs/severidad" },
+        "tool_confidence": {
+          "type": ["string", "null"],
+          "enum": ["false_positive", "low", "medium", "high", "confirmed", null],
+          "description": "Confianza declarada por la herramienta. En ZAP es el campo confidence."
+        },
+        "cvss_score": { "type": ["number", "null"], "minimum": 0, "maximum": 10 }
+      }
+    },
+
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cwe_id": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "CWE numérico. Es el único puente confiable para correlacionar hallazgos entre herramientas distintas."
+        },
+        "wasc_id": { "type": ["integer", "null"] },
+        "references": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "dedupe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "occurrences"],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "Deduplicación dentro de una misma herramienta. sha256(tool|rule_id|path_template|param|method), 16 primeros hex."
+        },
+        "correlation_key": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "Agrupación entre herramientas distintas. sha256(cwe_id|path_template|param). Nulo si no hay CWE. Sugiere 'posiblemente el mismo problema'; NO fusiona registros."
+        },
+        "occurrences": { "type": "integer", "minimum": 1 },
+        "first_seen_scan_id": { "$ref": "#/$defs/uuidNullable" },
+        "last_seen_scan_id": { "$ref": "#/$defs/uuidNullable" }
+      }
+    },
+
+    "status": {
+      "type": "string",
+      "enum": ["nuevo", "en_triage", "confirmado", "falso_positivo", "riesgo_aceptado", "remediado"],
+      "description": "Estado del ciclo de vida. Solo cambia por acción humana registrada en 'validation'."
+    },
+
+    "ai": {
+      "description": "Salida del modelo local. Null mientras no se haya intentado enriquecer.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "model", "prompt_version", "generated_at"],
+          "properties": {
+            "state": {
+              "type": "string",
+              "enum": ["ok", "failed"],
+              "description": "'failed' tras agotar los reintentos. En ese caso el hallazgo se muestra como no enriquecido y el resto de los campos van en null. Nunca se rellenan por defecto."
+            },
+            "model": { "type": "string", "examples": ["llama3.1:8b-instruct-q4_K_M"] },
+            "prompt_version": { "type": "string", "examples": ["p-1.2.0"] },
+            "generated_at": { "$ref": "#/$defs/timestamp" },
+            "latency_ms": { "type": ["integer", "null"], "minimum": 0 },
+            "explanation": { "type": ["string", "null"], "maxLength": 1200, "description": "El hallazgo explicado para alguien que no es especialista." },
+            "impact": { "type": ["string", "null"], "maxLength": 800 },
+            "owasp": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["version", "category_id"],
+                  "properties": {
+                    "version": { "type": "string", "enum": ["2025", "2021"], "description": "Edición del Top 10 usada. Se guarda explícita para que la clasificación siga siendo interpretable cuando salga la próxima edición." },
+                    "category_id": { "$ref": "#/$defs/owaspCategoria" },
+                    "category_name": { "type": ["string", "null"] }
+                  }
+                }
+              ]
+            },
+            "priority": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/prioridad" }] },
+            "confidence": {
+              "type": ["number", "null"],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Confianza declarada por el modelo. Es autoevaluación, no una medida de exactitud: el valor honesto de la clasificación se obtiene comparando contra el golden set, no leyendo este campo."
+            },
+            "remediation": {
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["summary"],
+                  "properties": {
+                    "summary": { "type": "string", "maxLength": 600 },
+                    "steps": { "type": "array", "maxItems": 8, "items": { "type": "string", "maxLength": 300 } }
+                  }
+                }
+              ]
+            },
+            "failure_reason": {
+              "type": ["string", "null"],
+              "enum": ["json_invalido", "esquema_invalido", "timeout", "modelo_no_disponible", "contexto_excedido", null]
+            },
+            "attempts": { "type": ["integer", "null"], "minimum": 1, "maximum": 3 }
+          }
+        }
+      ]
+    },
+
+    "validation": {
+      "description": "Decisión humana. Null mientras nadie haya revisado el hallazgo. Es lo que respalda la afirmación de que la validación final es siempre humana.",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision", "reviewer", "reviewed_at"],
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": ["confirmado", "falso_positivo", "riesgo_aceptado", "duplicado", "requiere_segunda_opinion"]
+            },
+            "reviewer": { "type": "string", "minLength": 1 },
+            "reviewed_at": { "$ref": "#/$defs/timestamp" },
+            "priority_override": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/prioridad" }] },
+            "comment": { "type": ["string", "null"], "maxLength": 1000 },
+            "ai_review": {
+              "description": "Juicio del revisor sobre la salida del modelo. Alimenta directamente las métricas del golden set: si se completa durante el triage normal, la evaluación de la IA sale de la operación en vez de ser un ejercicio aparte.",
+              "oneOf": [
+                { "type": "null" },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "owasp_correcto": { "type": ["boolean", "null"] },
+                    "prioridad_correcta": { "type": ["boolean", "null"] },
+                    "remediacion_util": { "type": ["boolean", "null"] },
+                    "alucinacion": {
+                      "type": ["boolean", "null"],
+                      "description": "El modelo afirmó algo que la evidencia no respalda."
+                    },
+                    "nota": { "type": ["string", "null"], "maxLength": 500 }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid", "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+    "uuidNullable": { "type": ["string", "null"], "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "timestampNullable": { "type": ["string", "null"], "format": "date-time" },
+    "severidad": { "type": "string", "enum": ["critica", "alta", "media", "baja", "informativa"] },
+    "prioridad": { "type": "string", "enum": ["p1", "p2", "p3", "p4"] },
+    "owaspCategoria": {
+      "type": "string",
+      "enum": [
+        "A01:2025", "A02:2025", "A03:2025", "A04:2025", "A05:2025",
+        "A06:2025", "A07:2025", "A08:2025", "A09:2025", "A10:2025"
+      ],
+      "description": "OWASP Top 10:2025. A01 Broken Access Control (absorbe SSRF) · A02 Security Misconfiguration · A03 Software Supply Chain Failures · A04 Cryptographic Failures · A05 Injection (incluye XSS) · A06 Insecure Design · A07 Authentication Failures · A08 Software or Data Integrity Failures · A09 Security Logging & Alerting Failures · A10 Mishandling of Exceptional Conditions"
+    }
+  }
+}
