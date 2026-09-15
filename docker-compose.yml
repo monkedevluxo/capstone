@@ -30,9 +30,36 @@ services:
       interval: 5s
       retries: 10
 
+  api:
+    build: ./backend
+    container_name: sentinel-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://sentinel:sentinel_local@db:5432/sentinelai
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      SQL_ECHO: ${SQL_ECHO:-false}
+    networks: [lab_datos]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      # Código montado en vivo: uvicorn --reload recarga al guardar,
+      # sin reconstruir la imagen.
+      - ./backend:/app
+      - ./lab/salidas:/data/salidas:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
 networks:
   lab_interna:
-    internal: true
+    internal: true      # sin ruta de salida. Esta línea es el aislamiento.
   lab_datos:
 
 volumes:

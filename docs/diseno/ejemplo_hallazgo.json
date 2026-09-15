@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "finding_id": "3f2a91c4-7d18-4b6e-9a05-c81e2f4b7d33",
+  "scan_id": "b7c04e19-2a55-4f8d-8e31-6ad9c0f11e42",
+  "created_at": "2026-09-14T15:42:08-03:00",
+  "updated_at": "2026-09-14T16:10:55-03:00",
+
+  "target": {
+    "target_id": "0c5d8e77-3b41-4a92-b6c8-1e07f2a95d10",
+    "name": "OWASP Juice Shop",
+    "base_url": "http://juiceshop:3000",
+    "environment": "lab"
+  },
+
+  "source": {
+    "tool": "zap",
+    "tool_version": "2.15.0",
+    "rule_id": "40012",
+    "rule_name": "Cross Site Scripting (Reflected)",
+    "raw": {
+      "pluginid": "40012",
+      "alertRef": "40012",
+      "alert": "Cross Site Scripting (Reflected)",
+      "riskcode": "3",
+      "confidence": "2",
+      "riskdesc": "High (Medium)",
+      "desc": "Cross-site Scripting (XSS) is an attack technique that involves echoing attacker-supplied code into a user's browser instance.",
+      "instances": [
+        {
+          "uri": "http://juiceshop:3000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E",
+          "method": "GET",
+          "param": "q",
+          "attack": "<script>alert(1)</script>",
+          "evidence": "<script>alert(1)</script>"
+        },
+        {
+          "uri": "http://juiceshop:3000/rest/products/search?q=%3Cimg+src%3Dx+onerror%3Dalert%281%29%3E",
+          "method": "GET",
+          "param": "q",
+          "attack": "<img src=x onerror=alert(1)>",
+          "evidence": "<img src=x onerror=alert(1)>"
+        }
+      ],
+      "count": "2",
+      "solution": "Phase: Architecture and Design. Use a vetted library or framework that does not allow this weakness to occur.",
+      "cweid": "79",
+      "wascid": "8",
+      "sourceid": "1"
+    }
+  },
+
+  "title": "Cross Site Scripting (Reflected)",
+  "description": "El contenido enviado por el usuario en el parámetro de búsqueda se devuelve en la respuesta sin codificar, lo que permite que un script suministrado por un atacante se ejecute en el navegador de la víctima.",
+
+  "location": {
+    "url": "http://juiceshop:3000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E",
+    "path_template": "/rest/products/search?q",
+    "method": "GET",
+    "param": "q",
+    "attack": "<script>alert(1)</script>"
+  },
+
+  "evidence": {
+    "snippet": "<script>alert(1)</script>",
+    "request": "GET /rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E HTTP/1.1\nHost: juiceshop:3000\nAccept: application/json",
+    "response": "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n... <span>Sin resultados para <script>alert(1)</script></span> ...",
+    "instance_count": 2,
+    "instances": [
+      { "url": "http://juiceshop:3000/rest/products/search?q=%3Cscript%3Ealert%281%29%3C%2Fscript%3E", "method": "GET", "param": "q" },
+      { "url": "http://juiceshop:3000/rest/products/search?q=%3Cimg+src%3Dx+onerror%3Dalert%281%29%3E", "method": "GET", "param": "q" }
+    ]
+  },
+
+  "severity": {
+    "tool_raw": "High",
+    "normalized": "alta",
+    "tool_confidence": "medium",
+    "cvss_score": null
+  },
+
+  "classification": {
+    "cwe_id": 79,
+    "wasc_id": 8,
+    "references": [
+      "https://cwe.mitre.org/data/definitions/79.html",
+      "https://owasp.org/Top10/2025/A05_2025-Injection/"
+    ]
+  },
+
+  "dedupe": {
+    "key": "c8217932ac49648d",
+    "correlation_key": "472d567c64297c23",
+    "occurrences": 2,
+    "first_seen_scan_id": "b7c04e19-2a55-4f8d-8e31-6ad9c0f11e42",
+    "last_seen_scan_id": "b7c04e19-2a55-4f8d-8e31-6ad9c0f11e42"
+  },
+
+  "status": "confirmado",
+
+  "ai": {
+    "state": "ok",
+    "model": "llama3.1:8b-instruct-q4_K_M",
+    "prompt_version": "p-1.2.0",
+    "generated_at": "2026-09-14T15:44:31-03:00",
+    "latency_ms": 8420,
+    "explanation": "El buscador de productos devuelve en la página lo que el usuario escribió, sin transformarlo antes en texto inofensivo. Si alguien escribe código en lugar de palabras, el navegador de quien abra ese enlace lo ejecuta como si viniera del propio sitio.",
+    "impact": "Un atacante puede preparar un enlace que, al ser abierto por una persona con sesión iniciada, ejecute acciones en su nombre o robe su sesión. No requiere acceso previo al servidor: basta con que la víctima haga clic.",
+    "owasp": {
+      "version": "2025",
+      "category_id": "A05:2025",
+      "category_name": "Injection"
+    },
+    "priority": "p1",
+    "confidence": 0.88,
+    "remediation": {
+      "summary": "Codificar toda salida según su contexto y evitar insertar entrada del usuario directamente en el HTML.",
+      "steps": [
+        "Aplicar codificación HTML sobre el término de búsqueda antes de renderizarlo en la respuesta.",
+        "Usar los mecanismos de interpolación segura del framework en lugar de concatenar strings de HTML.",
+        "Definir una Content-Security-Policy que impida la ejecución de scripts en línea.",
+        "Agregar un caso de prueba con la carga <script>alert(1)</script> sobre el parámetro q."
+      ]
+    },
+    "failure_reason": null,
+    "attempts": 1
+  },
+
+  "validation": {
+    "decision": "confirmado",
+    "reviewer": "luciano.zambrano",
+    "reviewed_at": "2026-09-14T16:10:55-03:00",
+    "priority_override": null,
+    "comment": "Reproducido a mano en el laboratorio. El payload se refleja sin codificar en la respuesta del buscador.",
+    "ai_review": {
+      "owasp_correcto": true,
+      "prioridad_correcta": true,
+      "remediacion_util": true,
+      "alucinacion": false,
+      "nota": "La explicación es correcta y utilizable tal cual en el informe."
+    }
+  }
+}
