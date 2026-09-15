@@ -38,8 +38,16 @@ La Ley 21.459 sobre delitos informáticos delimita el alcance del proyecto y jus
 
 ```
 capstone/
-├── backend/              API FastAPI, modelos de datos, parser de hallazgos
-├── frontend/             Dashboard en Next.js
+├── backend/
+│   ├── app/
+│   │   ├── main.py           API FastAPI
+│   │   ├── models.py         Modelos SQLAlchemy (7 tablas)
+│   │   ├── normalizacion.py  Rutas y claves de deduplicación
+│   │   └── parsers/          Conversión de salidas de escáneres
+│   ├── migrations/           Migraciones de Alembic
+│   ├── scripts/seed.py       Datos de prueba sintéticos
+│   └── tests/
+├── frontend/             Dashboard en Next.js (desde el S7)
 ├── lab/
 │   ├── fixtures/         Escaneos congelados y versionados (insumo de desarrollo)
 │   └── salidas/          Resultados de escaneos en curso (no se versiona)
@@ -78,12 +86,22 @@ Nikto y OpenVAS quedan como herramientas de apoyo opcionales. DVWA y WebGoat, co
 
 ## Requisitos
 
-- Docker Engine o Docker Desktop
+- **Docker Engine** — no Docker Desktop, ver nota abajo
 - Git
-- **En Windows:** WSL2. Se recomienda Docker Engine nativo dentro de WSL en lugar de Docker Desktop (ver `docs/guias/`)
-- Ollama, en el equipo que actúe como nodo de inferencia
+- **En Windows:** WSL2 con Ubuntu
+- **Ollama** — solo en el equipo que actúe como nodo de inferencia
 
-<!-- TODO: fijar versiones mínimas una vez estabilizado el entorno -->
+Instalación paso a paso: `docs/guias/GUIA_INSTALACION.md`
+
+### Por qué Docker Engine y no Docker Desktop
+
+Docker Desktop presentó inestabilidad bajo carga sostenida en uno de los equipos
+del grupo: reinicios del motor, errores 500 en su API y escaneos interrumpidos a
+mitad de ejecución. El diagnóstico apuntó a su capa de integración con WSL.
+Migrar a Docker Engine nativo dentro de WSL2 resolvió el problema.
+
+Docker Desktop puede funcionar en otros equipos, pero el camino soportado por el
+equipo es Docker Engine.
 
 ---
 
@@ -126,7 +144,22 @@ Los resultados quedan en `lab/salidas/`.
 
 **Si aparece `Permission denied` al escribir el JSON:** Docker creó `lab/salidas/` como root. Se corrige con `sudo chown -R $USER:$USER lab/salidas`.
 
-<!-- TODO: agregar el levantamiento del backend cuando exista el Dockerfile (S3) -->
+### Levantar el backend y la base de datos
+
+```bash
+docker compose up -d db api
+docker compose exec api alembic upgrade head
+docker compose exec api python scripts/seed.py --reset
+curl http://localhost:8000/stats
+```
+
+Debe devolver 1 objetivo, 2 escaneos y 40 hallazgos.
+
+Documentación interactiva de la API: `http://localhost:8000/docs`
+
+Los datos del seed son **sintéticos**, no vienen de un escaneo real. El objetivo
+se llama "(datos de prueba)" justamente para no confundirlos en el informe.
+
 <!-- TODO: agregar el levantamiento del frontend (S7) -->
 <!-- TODO: documentar las variables de entorno y el archivo .env.ejemplo -->
 
@@ -148,10 +181,14 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 
 | Documento | Ubicación |
 |---|---|
+| **Instalación del entorno** | `docs/guias/GUIA_INSTALACION.md` |
+| Introducción a Docker | `docs/guias/DOCKER_BASICO.md` |
 | Esquema del hallazgo normalizado | `docs/diseno/ESQUEMA_HALLAZGO.md` |
 | Modelo de datos (DER y tablas) | `docs/diseno/MODELO_DATOS.md` |
-| Montaje del laboratorio | `docs/guias/GUIA_MONTAJE_LABORATORIO.md` |
-| Introducción a Docker | `docs/guias/DOCKER_BASICO.md` |
+| Backend y migraciones (S2) | `docs/guias/GUIA_S2.md` |
+| Ollama en equipo separado | `docs/guias/ADDENDUM_OLLAMA_REMOTO.md` |
+| Rol de Felipe | `docs/README_FELIPE.md` |
+| Rol de Joaquín | `docs/README_JOAQUIN.md` |
 | Planilla de sprints | `docs/SentinelAI_Plan_Sprints.xlsx` |
 
 ---
@@ -172,11 +209,10 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 
 ## Convenciones de trabajo
 
-<!-- TODO: acordar en reunión de equipo -->
+**Ramas:** `persona/tema`. Por ejemplo `luciano/backend-base`, `joaquin/parser-zap`,
+`felipe/lab-escaneos`.
 
-**Ramas:** <!-- por persona (felipe/...) o por tema (backend/parser)? -->
-
-**Commits:** formato `tipo: descripción` — `feat`, `fix`, `docs`, `chore`, `lab`
+**Commits:** formato `tipo: descripción` — `feat`, `fix`, `docs`, `test`, `lab`, `chore`
 
 **Pull requests:** `main` solo se modifica por PR, con al menos un revisor.
 
@@ -187,7 +223,7 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 Proyecto de 18 semanas dividido en 9 sprints de 2 semanas.
 
 - [x] **S1 · Semanas 1-2** — Laboratorio, aislamiento de red, primer escaneo
-- [ ] **S2 · Semanas 3-4** — Modelo de datos y migraciones
+- [x] **S2 · Semanas 3-4** — Modelo de datos y migraciones
 - [ ] **S3 · Semanas 5-6** — Parser, normalización y API de ingesta
 - [ ] **S4 · Semanas 7-8** — Integración con Ollama
 - [ ] **S5 · Semanas 9-10** — Enriquecimiento asíncrono y trazabilidad

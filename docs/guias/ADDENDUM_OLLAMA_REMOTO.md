@@ -1,7 +1,11 @@
 # Addendum · Ollama en un equipo separado
 
-**SentinelAI · complemento de GUIA_MONTAJE_LABORATORIO.md**
+**SentinelAI · complemento de GUIA_INSTALACION.md**
 
+
+> **Nota:** este documento asume Docker Desktop. Con Docker Engine en WSL2,
+> `host.docker.internal` no apunta a Windows. Ver la sección de Joaquín en
+> `GUIA_INSTALACION.md` para la forma correcta.
 Reemplaza al paso 8 de la guía principal cuando Ollama corre en otro equipo.
 
 | Equipo | Rol | Hardware |
