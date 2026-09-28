@@ -87,7 +87,15 @@ def _a_entero(valor: Any) -> int | None:
         "-1"  -> None
         79    -> 79
     """
-    raise NotImplementedError("TODO: implementar _a_entero")
+    try:
+        numero = int(valor)
+    except (TypeError, ValueError):
+        return None
+
+    if numero <= 0:
+        return None
+
+    return numero
 
 
 def _extraer_instancias(alerta: dict) -> list[dict]:
