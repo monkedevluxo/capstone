@@ -76,6 +76,14 @@ from app.normalizacion import (
 MAX_INSTANCIAS = 50
 
 
+_RIESGO_ZAP_TEXTO = {"0": "Informational", "1": "Low", "2": "Medium", "3": "High"}
+
+
+def _texto_o_none(valor: Any) -> str | None:
+    if valor is None or valor == "":
+        return None
+    return valor
+
 def _a_entero(valor: Any) -> int | None:
     """
     ZAP entrega cweid y wascid como string, y a veces como "" o "-1".
@@ -99,63 +107,66 @@ def _a_entero(valor: Any) -> int | None:
 
 
 def _extraer_instancias(alerta: dict) -> list[dict]:
-    """
-    Saca la lista de instancias de una alerta de ZAP.
-
-    En el JSON de ZAP cada instancia se ve así:
-        {"uri": "...", "method": "GET", "param": "q",
-         "attack": "...", "evidence": "..."}
-
-    Devuelve una lista de diccionarios con las claves url, method y param.
-    Recorta a MAX_INSTANCIAS. Si la alerta no trae instancias, lista vacía.
-
-    OJO: la clave en ZAP es "uri", pero nuestro esquema usa "url".
-    """
-    raise NotImplementedError("TODO: implementar _extraer_instancias")
+    instancias = []
+    for inst in alerta.get("instances") or []:
+        instancias.append({
+            "url": inst.get("uri"),
+            "method": _texto_o_none(inst.get("method")),
+            "param": _texto_o_none(inst.get("param")),
+        })
+    return instancias[:MAX_INSTANCIAS]
 
 
 def parsear_alerta(alerta: dict) -> dict | None:
-    """
-    Convierte UNA alerta de ZAP en UN hallazgo normalizado.
+    instancias = _extraer_instancias(alerta)
+    if not instancias:
+        return None
 
-    Devuelve None si la alerta no tiene instancias utilizables
-    (sin URL no hay hallazgo que registrar).
+    primera = instancias[0]
+    url = primera["url"]
+    method = primera["method"]
+    param = primera["param"]
 
-    Pasos sugeridos:
-      1. Sacar las instancias con _extraer_instancias
-      2. Si no hay ninguna, devolver None
-      3. Tomar la primera instancia como representativa (url, method, param)
-      4. Calcular path_template a partir de esa url
-      5. Calcular dedupe_key y correlation_key
-      6. Mapear severidad con severidad_zap(alerta["riskcode"])
-      7. occurrences: usar alerta.get("count") si viene, si no len(instancias)
-      8. Armar el diccionario del contrato
-    """
-    raise NotImplementedError("TODO: implementar parsear_alerta")
+    rule_id = str(alerta.get("pluginid"))
+    plantilla = path_template(url)
+    cwe_id = _a_entero(alerta.get("cweid"))
 
+    # La evidencia viene en la instancia original de ZAP, no en la recortada.
+    evidencia = _texto_o_none(alerta["instances"][0].get("evidence"))
+
+    # "count" llega como string ("2"); si no viene, contamos las instancias.
+    ocurrencias = _a_entero(alerta.get("count")) or len(alerta["instances"])
+
+    return {
+        "rule_id": rule_id,
+        "rule_name": alerta.get("name"),
+        "titulo": alerta.get("alert") or alerta.get("name"),
+        "descripcion": alerta.get("desc"),
+        "url": url,
+        "path_template": plantilla,
+        "method": method,
+        "param": param,
+        "evidence_snippet": evidencia,
+        "severity": severidad_zap(alerta.get("riskcode")),
+        "severity_tool_raw": _RIESGO_ZAP_TEXTO.get(str(alerta.get("riskcode")), "Informational"),
+        "tool_confidence": confianza_zap(alerta.get("confidence")),
+        "cwe_id": cwe_id,
+        "wasc_id": _a_entero(alerta.get("wascid")),
+        "dedupe_key": dedupe_key("zap", rule_id, plantilla, param, method),
+        "correlation_key": correlation_key(cwe_id, plantilla, param),
+        "occurrences": ocurrencias,
+        "source_raw": alerta,
+        "instances": instancias,
+    }
 
 def parsear_reporte(crudo: dict) -> list[dict]:
-    """
-    Recorre el JSON completo de ZAP y devuelve todos los hallazgos normalizados.
-
-    Estructura del JSON de ZAP:
-        {
-          "@version": "2.17.0",
-          "site": [
-            {
-              "@name": "http://juiceshop:3000",
-              "alerts": [ {...}, {...} ]
-            }
-          ]
-        }
-
-    OJO: "site" es una LISTA, aunque casi siempre traiga un solo elemento.
-    Hay que recorrerla igual.
-
-    Las alertas que parsear_alerta devuelve como None se descartan.
-    """
-    raise NotImplementedError("TODO: implementar parsear_reporte")
-
+    hallazgos = []
+    for sitio in crudo.get("site") or []:
+        for alerta in sitio.get("alerts") or []:
+            hallazgo = parsear_alerta(alerta)
+            if hallazgo is not None:
+                hallazgos.append(hallazgo)
+    return hallazgos
 
 def main() -> None:
     """Uso: python -m app.parsers.zap <archivo.json>"""
