@@ -131,10 +131,8 @@ def parsear_alerta(alerta: dict) -> dict | None:
     plantilla = path_template(url)
     cwe_id = _a_entero(alerta.get("cweid"))
 
-    # La evidencia viene en la instancia original de ZAP, no en la recortada.
     evidencia = _texto_o_none(alerta["instances"][0].get("evidence"))
 
-    # "count" llega como string ("2"); si no viene, contamos las instancias.
     ocurrencias = _a_entero(alerta.get("count")) or len(alerta["instances"])
 
     return {
@@ -169,7 +167,6 @@ def parsear_reporte(crudo: dict) -> list[dict]:
     return hallazgos
 
 def main() -> None:
-    """Uso: python -m app.parsers.zap <archivo.json>"""
     if len(sys.argv) != 2:
         print(__doc__.split("CÓMO TRABAJAR")[1])
         sys.exit(1)
