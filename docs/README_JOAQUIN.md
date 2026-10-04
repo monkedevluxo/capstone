@@ -242,18 +242,18 @@ Corre los tests antes de cada push.
 
 **Parser**
 - [ ] Entorno instalado según `docs/guias/GUIA_INSTALACION.md`
-- [ ] Los 25 tests pasan
-- [ ] Corre contra el fixture real sin errores
-- [ ] No hay claves de deduplicación repetidas
-- [ ] Los conteos por severidad tienen sentido
+- [x] Los 25 tests pasan
+- [x] Corre contra el fixture real sin errores
+- [x] No hay claves de deduplicación repetidas
+- [x] Los conteos por severidad tienen sentido
 
 **IA**
-- [ ] `OLLAMA_HOST` configurado y sesión reiniciada
-- [ ] `nvidia-smi` confirma que usa la GPU
+- [x] `OLLAMA_HOST` configurado y sesión reiniciada
+- [x] `nvidia-smi` confirma que usa la GPU
 - [ ] Un contenedor alcanza Ollama por la IP del host
-- [ ] Latencia mediana medida y anotada
-- [ ] Prompt devolviendo JSON válido con categorías 2025
-- [ ] Contadas las respuestas que vinieron con categorías 2021
+- [x] Latencia mediana medida y anotada
+- [x] Prompt devolviendo JSON válido con categorías 2025
+- [x] Contadas las respuestas que vinieron con categorías 2021
 
 ---
 
