@@ -8,7 +8,7 @@ Resumen de lo trabajado en mi parte de SentinelAI (Arquitectura, IA y Parser), p
 
 **Mi parte en una línea:** convertir la salida de ZAP a un formato común (el **parser**) y lograr que un modelo local explique y clasifique cada hallazgo de forma **validada** (la **IA**).
 
-**Mi entorno:** Windows + VS Code + Python 3.12 en `backend\.venv`. Repo en `C:\Proyectotitulo\capstone`, rama `joaquin/parser-zap`. Ollama instalado en Windows, con una RTX 3060 Ti de 8 GB.
+**Mi entorno:** Windows + VS Code + Python 3.12 en `backend\.venv`. WSL2 (Ubuntu 26.04, 8 GB) con Docker Engine 29.9 desde el 14-10-2026. Repo en `C:\Proyectotitulo\capstone`, rama `joaquin/parser-zap`. Ollama instalado en Windows, con una RTX 3060 Ti de 8 GB.
 
 | Hecho | Archivo |
 |---|---|
@@ -63,9 +63,9 @@ Resumen de lo trabajado en mi parte de SentinelAI (Arquitectura, IA y Parser), p
 
 ## 4. Próximos pasos (checklist de `README_JOAQUIN.md`)
 
-1. **Que un contenedor alcance a Ollama.** Es el único punto del checklist que falta. En Ubuntu (WSL): obtener la IP con `ip route show | grep default | awk '{print $3}'`, después probar `curl http://IP:11434/api/tags` y `docker run --rm curlimages/curl -s http://IP:11434/api/tags`. Si se cuelga, es el firewall: aplicar la regla de `COMANDOS_JOAQUIN.md`, sección 5.
-2. **Probar el enriquecimiento real:** `python -m app.ia.enriquecer ..\lab\fixtures\zap_juiceshop_ajax_v1.json`.
-3. **Commit y PR del módulo `app/ia`**, con Luciano de revisor. Él lo conecta en `POST /findings/{id}/enrich` (T-032).
+1. ~~Que un contenedor alcance a Ollama~~ ✅ (14-10-2026): WSL2 + Docker Engine instalados; un contenedor llega a Ollama en `http://172.31.32.1:11434` y uno en red `--internal` no llega. Evidencia: `docs/evidencias/contenedor_ollama.md`.
+2. ~~Probar el enriquecimiento real~~ ✅: 8/8 en `ajax_v1` y 26/26 en `ajax_v2`. Evidencia: `docs/evidencias/enriquecimiento_ajax_v2.md`.
+3. **PR del módulo `app/ia`** (rama `joaquin/ia-enriquecimiento`), con Luciano de revisor. Él lo conecta en `POST /findings/{id}/enrich` (T-032).
 4. **Cerrar con el grupo la decisión A/B/mixta.**
-5. **Cuando Felipe suba `ajax_v2`:** correr el parser y el enriquecimiento con ese fixture (son hallazgos que el prompt no conoce).
+5. ~~Probar con `ajax_v2`~~ ✅: el parser normaliza 13 hallazgos sin claves repetidas.
 6. **S5:** medir el tiempo de enriquecer un escaneo completo (T-039). **S6:** script que compare contra el golden set (T-045).
