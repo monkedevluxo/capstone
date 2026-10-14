@@ -250,7 +250,7 @@ Corre los tests antes de cada push.
 **IA**
 - [x] `OLLAMA_HOST` configurado y sesión reiniciada
 - [x] `nvidia-smi` confirma que usa la GPU
-- [ ] Un contenedor alcanza Ollama por la IP del host
+- [x] Un contenedor alcanza Ollama por la IP del host
 - [x] Latencia mediana medida y anotada
 - [x] Prompt devolviendo JSON válido con categorías 2025
 - [x] Contadas las respuestas que vinieron con categorías 2021
