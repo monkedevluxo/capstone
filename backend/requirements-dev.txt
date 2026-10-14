@@ -2,3 +2,4 @@
 -r requirements.txt
 pytest==8.3.4
 jsonschema==4.23.0
+httpx==0.28.1   # TestClient de FastAPI
