@@ -4,6 +4,8 @@
 
 Proyecto de Título · Capstone · Duoc UC · Grupo 3
 
+[![CI](https://github.com/monkedevluxo/capstone/actions/workflows/ci.yml/badge.svg)](https://github.com/monkedevluxo/capstone/actions/workflows/ci.yml)
+
 ---
 
 ## Qué es
@@ -38,6 +40,7 @@ La Ley 21.459 sobre delitos informáticos delimita el alcance del proyecto y jus
 
 ```
 capstone/
+├── .github/workflows/    CI: tests, migraciones y restricciones
 ├── backend/
 │   ├── app/
 │   │   ├── main.py           API FastAPI
@@ -45,8 +48,10 @@ capstone/
 │   │   ├── normalizacion.py  Rutas y claves de deduplicación
 │   │   └── parsers/          Conversión de salidas de escáneres
 │   ├── migrations/           Migraciones de Alembic
-│   ├── scripts/seed.py       Datos de prueba sintéticos
-│   └── tests/
+│   ├── scripts/
+│   │   ├── seed.py           Datos de prueba sintéticos
+│   │   └── verificar_bd.py   Verifica las restricciones de la base
+│   └── tests/                Parser y contrato del esquema
 ├── frontend/             Dashboard en Next.js (desde el S7)
 ├── lab/
 │   ├── fixtures/         Escaneos congelados y versionados (insumo de desarrollo)
@@ -54,7 +59,7 @@ capstone/
 ├── docs/
 │   ├── diseno/           Esquema del hallazgo, modelo de datos, decisiones técnicas
 │   ├── institucional/    Entregables formales que solicita Duoc UC
-│   ├── guias/            Montaje del laboratorio, uso de Docker
+│   ├── guias/            Instalación, Docker, Ollama
 │   └── evidencias/       Capturas, logs y planillas de validación
 ├── docker-compose.yml
 └── README.md
@@ -207,6 +212,45 @@ El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.m
 
 ---
 
+## Integración continua
+
+Cada PR hacia `main` corre automáticamente en GitHub Actions
+(`.github/workflows/ci.yml`). Son dos jobs:
+
+| Job | Qué comprueba |
+|---|---|
+| **Tests** | Los tests del parser de ZAP, y que `ejemplo_hallazgo.json` cumpla `finding.schema.json` |
+| **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); y que la base rechace lo que debe rechazar |
+
+Las restricciones que se verifican en cada PR:
+
+- solo se aceptan objetivos del laboratorio (Ley 21.459)
+- un enriquecimiento fallido no puede traer datos a medias
+- un hallazgo no puede tener dos enriquecimientos vigentes
+- la confianza del modelo va entre 0 y 1
+- no se puede duplicar un hallazgo en el mismo objetivo
+
+La restricción ética del proyecto no depende de que alguien se acuerde de
+respetarla: si un cambio la debilita, el CI falla y el PR no se puede mergear.
+
+**No hay CD.** El sistema es deliberadamente local, así que no hay dónde
+desplegar. Los escaneos de ZAP y la inferencia con Ollama tampoco corren en el
+CI: uno es lento y el otro necesita GPU. Siguen siendo manuales.
+
+### Correr las mismas verificaciones en local
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest tests/ -v
+docker compose exec api python scripts/verificar_bd.py
+```
+
+`verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
+datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
+
+---
+
 ## Convenciones de trabajo
 
 **Ramas:** `persona/tema`. Por ejemplo `luciano/backend-base`, `joaquin/parser-zap`,
@@ -214,7 +258,10 @@ El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.m
 
 **Commits:** formato `tipo: descripción` — `feat`, `fix`, `docs`, `test`, `lab`, `chore`
 
-**Pull requests:** `main` solo se modifica por PR, con al menos un revisor.
+**Pull requests:** `main` está protegida. Todo cambio entra por PR, con los dos
+checks del CI en verde y una aprobación de otro integrante. Nadie aprueba su
+propio PR: la revisión también sirve para que los tres conozcan el código que
+van a defender.
 
 ---
 
