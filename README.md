@@ -271,9 +271,9 @@ Proyecto de 18 semanas dividido en 9 sprints de 2 semanas.
 
 - [x] **S1 · Semanas 1-2** — Laboratorio, aislamiento de red, primer escaneo
 - [x] **S2 · Semanas 3-4** — Modelo de datos y migraciones
-- [ ] **S3 · Semanas 5-6** — Parser, normalización y API de ingesta
-- [ ] **S4 · Semanas 7-8** — Integración con Ollama
-- [ ] **S5 · Semanas 9-10** — Enriquecimiento asíncrono y trazabilidad
+- [x] **S3 · Semanas 5-6** — Parser, normalización y API de ingesta
+- [x] **S4 · Semanas 7-8** — Integración con Ollama
+- [x] **S5 · Semanas 9-10** — Enriquecimiento asíncrono y trazabilidad
 - [ ] **S6 · Semanas 11-12** — Golden set y métricas de calidad
 - [ ] **S7 · Semanas 13-14** — Dashboard
 - [ ] **S8 · Semanas 15-16** — Validación humana e informe
