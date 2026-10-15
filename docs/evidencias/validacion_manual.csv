@@ -1,0 +1,11 @@
+id_hallazgo,titulo,severidad,owasp_modelo,owasp_tuyo,owasp_correcto,prioridad_modelo,prioridad_tuya,prioridad_correcta,remediacion_util,alucinacion,nota
+H01,SQL Injection,High,,,,,,,,,
+H02,External Redirect,High,,,,,,,,,
+H03,Off-site Redirect,High,,,,,,,,,
+H04,Content Security Policy (CSP) Header Not Set,Medium,,,,,,,,,
+H05,Cross-Domain Misconfiguration,Medium,,,,,,,,,
+H06,Missing Anti-clickjacking Header,Medium,,,,,,,,,
+H07,Session ID in URL Rewrite,Medium,,,,,,,,,
+H08,Private IP Disclosure,Low,,,,,,,,,
+H09,X-Content-Type-Options Header Missing,Low,,,,,,,,,
+H10,Information Disclosure - Information in Browser sessionStorage,Informational,,,,,,,,,
