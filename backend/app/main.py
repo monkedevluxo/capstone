@@ -1,8 +1,7 @@
 """
 SentinelAI · Aplicación FastAPI.
 
-Por ahora solo el esqueleto y el healthcheck (tarea T-010). Los endpoints de
-ingesta y consulta llegan en el S3.
+Healthcheck y estadísticas acá; ingesta y consulta de hallazgos en app/rutas.py.
 """
 
 from fastapi import Depends, FastAPI
@@ -13,12 +12,16 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.db import get_db
 from app.models import Finding, Scan, Target
+from app.rutas import router
 
 app = FastAPI(
     title="SentinelAI",
     description="Hallazgos de seguridad web priorizados con IA local",
     version="0.1.0",
 )
+
+
+app.include_router(router)
 
 
 @app.get("/health", tags=["sistema"])

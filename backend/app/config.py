@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     OLLAMA_SEED: int | None = None   # fijarla solo para demos reproducibles
     SCHEMA_VERSION: str = "1.0.0"
 
+    # Hosts del laboratorio. La ingesta rechaza reportes de cualquier otro
+    # objetivo (Ley 21.459). Separados por coma.
+    LAB_HOSTS: str = "juiceshop,dvwa,webgoat"
+
     # echo=True imprime cada consulta SQL. Útil mientras se arma el modelo,
     # insoportable después. Se activa con SQL_ECHO=true en el .env.
     SQL_ECHO: bool = False

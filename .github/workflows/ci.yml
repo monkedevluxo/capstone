@@ -85,7 +85,7 @@ jobs:
           cache-dependency-path: backend/requirements*.txt
 
       - name: Instalar dependencias
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-dev.txt
 
       - name: Aplicar migraciones
         run: alembic upgrade head
@@ -101,6 +101,11 @@ jobs:
       # alguien debilitó una restricción.
       - name: Verificar restricciones del proyecto
         run: python scripts/verificar_bd.py
+
+      # Importa los fixtures reales de ZAP y consulta la API. Vacía las tablas,
+      # por eso va después de verificar las restricciones.
+      - name: Tests de ingesta y consulta
+        run: python -m pytest tests/test_ingesta.py -v
 
       - name: Revertir y reaplicar migraciones
         run: |
