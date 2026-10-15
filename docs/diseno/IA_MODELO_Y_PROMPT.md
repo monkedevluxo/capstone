@@ -1,6 +1,6 @@
 # IA · Modelo, prompt y validación
 
-**Responsable:** Joaquín Herrera · **Tareas:** T-009, T-028 a T-031, T-033, T-034 · **Actualizado:** 04-10-2026
+**Responsable:** Joaquín Herrera · **Tareas:** T-009, T-028 a T-031, T-033, T-034 · **Actualizado:** 14-10-2026
 
 Documento de referencia para reproducir cualquier salida del modelo. Si algo de lo que está aquí cambia (modelo, prompt o parámetros), se actualiza este archivo **y** `PROMPT_VERSION` en `backend/app/ia/prompt.py`.
 
@@ -105,12 +105,66 @@ $env:OLLAMA_URL = "http://localhost:11434"
 python -m app.ia.enriquecer ..\lab\fixtures\zap_juiceshop_ajax_v1.json   # con Ollama real
 ```
 
-## 5. Decisión pendiente del grupo
+## 5. Alternativas para clasificar y priorizar, y recomendación
 
-**¿Quién asigna la categoría OWASP?**
+**La pregunta:** ¿quién asigna la categoría OWASP y la prioridad de cada hallazgo? Hoy lo hace el modelo, y las pruebas muestran que formatea bien pero que el contenido es irregular.
 
-- **A**: el modelo, como hoy.
-- **B**: una tabla CWE → OWASP 2025, y el modelo solo explica, describe el impacto y propone la remediación.
-- **Mixta**: la tabla asigna la categoría, el modelo propone la suya y, si no coinciden, el hallazgo se marca para revisión.
+### 5.1 Evidencia que motiva la decisión
 
-El módulo funciona igual con cualquiera de las tres: B o la mixta agregan un paso después de `enriquecer()`, sin cambiar el cliente ni la validación.
+| Observación | Dato | Fuente |
+|---|---|---|
+| El formato siempre es válido | 26/26 respuestas en `ajax_v2`, 60/60 en las pruebas del prompt | `evidencias/enriquecimiento_ajax_v2.md` |
+| Acierta la categoría en casos claros, no siempre | 11/16 en `ajax_v2`; 13/18 con el prompt v2 | ídem, sección 3 de este documento |
+| Sesgo persistente hacia OWASP 2021 | CSP clasificado como A05 en 15 de 16 respuestas, pese a la instrucción explícita | ídem |
+| Mismo CWE, distinta categoría | CWE-497 en A01 (Private IP) y A02 (Timestamp) | `evidencias/enriquecimiento_ajax_v2.md` |
+| La prioridad no sigue la regla pedida | 11/26 respuestas dentro del tramo según la severidad de ZAP | ídem |
+| La confianza no discrimina | 0.93 cuando acierta contra 0.90 cuando falla | sección 3 |
+| Contra la anotación humana | ver `evidencias/metricas_golden_set.md` (modelo contra regla fija) | T-045 |
+
+### 5.2 Las tres alternativas
+
+**A · El modelo decide todo (situación actual).**
+El modelo entrega categoría, prioridad, explicación y remediación. La persona que valida corrige lo que esté mal.
+
+**B · Reglas deterministas, el modelo solo redacta.**
+La **categoría** sale de una tabla CWE → OWASP 2025, construida con el mapeo oficial de OWASP. La **prioridad** sale de una regla según la severidad de ZAP. El modelo solo escribe la explicación, el impacto y la remediación.
+
+**Mixta · La regla propone, el modelo contrasta, la persona decide.**
+La tabla CWE asigna la categoría de referencia y el modelo propone la suya. **Si no coinciden, el hallazgo se marca "revisar"** y queda primero en la cola de validación. La prioridad sale de la regla. El modelo redacta la explicación, el impacto y la remediación.
+
+| Criterio | A · Modelo | B · Reglas | Mixta |
+|---|---|---|---|
+| Reproducibilidad de la categoría | Baja (cambia entre corridas) | Total | Total (la de referencia) |
+| Reproducibilidad de la prioridad | Baja | Total | Total |
+| Hallazgos sin CWE (informativos) | Inventa una categoría (Modern Web App → A05) | "No aplica", que es lo correcto | "No aplica" |
+| CWE ambiguo o fuera de la tabla | Lo resuelve, con errores | Queda sin categoría | Usa la del modelo, marcado "revisar" |
+| Aporte visible de la IA | Clasifica y redacta | Solo redacta | Redacta **y** detecta discrepancias |
+| Señal para priorizar la revisión humana | Ninguna confiable (la confianza no discrimina) | Ninguna | **La discrepancia** regla/modelo |
+| Coherencia con "la validación final es humana" | Media | Alta | **Alta, y además guía la validación** |
+| Cambios en el código | Ninguno | Tabla + regla; se ignoran dos campos del modelo | Tabla + regla + comparación |
+| Cambios en la base de datos | Ninguno | Ninguno (la tabla vive en el código) | Ninguno: la discrepancia se calcula al consultar |
+| Esfuerzo estimado | 0 | ~1 día | ~1 a 1,5 días |
+| Cómo se presenta el proyecto | "La IA clasifica y prioriza" | "La IA explica y recomienda" | "La IA explica, recomienda y señala lo dudoso" |
+
+### 5.3 Recomendación: **Mixta para la categoría, regla fija para la prioridad**
+
+1. **Prioridad por regla** (High → p1, Medium → p2, Low → p3, Informational → p4), ajustable por la persona que valida. Es la parte donde el modelo rinde peor (11/26 dentro del tramo) y donde una regla simple es transparente y defendible.
+2. **Categoría mixta.** La tabla CWE da la categoría de referencia y el modelo la suya. Las discrepancias se convierten en el criterio para **ordenar la revisión humana**, que es justo lo que la confianza del modelo no logra hacer.
+3. **El modelo conserva lo que hace bien:** explicar, describir el impacto y proponer la remediación. El formato ya está garantizado por la validación (sección 4).
+
+**Por qué no A:** sus errores son sistemáticos (CSP en A05) y la confianza no permite detectarlos, así que toda la carga de detección recae en la persona.
+**Por qué no B pura:** se pierde la capacidad del modelo de clasificar hallazgos sin CWE claro, y la IA queda reducida a redactar.
+
+**Qué se mantiene igual:** `enriquecer()`, la validación y los reintentos. El modelo sigue entregando su categoría y su prioridad, que quedan guardadas en `ai_enrichments` como **sugerencia**, para poder seguir midiéndolas contra el golden set (T-046, T-047).
+
+### 5.4 Implementación propuesta (si el grupo aprueba)
+
+| Paso | Dónde | Responsable |
+|---|---|---|
+| Tabla CWE → OWASP 2025 para los CWE presentes en los fixtures, citando el mapeo oficial | `backend/app/ia/owasp_por_cwe.py` | Joaquín |
+| Regla de prioridad por severidad | mismo módulo | Joaquín |
+| Campos calculados `owasp_referencia`, `requiere_revision` y `prioridad_regla` en la respuesta de la API | endpoint de consulta de hallazgos | Luciano |
+| Mostrar la discrepancia y ordenar la cola de validación por ella | dashboard (S7) | Luciano |
+| Medir cuántos errores del modelo detecta la discrepancia | `scripts/metricas_golden_set.py` | Joaquín |
+
+**Decisión del grupo:** _pendiente — registrar aquí la opción elegida, la fecha y quiénes la tomaron._
