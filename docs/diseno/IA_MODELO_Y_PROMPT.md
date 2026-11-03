@@ -157,7 +157,7 @@ La tabla CWE asigna la categoría de referencia y el modelo propone la suya. **S
 
 **Qué se mantiene igual:** `enriquecer()`, la validación y los reintentos. El modelo sigue entregando su categoría y su prioridad, que quedan guardadas en `ai_enrichments` como **sugerencia**, para poder seguir midiéndolas contra el golden set (T-046, T-047).
 
-### 5.4 Implementación propuesta (si el grupo aprueba)
+### 5.4 Implementación (aprobada)
 
 | Paso | Dónde | Responsable |
 |---|---|---|
@@ -167,4 +167,6 @@ La tabla CWE asigna la categoría de referencia y el modelo propone la suya. **S
 | Mostrar la discrepancia y ordenar la cola de validación por ella | dashboard (S7) | Luciano |
 | Medir cuántos errores del modelo detecta la discrepancia | `scripts/metricas_golden_set.py` | Joaquín |
 
-**Decisión del grupo:** _pendiente — registrar aquí la opción elegida, la fecha y quiénes la tomaron._
+**Decisión del grupo:** opción **mixta** (5.3): categoría de referencia por tabla CWE → OWASP 2025, prioridad por regla según la severidad de ZAP y marca "revisar" cuando la categoría del modelo no coincide. Decidida el 16-10-2026, en la preparación de la presentación de la Fase 2, por Joaquín Herrera, Felipe Cayún y Luciano Zambrano.
+
+**Estado:** tabla y regla implementadas en `backend/app/ia/owasp_por_cwe.py` (tests en `backend/tests/test_owasp_por_cwe.py`), con las listas oficiales completas de top10.owasp.org/2025 (consultadas el 02-11-2026). En los cuatro fixtures, todos los hallazgos con CWE reciben categoría salvo **CWE-264** (Cross-Domain Misconfiguration), que OWASP 2025 no mapea: queda "fuera de tabla" y se marca para revisión. Ojo: el mapeo oficial ubica CSP, X-Content-Type-Options y anti-clickjacking (CWE-693 y 1021) en **A06 Insecure Design**, no en A02.
