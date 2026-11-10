@@ -27,6 +27,23 @@ MAX_MIN_ESCANEO=60      # tope del escaneo activo completo
 
 error() { echo "ERROR: $*" >&2; exit 1; }
 
+# Muestra cuántos tipos de alerta trae el JSON, por nivel de riesgo.
+resumen() {
+  python3 - "$1" <<'PY'
+import json, sys
+from collections import Counter
+datos = json.load(open(sys.argv[1]))
+alertas = [a for sitio in datos.get("site", []) for a in sitio.get("alerts", [])]
+riesgos = Counter(a["riskdesc"].split(" ")[0] for a in alertas)
+print(f"\nTipos de alerta: {len(alertas)}")
+for nivel in ("High", "Medium", "Low", "Informational"):
+    print(f"  {nivel:<14}{riesgos.get(nivel, 0)}")
+print()
+for a in sorted(alertas, key=lambda a: -int(a["riskcode"])):
+    print(f"  [{a['riskdesc'].split(' ')[0]}] {a['name']} (CWE {a['cweid']}, {a['count']} instancias)")
+PY
+}
+
 # --- Verificaciones previas -------------------------------------------------
 
 [[ -f docker-compose.yml ]] \
@@ -66,4 +83,8 @@ echo "Resultado: ${DIR_SALIDAS}/${SALIDA}"
 # -I: no tratar las advertencias como error (ZAP devuelve código 2 si hay WARN).
 docker compose run --rm zap "${COMANDO[@]}"
 
+[[ -f "${DIR_SALIDAS}/${SALIDA}" ]] \
+  || error "ZAP terminó pero no generó ${DIR_SALIDAS}/${SALIDA}."
+
 echo "Listo: ${DIR_SALIDAS}/${SALIDA}"
+resumen "${DIR_SALIDAS}/${SALIDA}"
