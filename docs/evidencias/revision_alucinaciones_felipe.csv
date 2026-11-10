@@ -1,0 +1,21 @@
+fila;corrida;hallazgo;alucinacion;nota
+H01;1;SQL Injection;no;"Puede" plantea un riesgo, no afirma una explotación; coincide con la baja confianza de ZAP ante el error 500
+H01;2;SQL Injection;no;Igual que la corrida 1
+H02;1;External Redirect;no;Describe con precisión el riesgo real: redirigir al usuario a un sitio malicioso
+H02;2;External Redirect;si;Califica la redirección como "acceso no autorizado", mezclando redirección con control de acceso
+H03;1;Off-site Redirect;si;Llama "URL no confiable" al repositorio oficial de GitHub, un destino permitido por la aplicación
+H03;2;Off-site Redirect;si;Afirma que ocurre "sin autorización" cuando el destino es externo pero permitido e intencional
+H04;1;Content Security Policy (CSP) Header Not Set;si;Afirma categóricamente que "no hay protección"; la falta de CSP no implica ausencia de otros controles
+H04;2;Content Security Policy (CSP) Header Not Set;no;"Puede permitir" describe correctamente el riesgo de la capa defensiva ausente
+H05;1;Cross-Domain Misconfiguration;no;Vaga pero correcta: el origen * permite que otros dominios lean datos desde el navegador
+H05;2;Cross-Domain Misconfiguration;no;Igual que la corrida 1
+H06;1;Missing Anti-clickjacking Header;no;Describe literalmente la cabecera ausente; no detectar el contexto socket.io es error de criterio, no alucinación
+H06;2;Missing Anti-clickjacking Header;no;Igual que la corrida 1
+H07;1;Session ID in URL Rewrite;si;Inventa una "URL de redirección" inexistente y asume que el sid es la sesión del usuario (es la conexión de socket.io)
+H07;2;Session ID in URL Rewrite;si;Igual que la corrida 1
+H08;1;Private IP Disclosure;no;La IP puede servir de insumo para dirigir ataques internos (SSRF, pivoteo); no excede lo que implica la fuga
+H08;2;Private IP Disclosure;no;Describe con precisión el impacto: reconocimiento de la infraestructura interna
+H09;1;X-Content-Type-Options Header Missing;no;Describe exactamente el MIME sniffing que evita nosniff
+H09;2;X-Content-Type-Options Header Missing;no;Igual que la corrida 1
+H10;1;Information Disclosure - Information in Browser sessionStorage;no;Correcto: el sessionStorage queda expuesto a quien acceda a esa sesión activa del navegador
+H10;2;Information Disclosure - Information in Browser sessionStorage;no;Igual que la corrida 1
