@@ -3,11 +3,12 @@
 # Tarea: T-018 · Responsable: Felipe Cayún
 #
 # Uso (desde la raíz del repositorio):
-#   ./lab/escanear.sh [baseline|full|ajax]
+#   ./lab/escanear.sh [baseline|full|ajax|ajax-auth]
 #
-#   baseline  Solo pasivo, 1-2 minutos (por defecto)
-#   full      Escaneo activo con el spider tradicional, unos 6-9 minutos
-#   ajax      Escaneo activo con Ajax Spider y límites de tiempo, unos 15 minutos
+#   baseline   Solo pasivo, 1-2 minutos (por defecto)
+#   full       Escaneo activo con el spider tradicional, unos 6-9 minutos
+#   ajax       Escaneo activo con Ajax Spider y límites de tiempo, unos 15 minutos
+#   ajax-auth  Igual que ajax, pero con sesión iniciada (usuario de prueba)
 #
 # El resultado queda en lab/salidas/<modo>_<fecha>.json
 
@@ -61,6 +62,10 @@ mkdir -p "${DIR_SALIDAS}"
 
 # --- Escaneo ----------------------------------------------------------------
 
+AJAX=(-j -m "${AJAX_MINUTOS}"
+      -z "-config scanner.maxScanDurationInMins=${MAX_MIN_ESCANEO} -config scanner.maxRuleDurationInMins=${MAX_MIN_POR_REGLA}")
+ENTORNO=()   # variables extra para el contenedor de ZAP
+
 case "${MODO}" in
   baseline)
     COMANDO=(zap-baseline.py -t "${OBJETIVO}" -J "${SALIDA}" -I)
@@ -69,11 +74,17 @@ case "${MODO}" in
     COMANDO=(zap-full-scan.py -t "${OBJETIVO}" -J "${SALIDA}" -I)
     ;;
   ajax)
-    COMANDO=(zap-full-scan.py -t "${OBJETIVO}" -J "${SALIDA}" -I -j -m "${AJAX_MINUTOS}"
-             -z "-config scanner.maxScanDurationInMins=${MAX_MIN_ESCANEO} -config scanner.maxRuleDurationInMins=${MAX_MIN_POR_REGLA}")
+    COMANDO=(zap-full-scan.py -t "${OBJETIVO}" -J "${SALIDA}" -I "${AJAX[@]}")
+    ;;
+  ajax-auth)
+    echo "Obteniendo token del usuario de prueba..."
+    TOKEN="$(./lab/token_juiceshop.sh)" || error "No se pudo obtener el token."
+    # ZAP agrega esta cabecera a cada petición, incluidas las del Ajax Spider.
+    ENTORNO=(-e "ZAP_AUTH_HEADER_VALUE=Bearer ${TOKEN}")
+    COMANDO=(zap-full-scan.py -t "${OBJETIVO}" -J "${SALIDA}" -I "${AJAX[@]}")
     ;;
   *)
-    error "Modo no válido: ${MODO}. Usa baseline, full o ajax."
+    error "Modo no válido: ${MODO}. Usa baseline, full, ajax o ajax-auth."
     ;;
 esac
 
@@ -81,7 +92,7 @@ echo "Escaneo ${MODO} contra ${OBJETIVO}"
 echo "Resultado: ${DIR_SALIDAS}/${SALIDA}"
 
 # -I: no tratar las advertencias como error (ZAP devuelve código 2 si hay WARN).
-docker compose run --rm zap "${COMANDO[@]}"
+docker compose run --rm "${ENTORNO[@]}" zap "${COMANDO[@]}"
 
 [[ -f "${DIR_SALIDAS}/${SALIDA}" ]] \
   || error "ZAP terminó pero no generó ${DIR_SALIDAS}/${SALIDA}."
