@@ -279,12 +279,13 @@ El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.m
 ## Integración continua
 
 Cada PR hacia `main` corre automáticamente en GitHub Actions
-(`.github/workflows/ci.yml`). Son dos jobs:
+(`.github/workflows/ci.yml`). Son tres jobs:
 
 | Job | Qué comprueba |
 |---|---|
 | **Tests** | Los tests del parser de ZAP, del módulo de IA (sin depender de Ollama) y que `ejemplo_hallazgo.json` cumpla `finding.schema.json` |
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
+| **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
 En total son 129 pruebas automatizadas, más las verificaciones de restricciones.
 
