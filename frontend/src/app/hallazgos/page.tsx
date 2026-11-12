@@ -1,5 +1,6 @@
 import { TriangleAlert } from "lucide-react";
 
+import { FiltrosHallazgos } from "@/components/filtros-hallazgos";
 import { Aviso, Marco } from "@/components/marco";
 import { InsigniaSeveridad } from "@/components/severidad";
 import { Totales } from "@/components/totales";
@@ -63,8 +64,9 @@ export default async function PaginaHallazgos({
         </p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 flex flex-col gap-4">
         <Totales resumen={resumen} filtros={filtros} />
+        <FiltrosHallazgos filtros={filtros} />
       </div>
 
       {pagina.items.length === 0 ? (

@@ -107,6 +107,8 @@ export function parametrosApi(f: Filtros): URLSearchParams {
  */
 export function hrefHallazgos(f: Filtros, cambios: Partial<Filtros> = {}): string {
   const nuevo = { ...f, pagina: 1, ...cambios };
+  // Siempre en el mismo orden: una misma vista tiene una sola URL.
+  nuevo.severidad = SEVERIDADES.map((s) => s.valor).filter((v) => nuevo.severidad.includes(v));
   const p = parametrosFiltro(nuevo);
   if (nuevo.pagina > 1) p.set("pagina", String(nuevo.pagina));
   const qs = p.toString();
