@@ -1,26 +1,24 @@
-import { TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import type { Metadata } from "next";
 
 import { FiltrosHallazgos } from "@/components/filtros-hallazgos";
 import { Aviso, Marco } from "@/components/marco";
-import { InsigniaSeveridad } from "@/components/severidad";
+import { Paginacion } from "@/components/paginacion";
+import { TablaHallazgos } from "@/components/tabla-hallazgos";
 import { Totales } from "@/components/totales";
+import { ErrorApi, listarHallazgos, obtenerResumen } from "@/lib/api";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ErrorApi, listarHallazgos, obtenerResumen, type HallazgoResumen } from "@/lib/api";
-import { leerFiltros, parametrosApi, type SearchParams } from "@/lib/filtros";
-import { cn } from "@/lib/utils";
+  POR_PAGINA,
+  hayFiltros,
+  hrefHallazgos,
+  leerFiltros,
+  parametrosApi,
+  type SearchParams,
+} from "@/lib/filtros";
 
-/** Texto para cada motivo_revision que devuelve la API. */
-const MOTIVO_REVISION: Record<string, string> = {
-  categoria_distinta: "categoría distinta",
-  cwe_fuera_de_tabla: "CWE fuera de la tabla",
-};
+export const metadata: Metadata = { title: "Hallazgos · SentinelAI" };
+
+const claseEnlace = "font-medium text-ia underline-offset-4 hover:underline";
 
 export default async function PaginaHallazgos({
   searchParams,
@@ -36,7 +34,7 @@ export default async function PaginaHallazgos({
   try {
     // Mismos filtros para la tabla y los totales: siempre cuadran.
     [pagina, resumen] = await Promise.all([
-      listarHallazgos(params, 50, 0),
+      listarHallazgos(params, POR_PAGINA, (filtros.pagina - 1) * POR_PAGINA),
       obtenerResumen(params),
     ]);
   } catch (error) {
@@ -55,127 +53,51 @@ export default async function PaginaHallazgos({
 
   return (
     <Marco>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-navy">Hallazgos</h1>
-        <p className="text-sm text-muted-foreground">
-          {pagina.items.length < pagina.total
-            ? `Mostrando ${pagina.items.length} de ${pagina.total}`
-            : `${pagina.total} ${pagina.total === 1 ? "hallazgo" : "hallazgos"}`}
-        </p>
-      </div>
+      <h1 className="mb-4 text-2xl font-semibold tracking-tight text-navy">Hallazgos</h1>
 
       <div className="mb-6 flex flex-col gap-4">
         <Totales resumen={resumen} filtros={filtros} />
         <FiltrosHallazgos filtros={filtros} />
       </div>
 
-      {pagina.items.length === 0 ? (
+      {pagina.total === 0 && !hayFiltros(filtros) ? (
         <Aviso titulo="Todavía no hay hallazgos">
           Importa un reporte de ZAP con <code className="font-mono">POST /scans/import</code>{" "}
           para verlos acá.
         </Aviso>
+      ) : pagina.total === 0 ? (
+        <Aviso
+          titulo="Ningún hallazgo con estos filtros"
+          accion={
+            <Link href="/hallazgos" className={claseEnlace}>
+              Limpiar filtros
+            </Link>
+          }
+        >
+          Prueba quitando alguno de los filtros de arriba.
+        </Aviso>
+      ) : pagina.items.length === 0 ? (
+        <Aviso
+          titulo="Esta página no tiene hallazgos"
+          accion={
+            <Link href={hrefHallazgos(filtros)} className={claseEnlace}>
+              Ir a la primera página
+            </Link>
+          }
+        >
+          Hay {pagina.total} {pagina.total === 1 ? "hallazgo" : "hallazgos"} con estos filtros,
+          pero no llegan hasta la página {filtros.pagina}.
+        </Aviso>
       ) : (
-        <div className="rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-28">Severidad</TableHead>
-                <TableHead>Hallazgo</TableHead>
-                <TableHead className="text-right">Ocurrencias</TableHead>
-                <TableHead>OWASP tabla · modelo</TableHead>
-                <TableHead>Prioridad</TableHead>
-                <TableHead>Confianza IA</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pagina.items.map((h) => (
-                <FilaHallazgo key={h.id} hallazgo={h} />
-              ))}
-            </TableBody>
-          </Table>
+        <div className="flex flex-col gap-4">
+          <TablaHallazgos hallazgos={pagina.items} />
+          <Paginacion filtros={filtros} mostrados={pagina.items.length} total={pagina.total} />
+          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            La confianza la declara el modelo. En el golden set fue igual de alta en aciertos
+            (0,90) que en errores (0,93): úsala como contexto, no para decidir.
+          </p>
         </div>
       )}
     </Marco>
-  );
-}
-
-function FilaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
-  const revisar = h.referencia.requiere_revision;
-  return (
-    <TableRow className={cn(revisar && "bg-revisar-fondo hover:bg-revisar-fondo")}>
-      <TableCell>
-        <InsigniaSeveridad severidad={h.severidad} />
-      </TableCell>
-      <TableCell className="max-w-md whitespace-normal">
-        <div className="font-medium">{h.titulo}</div>
-        {h.ruta && (
-          <div className="truncate font-mono text-xs text-escaner" title={h.ruta}>
-            {h.metodo ? `${h.metodo} ` : ""}
-            {h.ruta}
-            {h.parametro ? ` · ${h.parametro}` : ""}
-          </div>
-        )}
-      </TableCell>
-      <TableCell className="text-right tabular-nums">{h.ocurrencias}</TableCell>
-      <TableCell>
-        <div className="font-mono text-xs">
-          <span className="text-escaner">{h.referencia.owasp_referencia ?? "—"}</span>
-          <span className="text-muted-foreground"> · </span>
-          <span className="text-ia">{h.ia?.estado === "ok" ? (h.ia.owasp ?? "—") : "—"}</span>
-        </div>
-        {revisar && (
-          <div className="mt-1 flex items-center gap-1 text-xs font-medium text-persona-texto">
-            <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
-            Revisar
-            {h.referencia.motivo_revision &&
-              ` · ${MOTIVO_REVISION[h.referencia.motivo_revision] ?? h.referencia.motivo_revision}`}
-          </div>
-        )}
-      </TableCell>
-      <TableCell>
-        <div className="font-mono text-sm">{h.referencia.prioridad_regla ?? "—"}</div>
-        <div className="text-xs text-muted-foreground">por regla</div>
-      </TableCell>
-      <TableCell className="text-xs">
-        <ConfianzaIA hallazgo={h} />
-      </TableCell>
-    </TableRow>
-  );
-}
-
-/** 0.94 -> "0,94" */
-function formatearConfianza(valor: number) {
-  return valor.toFixed(2).replace(".", ",");
-}
-
-function ConfianzaIA({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
-  if (h.ia === null) {
-    return (
-      <span className="inline-flex h-6 items-center rounded-full border border-dashed border-muted-foreground/50 px-2 text-muted-foreground">
-        Sin enriquecer
-      </span>
-    );
-  }
-  if (h.ia.estado === "failed") {
-    return (
-      <span
-        className="inline-flex h-6 items-center rounded-full border border-destructive/40 px-2 font-medium text-destructive"
-        title={h.ia.motivo_fallo ?? undefined}
-      >
-        Falló
-      </span>
-    );
-  }
-  if (h.ia.confianza === null) {
-    return <span className="text-muted-foreground">—</span>;
-  }
-  const porcentaje = Math.min(Math.max(h.ia.confianza, 0), 1) * 100;
-  return (
-    <span className="inline-flex items-center gap-2">
-      <span aria-hidden className="h-1.5 w-[72px] overflow-hidden rounded-full bg-ia-suave">
-        <span className="block h-full rounded-full bg-ia" style={{ width: `${porcentaje}%` }} />
-      </span>
-      <span className="font-mono text-ia tabular-nums">{formatearConfianza(h.ia.confianza)}</span>
-    </span>
   );
 }
