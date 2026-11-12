@@ -47,6 +47,7 @@
   --color-persona-suave: var(--persona-suave);
   --color-persona-texto: var(--persona-texto);
   --color-persona-fuerte: var(--persona-fuerte);
+  --color-revisar-fondo: var(--revisar-fondo);
 
   /* Severidades: siempre acompañadas de su texto, nunca solo color */
   --color-sev-critica: var(--sev-critica);
@@ -79,6 +80,8 @@
   --persona-suave: #fdf0e6;
   --persona-texto: #b35a14;
   --persona-fuerte: #8a3b0b;
+  /* Fila que una persona debería mirar primero (requiere_revision) */
+  --revisar-fondo: #fffbf7;
 
   --background: #f5f7f9;
   --foreground: #14263d;
