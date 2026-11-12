@@ -4,6 +4,7 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     POST /scans/import       importa un reporte JSON de ZAP
     GET  /scans              escaneos importados, del más reciente al más antiguo
     GET  /findings           hallazgos con filtros y paginación
+    GET  /findings/resumen   conteos por severidad, estado, "revisar" y "sin enriquecer"
     GET  /findings/{id}      detalle: evidencia original, instancias, IA, validaciones
     POST /findings/{id}/enrich  enriquece un hallazgo con el modelo local (T-032)
     POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
@@ -293,6 +294,50 @@ def listar_hallazgos(
             }
             for f, e in filas
         ],
+    }
+
+
+@router.get("/findings/resumen", tags=["consulta"])
+def resumen_hallazgos(
+    filtros: Annotated[FiltrosHallazgos, Depends(filtros_hallazgos)],
+    db: Session = Depends(get_db),
+):
+    """
+    Conteos para el resumen del dashboard, con los mismos filtros que
+    `GET /findings`: el `total` es el mismo que daría el listado.
+
+    - `por_severidad` y `por_estado` traen todas las claves, aunque valgan 0.
+    - `revisar`: marcados por la opción mixta (`requiere_revision`).
+    - `sin_enriquecer`: sin enriquecimiento vigente o con uno fallido.
+    """
+    c = _ConsultaHallazgos(filtros)
+    base = c.select(
+        Finding.severity.label("severidad"),
+        Finding.status.label("estado"),
+        c.revisar.label("revisar"),
+        c.sin_ia.label("sin_ia"),
+    ).subquery()
+
+    total, revisar, sin_ia = db.execute(
+        select(
+            func.count(),
+            func.count().filter(base.c.revisar),
+            func.count().filter(base.c.sin_ia),
+        )
+    ).one()
+    por_severidad = dict(db.execute(
+        select(base.c.severidad, func.count()).group_by(base.c.severidad)
+    ).all())
+    por_estado = dict(db.execute(
+        select(base.c.estado, func.count()).group_by(base.c.estado)
+    ).all())
+
+    return {
+        "total": total,
+        "por_severidad": {s.value: por_severidad.get(s, 0) for s in Severidad},
+        "por_estado": {e.value: por_estado.get(e, 0) for e in EstadoHallazgo},
+        "revisar": revisar,
+        "sin_enriquecer": sin_ia,
     }
 
 
