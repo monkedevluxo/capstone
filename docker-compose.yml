@@ -57,6 +57,30 @@ services:
       retries: 5
       start_period: 20s
 
+  web:
+    build:
+      context: ./frontend
+      target: dev
+    container_name: sentinel-web
+    environment:
+      # Lo lee solo el servidor de Next (sin NEXT_PUBLIC_): el navegador nunca
+      # habla con la API directo, así que no hace falta CORS.
+      API_URL: http://api:8000
+    # Solo lab_datos. El dashboard no debe alcanzar la red del objetivo.
+    networks: [lab_datos]
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      # Código montado en vivo, igual que la API. node_modules y .next quedan
+      # en volúmenes del contenedor para no mezclarlos con los del host.
+      # Si cambian las dependencias: docker compose up -d --build -V web
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      api:
+        condition: service_healthy
+
 networks:
   lab_interna:
     internal: true      # sin ruta de salida. Esta línea es el aislamiento.

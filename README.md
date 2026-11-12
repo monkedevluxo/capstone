@@ -86,7 +86,7 @@ Un escaneo completo demora entre 9 y 40 minutos según el equipo y si usa Ajax S
 | Backend | Python · FastAPI · SQLAlchemy · Alembic |
 | Base de datos | PostgreSQL 16 |
 | IA | Ollama · Llama 3.1 8B (q4_K_M) · validación con Pydantic |
-| Frontend | Next.js · React |
+| Frontend | Next.js 16 (App Router) · React · TypeScript · Tailwind CSS · shadcn/ui · bun |
 | Laboratorio | Docker Compose |
 | Escáner | OWASP ZAP (con Ajax Spider) |
 | Objetivo | OWASP Juice Shop |
@@ -195,7 +195,38 @@ Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP s
 
 Documentación interactiva de la API: `http://localhost:8000/docs`
 
-<!-- TODO: agregar el levantamiento del frontend (S5) -->
+### Levantar el dashboard
+
+```bash
+docker compose up -d web
+```
+
+Queda en `http://localhost:3000` y lista los hallazgos de `GET /findings`. El
+servidor de Next lee la API en `http://api:8000` dentro de la red `lab_datos`;
+el navegador nunca habla con la API directo, por eso no hay CORS. El servicio
+`web` no está en `lab_interna`: no alcanza al objetivo.
+
+El código de `frontend/` está montado en vivo y Next recarga al guardar. Si
+cambian las dependencias (`package.json` o `bun.lock`), reconstruye y renueva
+el volumen de `node_modules`:
+
+```bash
+docker compose up -d --build -V web
+```
+
+Para trabajar fuera del contenedor hace falta [bun](https://bun.sh). bun solo
+instala y corre scripts; en el contenedor Next se ejecuta con Node:
+
+```bash
+cd frontend
+bun install
+bun --bun run lint        # --bun: usa el runtime de bun si no tienes Node
+bun --bun run typecheck   # tsc de TypeScript 7
+```
+
+Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
+compila y se ve igual sin internet.
+
 <!-- TODO: documentar las variables de entorno y el archivo .env.ejemplo -->
 
 ---
