@@ -5,6 +5,12 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     GET  /scans              escaneos importados, del más reciente al más antiguo
     GET  /findings           hallazgos con filtros y paginación
     GET  /findings/{id}      detalle: evidencia original, instancias, IA, validaciones
+    POST /findings/{id}/enrich  enriquece un hallazgo con el modelo local (T-032)
+    POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
+
+Cada hallazgo trae además `referencia`: la categoría OWASP según la tabla
+CWE -> OWASP 2025, la prioridad por regla y la marca "revisar" de la opción
+mixta (app/ia/owasp_por_cwe.py). Se calcula al consultar; no se guarda.
 """
 
 from __future__ import annotations
@@ -17,6 +23,14 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.enriquecimiento import (
+    OllamaApagado,
+    enriquecer_escaneo,
+    enriquecer_hallazgo,
+    referencia,
+    vigente,
+)
+from app.ia.cliente import ClienteOllama
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.models import (
     AiEnrichment,
@@ -30,6 +44,11 @@ from app.models import (
 )
 
 router = APIRouter()
+
+
+def get_cliente() -> ClienteOllama:
+    """Dependencia: el cliente de Ollama según la configuración. Los tests lo reemplazan."""
+    return ClienteOllama.desde_config()
 
 
 # ── Ingesta ───────────────────────────────────────────────────────────────
@@ -84,6 +103,24 @@ def _resumen_ia(e: AiEnrichment | None) -> dict | None:
         "prioridad": e.priority.value if e.priority else None,
         "confianza": e.confidence,
         "motivo_fallo": e.failure_reason,
+    }
+
+
+def _detalle_ia(e: AiEnrichment | None) -> dict | None:
+    if e is None:
+        return None
+    return {
+        **_resumen_ia(e),
+        "explicacion": e.explanation,
+        "impacto": e.impact,
+        "remediacion": e.remediation_summary,
+        "pasos": e.remediation_steps,
+        "modelo": e.model,
+        "prompt_version": e.prompt_version,
+        "prompt_sha256": e.prompt_sha256,
+        "intentos": e.attempts,
+        "latencia_ms": e.latency_ms,
+        "generado": e.generated_at,
     }
 
 
@@ -161,6 +198,7 @@ def listar_hallazgos(
                 "ocurrencias": f.occurrences,
                 "visto_por_ultima_vez": f.last_seen_at,
                 "ia": _resumen_ia(e),
+                "referencia": referencia(f, e),
             }
             for f, e in filas
         ],
@@ -179,11 +217,7 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
     if f is None:
         raise HTTPException(status_code=404, detail="hallazgo no encontrado")
 
-    ia_vigente = db.scalar(
-        select(AiEnrichment).where(
-            AiEnrichment.finding_id == f.id, AiEnrichment.is_current.is_(True)
-        )
-    )
+    ia_vigente = vigente(db, f.id)
     instancias = db.scalars(
         select(FindingInstance).where(FindingInstance.finding_id == f.id)
     ).all()
@@ -194,20 +228,6 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
     escaneos = db.scalars(
         select(FindingObservation.scan_id).where(FindingObservation.finding_id == f.id)
     ).all()
-
-    ia = None
-    if ia_vigente is not None:
-        ia = {
-            **_resumen_ia(ia_vigente),
-            "explicacion": ia_vigente.explanation,
-            "impacto": ia_vigente.impact,
-            "remediacion": ia_vigente.remediation_summary,
-            "pasos": ia_vigente.remediation_steps,
-            "modelo": ia_vigente.model,
-            "prompt_version": ia_vigente.prompt_version,
-            "intentos": ia_vigente.attempts,
-            "generado": ia_vigente.generated_at,
-        }
 
     return {
         "id": str(f.id),
@@ -229,7 +249,8 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
         "escaneos": [str(s) for s in escaneos],
         "instancias": [{"url": i.url, "metodo": i.method, "parametro": i.param} for i in instancias],
         "origen": f.source_raw,
-        "ia": ia,
+        "ia": _detalle_ia(ia_vigente),
+        "referencia": referencia(f, ia_vigente),
         "validaciones": [
             {
                 "decision": v.decision.value,
@@ -241,3 +262,74 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
             for v in validaciones
         ],
     }
+
+
+# ── Enriquecimiento con IA ────────────────────────────────────────────────
+
+_OLLAMA_APAGADO = {
+    "error": "Ollama no responde: no se registró ningún intento",
+    "motivo": "ollama_no_disponible",
+}
+
+
+@router.post("/findings/{finding_id}/enrich", tags=["ia"])
+def enriquecer_uno(
+    finding_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    cliente: ClienteOllama = Depends(get_cliente),
+):
+    """
+    Enriquece un hallazgo con el modelo local y guarda el resultado, con el
+    modelo, la versión y el hash del prompt, los intentos y la latencia.
+
+    - **200**: el modelo respondió. `ia.estado` es `ok` o `failed` (tras 3
+      intentos inválidos), con `motivo_fallo`. `vigente: false` indica que el
+      intento falló y se conservó el enriquecimiento válido anterior.
+    - **404**: el hallazgo no existe
+    - **503**: Ollama no responde; no se guardó nada
+    """
+    f = db.get(Finding, finding_id)
+    if f is None:
+        raise HTTPException(status_code=404, detail="hallazgo no encontrado")
+    try:
+        nueva = enriquecer_hallazgo(db, f, cliente)
+        db.commit()
+    except OllamaApagado:
+        db.rollback()
+        raise HTTPException(status_code=503, detail=_OLLAMA_APAGADO)
+
+    return {
+        "id": str(f.id),
+        "titulo": f.titulo,
+        "vigente": nueva.is_current,
+        "ia": _detalle_ia(nueva),
+        "referencia": referencia(f, vigente(db, f.id)),
+    }
+
+
+@router.post("/scans/{scan_id}/enrich", tags=["ia"])
+def enriquecer_lote(
+    scan_id: uuid.UUID,
+    solo_pendientes: bool = Query(
+        True, description="true: se salta los hallazgos que ya tienen un enriquecimiento válido"
+    ),
+    db: Session = Depends(get_db),
+    cliente: ClienteOllama = Depends(get_cliente),
+):
+    """
+    Enriquece, uno por uno, los hallazgos que vio un escaneo. Cada resultado
+    se guarda al terminar, así que si se corta, una segunda llamada sigue
+    donde quedó. Con el modelo cargado toma 1-2 s por hallazgo; la primera
+    llamada puede tardar más mientras Ollama carga el modelo en la GPU.
+
+    - **200**: resumen del lote. Si Ollama se cae a la mitad, `detenido_por`
+      lo indica y lo ya procesado queda guardado.
+    - **404**: el escaneo no existe
+    - **503**: Ollama no responde y no se alcanzó a procesar ningún hallazgo
+    """
+    if db.get(Scan, scan_id) is None:
+        raise HTTPException(status_code=404, detail="escaneo no encontrado")
+    resumen = enriquecer_escaneo(db, scan_id, cliente, solo_pendientes=solo_pendientes)
+    if resumen.detenido_por and resumen.procesados == 0:
+        raise HTTPException(status_code=503, detail=_OLLAMA_APAGADO)
+    return resumen.como_dict()

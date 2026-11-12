@@ -188,6 +188,10 @@ curl "localhost:8000/findings?severidad=alta"
 | `GET /scans` | Lista los escaneos importados |
 | `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP, enriquecimiento y texto |
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
+| `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
+| `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
+
+Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP según la tabla CWE → OWASP 2025, la prioridad por regla y la marca `requiere_revision` de la opción mixta. Se calcula al consultar; no se guarda.
 
 Documentación interactiva de la API: `http://localhost:8000/docs`
 
@@ -251,7 +255,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Tests** | Los tests del parser de ZAP, del módulo de IA (sin depender de Ollama) y que `ejemplo_hallazgo.json` cumpla `finding.schema.json` |
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 
-En total son 72 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 129 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 
@@ -280,7 +284,7 @@ docker compose exec api python scripts/verificar_bd.py
 `verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
 datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
 
-Los tests de ingesta (`tests/test_ingesta.py`) se saltan si no hay una base
+Los tests de ingesta y enriquecimiento (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`) se saltan si no hay una base
 PostgreSQL disponible, y vacían las tablas antes de cada prueba: no los corras
 contra una base con datos que quieras conservar.
 

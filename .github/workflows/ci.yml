@@ -102,10 +102,11 @@ jobs:
       - name: Verificar restricciones del proyecto
         run: python scripts/verificar_bd.py
 
-      # Importa los fixtures reales de ZAP y consulta la API. Vacía las tablas,
-      # por eso va después de verificar las restricciones.
-      - name: Tests de ingesta y consulta
-        run: python -m pytest tests/test_ingesta.py -v
+      # Importa los fixtures reales de ZAP, consulta la API y enriquece con un
+      # cliente de Ollama falso. Vacían las tablas, por eso van después de
+      # verificar las restricciones.
+      - name: Tests de ingesta, consulta y enriquecimiento
+        run: python -m pytest tests/test_ingesta.py tests/test_enriquecimiento_api.py -v
 
       - name: Revertir y reaplicar migraciones
         run: |
