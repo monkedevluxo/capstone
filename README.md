@@ -186,7 +186,8 @@ curl "localhost:8000/findings?severidad=alta"
 |---|---|
 | `POST /scans/import` | Importa un reporte de ZAP en una transacción. 403 si el host no es del laboratorio, 409 si el reporte ya se importó, 422 si no es un reporte de ZAP |
 | `GET /scans` | Lista los escaneos importados |
-| `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP, enriquecimiento y texto |
+| `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP, enriquecimiento, `revisar` y texto. Orden: severidad, después los marcados para revisar, después ocurrencias |
+| `GET /findings/resumen` | Total y conteos por severidad, por estado, para revisar y sin enriquecer, con los mismos filtros que `GET /findings` |
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
 | `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
 | `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
@@ -255,7 +256,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Tests** | Los tests del parser de ZAP, del módulo de IA (sin depender de Ollama) y que `ejemplo_hallazgo.json` cumpla `finding.schema.json` |
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 
-En total son 129 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 149 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 
@@ -284,7 +285,7 @@ docker compose exec api python scripts/verificar_bd.py
 `verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
 datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
 
-Los tests de ingesta y enriquecimiento (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`) se saltan si no hay una base
+Los tests de ingesta, enriquecimiento y resumen (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`) se saltan si no hay una base
 PostgreSQL disponible, y vacían las tablas antes de cada prueba: no los corras
 contra una base con datos que quieras conservar.
 
