@@ -1,8 +1,8 @@
 import { TriangleAlert } from "lucide-react";
-import { connection } from "next/server";
 
 import { Aviso, Marco } from "@/components/marco";
 import { InsigniaSeveridad } from "@/components/severidad";
+import { Totales } from "@/components/totales";
 import {
   Table,
   TableBody,
@@ -11,7 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ErrorApi, listarHallazgos, type HallazgoResumen } from "@/lib/api";
+import { ErrorApi, listarHallazgos, obtenerResumen, type HallazgoResumen } from "@/lib/api";
+import { leerFiltros, parametrosApi, type SearchParams } from "@/lib/filtros";
 import { cn } from "@/lib/utils";
 
 /** Texto para cada motivo_revision que devuelve la API. */
@@ -20,14 +21,23 @@ const MOTIVO_REVISION: Record<string, string> = {
   cwe_fuera_de_tabla: "CWE fuera de la tabla",
 };
 
-export default async function PaginaHallazgos() {
-  // Renderiza en cada request: los hallazgos cambian con cada importación y
-  // `next build` no debe intentar llamar a la API para prerenderizar.
-  await connection();
+export default async function PaginaHallazgos({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  // Leer searchParams hace que la página se renderice en cada request, así
+  // `next build` no intenta llamar a la API para prerenderizarla.
+  const filtros = leerFiltros(await searchParams);
+  const params = parametrosApi(filtros);
 
-  let pagina;
+  let pagina, resumen;
   try {
-    pagina = await listarHallazgos(new URLSearchParams(), 50, 0);
+    // Mismos filtros para la tabla y los totales: siempre cuadran.
+    [pagina, resumen] = await Promise.all([
+      listarHallazgos(params, 50, 0),
+      obtenerResumen(params),
+    ]);
   } catch (error) {
     if (error instanceof ErrorApi) {
       return (
@@ -51,6 +61,10 @@ export default async function PaginaHallazgos() {
             ? `Mostrando ${pagina.items.length} de ${pagina.total}`
             : `${pagina.total} ${pagina.total === 1 ? "hallazgo" : "hallazgos"}`}
         </p>
+      </div>
+
+      <div className="mb-6">
+        <Totales resumen={resumen} filtros={filtros} />
       </div>
 
       {pagina.items.length === 0 ? (
