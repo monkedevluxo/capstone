@@ -300,3 +300,56 @@ def test_resumen_no_choca_con_el_detalle_de_un_hallazgo():
     assert api.get("/findings/resumen").status_code == 200
     sqli = _id("SQL Injection")
     assert api.get(f"/findings/{sqli}").json()["titulo"] == "SQL Injection"
+
+
+# ── Filtro owasp_ref (categoría de la tabla CWE) ──────────────────────────
+
+@pytest.mark.parametrize("categoria", ["A01:2025", "A05:2025", "A06:2025"])
+def test_owasp_ref_filtra_por_la_categoria_de_la_tabla_sin_ia(categoria):
+    _importar()
+    todos = _todos()
+    esperados = {i["id"] for i in todos if i["referencia"]["owasp_referencia"] == categoria}
+    assert esperados, "el escenario tiene hallazgos de esa categoría"
+
+    filtrados = _todos(owasp_ref=categoria)
+    assert {i["id"] for i in filtrados} == esperados
+    assert all(i["ia"] is None for i in filtrados), "funciona sin enriquecer"
+
+
+def test_owasp_ref_usa_la_tabla_aunque_el_modelo_diga_otra_cosa():
+    _importar()
+    _enriquecer("External Redirect", "A05:2025")  # CWE-601: la tabla dice A01
+
+    por_tabla = [i["titulo"] for i in _todos(owasp_ref="A01:2025")]
+    por_modelo = [i["titulo"] for i in _todos(owasp="A05:2025")]
+    assert "External Redirect" in por_tabla
+    assert "External Redirect" in por_modelo
+    assert "External Redirect" not in [i["titulo"] for i in _todos(owasp_ref="A05:2025")]
+
+
+def test_owasp_ref_excluye_sin_cwe_y_cwe_fuera_de_la_tabla():
+    _importar()
+    titulos = set()
+    for n in range(1, 11):
+        titulos |= {i["titulo"] for i in _todos(owasp_ref=f"A{n:02d}:2025")}
+    assert "Cross-Domain Misconfiguration" not in titulos  # CWE-264, fuera de la tabla
+    assert "Modern Web Application" not in titulos         # sin CWE
+
+
+def test_owasp_ref_acepta_minusculas_y_rechaza_valores_invalidos():
+    _importar("zap_juiceshop_ajax_v2.json")
+    assert (api.get("/findings", params={"owasp_ref": "a01:2025"}).json()["total"]
+            == api.get("/findings", params={"owasp_ref": "A01:2025"}).json()["total"])
+    for invalido in ("A11:2025", "A01:2021", "inyeccion"):
+        assert api.get("/findings", params={"owasp_ref": invalido}).status_code == 422
+        assert api.get("/findings/resumen", params={"owasp_ref": invalido}).status_code == 422
+
+
+def test_resumen_y_listado_cuentan_lo_mismo_con_owasp_ref():
+    _importar()
+    _enriquecer("External Redirect", "A05:2025")
+    for params in ({"owasp_ref": "A01:2025"}, {"owasp_ref": "A06:2025", "revisar": "false"}):
+        resumen = api.get("/findings/resumen", params=params).json()
+        listado = _todos(**params)
+        assert resumen["total"] == len(listado)
+        assert resumen["revisar"] == sum(i["referencia"]["requiere_revision"] for i in listado)
