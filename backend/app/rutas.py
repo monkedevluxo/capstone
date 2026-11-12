@@ -135,6 +135,7 @@ class FiltrosHallazgos:
     scan_id: uuid.UUID | None
     target_id: uuid.UUID | None
     owasp: str | None
+    owasp_ref: str | None
     con_ia: bool | None
     revisar: bool | None
     q: str | None
@@ -145,7 +146,12 @@ def filtros_hallazgos(
     estado: Annotated[list[EstadoHallazgo] | None, Query()] = None,
     scan_id: uuid.UUID | None = None,
     target_id: uuid.UUID | None = None,
-    owasp: str | None = Query(None, description="Ej: A05:2025"),
+    owasp: str | None = Query(None, description="Categoría que propuso el modelo. Ej: A05:2025"),
+    owasp_ref: str | None = Query(
+        None,
+        pattern=r"^[Aa](0[1-9]|10):2025$",
+        description="Categoría de referencia según la tabla CWE -> OWASP 2025. Ej: A01:2025",
+    ),
     con_ia: bool | None = Query(None, description="true: solo enriquecidos; false: solo sin enriquecer"),
     revisar: bool | None = Query(
         None, description="true: solo los marcados para revisar (opción mixta); false: el resto"
@@ -153,7 +159,9 @@ def filtros_hallazgos(
     q: str | None = Query(None, min_length=2, description="Busca en título y ruta"),
 ) -> FiltrosHallazgos:
     """Dependencia: los filtros que comparten el listado y el resumen."""
-    return FiltrosHallazgos(severidad, estado, scan_id, target_id, owasp, con_ia, revisar, q)
+    return FiltrosHallazgos(
+        severidad, estado, scan_id, target_id, owasp, owasp_ref, con_ia, revisar, q
+    )
 
 
 def _tabla_owasp():
@@ -218,6 +226,10 @@ class _ConsultaHallazgos:
             ))
         if filtros.owasp:
             condiciones.append(ia.owasp_category == filtros.owasp.upper())
+        if filtros.owasp_ref:
+            # Sin CWE o con un CWE fuera de la tabla no hay categoría de
+            # referencia: esos hallazgos no calzan con ninguna.
+            condiciones.append(referencia_tabla == filtros.owasp_ref.upper())
         if filtros.con_ia is True:
             condiciones.append(ia.state == EstadoIA.ok)
         elif filtros.con_ia is False:
