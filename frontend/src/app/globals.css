@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tema de SentinelAI. Por ahora solo claro.
+ *
+ * Tres capas con color propio, que se usan igual en todo el dashboard:
+ *   escáner -> gris  (lo que dijo la herramienta)
+ *   ia      -> azul  (sugerencia del modelo, no decisión)
+ *   persona -> naranjo (lo que decidió alguien)
+ * El naranjo base (#E8833A) no alcanza contraste para texto sobre blanco:
+ * para texto se usan las variantes oscuras.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+  --font-heading: var(--font-plex-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Marca y capas */
+  --color-navy: var(--navy);
+  --color-ia: var(--ia);
+  --color-ia-suave: var(--ia-suave);
+  --color-escaner: var(--escaner);
+  --color-escaner-suave: var(--escaner-suave);
+  --color-persona: var(--persona);
+  --color-persona-suave: var(--persona-suave);
+  --color-persona-texto: var(--persona-texto);
+  --color-persona-fuerte: var(--persona-fuerte);
+
+  /* Severidades: siempre acompañadas de su texto, nunca solo color */
+  --color-sev-critica: var(--sev-critica);
+  --color-sev-critica-fondo: var(--sev-critica-fondo);
+  --color-sev-alta: var(--sev-alta);
+  --color-sev-alta-fondo: var(--sev-alta-fondo);
+  --color-sev-media: var(--sev-media);
+  --color-sev-media-fondo: var(--sev-media-fondo);
+  --color-sev-baja: var(--sev-baja);
+  --color-sev-baja-fondo: var(--sev-baja-fondo);
+  --color-sev-informativa: var(--sev-informativa);
+  --color-sev-informativa-fondo: var(--sev-informativa-fondo);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --navy: #14263d;
+  --ia: #1f4e79;
+  --ia-suave: #e7eef6;
+  --escaner: #4a5868;
+  --escaner-suave: #eef1f4;
+  --persona: #e8833a;
+  --persona-suave: #fdf0e6;
+  --persona-texto: #b35a14;
+  --persona-fuerte: #8a3b0b;
+
+  --background: #f5f7f9;
+  --foreground: #14263d;
+  --card: #ffffff;
+  --card-foreground: #14263d;
+  --popover: #ffffff;
+  --popover-foreground: #14263d;
+  --primary: #1f4e79;
+  --primary-foreground: #ffffff;
+  --secondary: #e7eef6;
+  --secondary-foreground: #14263d;
+  --muted: #eef1f4;
+  --muted-foreground: #556474;
+  --accent: #e7eef6;
+  --accent-foreground: #14263d;
+  --destructive: #b42318;
+  --border: #d9e0e7;
+  --input: #d9e0e7;
+  --ring: #1f4e79;
+  --radius: 0.5rem;
+
+  --sev-critica: #ffffff;
+  --sev-critica-fondo: #8a1c1c;
+  --sev-alta: #9b1c1c;
+  --sev-alta-fondo: #fce4e4;
+  --sev-media: #6b4e00;
+  --sev-media-fondo: #fff1c7;
+  --sev-baja: #3e4c5b;
+  --sev-baja-fondo: #e6ebf0;
+  --sev-informativa: #556474;
+  --sev-informativa-fondo: #ffffff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
