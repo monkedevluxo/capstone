@@ -91,10 +91,25 @@ async function obtener<T>(ruta: string): Promise<T> {
   return (await respuesta.json()) as T;
 }
 
-export function listarHallazgos(params: { limit?: number; offset?: number } = {}) {
-  const q = new URLSearchParams({
-    limit: String(params.limit ?? 50),
-    offset: String(params.offset ?? 0),
-  });
+export interface ResumenHallazgos {
+  total: number;
+  por_severidad: Record<Severidad, number>;
+  por_estado: Record<EstadoHallazgo, number>;
+  /** Marcados para revisar primero (requiere_revision). */
+  revisar: number;
+  /** Sin enriquecimiento vigente, o con uno fallido. */
+  sin_enriquecer: number;
+}
+
+/** `filtros` son los mismos que recibe obtenerResumen, para que cuadren. */
+export function listarHallazgos(filtros: URLSearchParams, limit: number, offset: number) {
+  const q = new URLSearchParams(filtros);
+  q.set("limit", String(limit));
+  q.set("offset", String(offset));
   return obtener<Pagina<HallazgoResumen>>(`/findings?${q}`);
+}
+
+export function obtenerResumen(filtros: URLSearchParams) {
+  const qs = filtros.toString();
+  return obtener<ResumenHallazgos>(`/findings/resumen${qs ? `?${qs}` : ""}`);
 }

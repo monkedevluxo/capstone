@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+
+import { BarraSuperior } from "@/components/barra-superior";
 import "./globals.css";
 
 // Fuentes empaquetadas (Fontsource), no Google Fonts: el dashboard tiene que
@@ -39,7 +41,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="es"
       className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        <BarraSuperior />
+        {children}
+      </body>
     </html>
   );
 }
