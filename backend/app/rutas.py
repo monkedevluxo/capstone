@@ -4,6 +4,7 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     POST /scans/import       importa un reporte JSON de ZAP
     GET  /scans              escaneos importados, del más reciente al más antiguo
     GET  /findings           hallazgos con filtros y paginación
+    GET  /findings/resumen   conteos por severidad, estado, "revisar" y "sin enriquecer"
     GET  /findings/{id}      detalle: evidencia original, instancias, IA, validaciones
     POST /findings/{id}/enrich  enriquece un hallazgo con el modelo local (T-032)
     POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
@@ -16,11 +17,12 @@ mixta (app/ia/owasp_por_cwe.py). Se calcula al consultar; no se guarda.
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from sqlalchemy import and_, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import Integer, String, and_, case, cast, column, func, not_, or_, select, values
+from sqlalchemy.orm import Session, aliased
 
 from app.db import get_db
 from app.enriquecimiento import (
@@ -31,10 +33,12 @@ from app.enriquecimiento import (
     vigente,
 )
 from app.ia.cliente import ClienteOllama
+from app.ia.owasp_por_cwe import TABLA
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.models import (
     AiEnrichment,
     EstadoHallazgo,
+    EstadoIA,
     Finding,
     FindingInstance,
     FindingObservation,
@@ -124,60 +128,148 @@ def _detalle_ia(e: AiEnrichment | None) -> dict | None:
     }
 
 
-@router.get("/findings", tags=["consulta"])
-def listar_hallazgos(
-    db: Session = Depends(get_db),
+@dataclass(frozen=True)
+class FiltrosHallazgos:
+    severidad: list[Severidad] | None
+    estado: list[EstadoHallazgo] | None
+    scan_id: uuid.UUID | None
+    target_id: uuid.UUID | None
+    owasp: str | None
+    con_ia: bool | None
+    revisar: bool | None
+    q: str | None
+
+
+def filtros_hallazgos(
     severidad: Annotated[list[Severidad] | None, Query()] = None,
     estado: Annotated[list[EstadoHallazgo] | None, Query()] = None,
     scan_id: uuid.UUID | None = None,
     target_id: uuid.UUID | None = None,
     owasp: str | None = Query(None, description="Ej: A05:2025"),
     con_ia: bool | None = Query(None, description="true: solo enriquecidos; false: solo sin enriquecer"),
+    revisar: bool | None = Query(
+        None, description="true: solo los marcados para revisar (opción mixta); false: el resto"
+    ),
     q: str | None = Query(None, min_length=2, description="Busca en título y ruta"),
+) -> FiltrosHallazgos:
+    """Dependencia: los filtros que comparten el listado y el resumen."""
+    return FiltrosHallazgos(severidad, estado, scan_id, target_id, owasp, con_ia, revisar, q)
+
+
+def _tabla_owasp():
+    """La tabla CWE -> OWASP 2025 de owasp_por_cwe.py como VALUES de SQL.
+
+    Se arma desde el mismo diccionario que usa evaluar(), así la regla
+    "revisar" tiene una sola fuente aunque se calcule en dos lugares.
+    """
+    return values(
+        column("cwe", Integer), column("categoria", String), name="tabla_owasp"
+    ).data(sorted(TABLA.items()))
+
+
+class _ConsultaHallazgos:
+    """Hallazgos con su enriquecimiento vigente, la categoría de referencia y
+    los filtros aplicados. La usan el listado y el resumen, para que los dos
+    cuenten exactamente el mismo conjunto."""
+
+    def __init__(self, filtros: FiltrosHallazgos):
+        self.ia = ia = aliased(AiEnrichment)
+        self.tabla = tabla = _tabla_owasp()
+        referencia_tabla = tabla.c.categoria
+
+        # Misma regla que evaluar() en app/ia/owasp_por_cwe.py:
+        # - sin CWE (NULL, 0, -1): no se marca
+        # - CWE fuera de la tabla: se marca
+        # - modelo ok con categoría distinta de la tabla: se marca
+        # - sin categoría del modelo (sin enriquecer o fallido): no se marca
+        self.revisar = case(
+            (
+                and_(
+                    Finding.cwe_id > 0,
+                    or_(
+                        referencia_tabla.is_(None),
+                        and_(
+                            ia.state == EstadoIA.ok,
+                            ia.owasp_category.is_not(None),
+                            cast(ia.owasp_category, String) != referencia_tabla,
+                        ),
+                    ),
+                ),
+                True,
+            ),
+            else_=False,
+        )
+        # "Sin enriquecer": no hay enriquecimiento vigente, o el vigente falló.
+        self.sin_ia = case(
+            (or_(ia.id.is_(None), ia.state == EstadoIA.failed), True), else_=False
+        )
+
+        condiciones = []
+        if filtros.severidad:
+            condiciones.append(Finding.severity.in_(filtros.severidad))
+        if filtros.estado:
+            condiciones.append(Finding.status.in_(filtros.estado))
+        if filtros.target_id:
+            condiciones.append(Finding.target_id == filtros.target_id)
+        if filtros.scan_id:
+            condiciones.append(Finding.id.in_(
+                select(FindingObservation.finding_id)
+                .where(FindingObservation.scan_id == filtros.scan_id)
+            ))
+        if filtros.owasp:
+            condiciones.append(ia.owasp_category == filtros.owasp.upper())
+        if filtros.con_ia is True:
+            condiciones.append(ia.state == EstadoIA.ok)
+        elif filtros.con_ia is False:
+            condiciones.append(self.sin_ia)
+        if filtros.revisar is True:
+            condiciones.append(self.revisar)
+        elif filtros.revisar is False:
+            condiciones.append(not_(self.revisar))
+        if filtros.q:
+            patron = f"%{filtros.q}%"
+            condiciones.append(or_(Finding.titulo.ilike(patron), Finding.path_template.ilike(patron)))
+        self.condiciones = condiciones
+
+    def select(self, *columnas):
+        consulta = (
+            select(*columnas)
+            .select_from(Finding)
+            .outerjoin(self.ia, and_(self.ia.finding_id == Finding.id, self.ia.is_current.is_(True)))
+            .outerjoin(self.tabla, self.tabla.c.cwe == Finding.cwe_id)
+        )
+        if self.condiciones:
+            consulta = consulta.where(and_(*self.condiciones))
+        return consulta
+
+
+@router.get("/findings", tags=["consulta"])
+def listar_hallazgos(
+    filtros: Annotated[FiltrosHallazgos, Depends(filtros_hallazgos)],
+    db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
     """
-    Lista hallazgos ordenados por severidad (crítica primero) y después por
-    cantidad de instancias. Los filtros se combinan entre sí.
+    Lista hallazgos ordenados por severidad (crítica primero), después los
+    marcados para revisar, y después por cantidad de instancias. Los filtros
+    se combinan entre sí; `total` cuenta todos los que cumplen los filtros.
 
     Cada hallazgo trae el resumen de su enriquecimiento vigente, o `null` si
     nunca se enriqueció. Un enriquecimiento fallido aparece con
     `estado: "failed"`: el dashboard debe mostrarlo distinto de uno exitoso.
     """
-    ia = AiEnrichment
-    base = (
-        select(Finding, ia)
-        .outerjoin(ia, and_(ia.finding_id == Finding.id, ia.is_current.is_(True)))
-    )
+    c = _ConsultaHallazgos(filtros)
 
-    filtros = []
-    if severidad:
-        filtros.append(Finding.severity.in_(severidad))
-    if estado:
-        filtros.append(Finding.status.in_(estado))
-    if target_id:
-        filtros.append(Finding.target_id == target_id)
-    if scan_id:
-        filtros.append(Finding.id.in_(
-            select(FindingObservation.finding_id).where(FindingObservation.scan_id == scan_id)
-        ))
-    if owasp:
-        filtros.append(ia.owasp_category == owasp.upper())
-    if con_ia is True:
-        filtros.append(ia.state == "ok")
-    elif con_ia is False:
-        filtros.append(or_(ia.id.is_(None), ia.state == "failed"))
-    if q:
-        patron = f"%{q}%"
-        filtros.append(or_(Finding.titulo.ilike(patron), Finding.path_template.ilike(patron)))
-
-    if filtros:
-        base = base.where(and_(*filtros))
-
-    total = db.scalar(select(func.count()).select_from(base.subquery()))
+    total = db.scalar(select(func.count()).select_from(c.select(Finding.id).subquery()))
     filas = db.execute(
-        base.order_by(Finding.severity, Finding.occurrences.desc(), Finding.id)
+        c.select(Finding, c.ia)
+        .order_by(
+            Finding.severity,
+            c.revisar.desc(),
+            Finding.occurrences.desc(),
+            Finding.id,
+        )
         .limit(limit).offset(offset)
     ).all()
 
@@ -202,6 +294,50 @@ def listar_hallazgos(
             }
             for f, e in filas
         ],
+    }
+
+
+@router.get("/findings/resumen", tags=["consulta"])
+def resumen_hallazgos(
+    filtros: Annotated[FiltrosHallazgos, Depends(filtros_hallazgos)],
+    db: Session = Depends(get_db),
+):
+    """
+    Conteos para el resumen del dashboard, con los mismos filtros que
+    `GET /findings`: el `total` es el mismo que daría el listado.
+
+    - `por_severidad` y `por_estado` traen todas las claves, aunque valgan 0.
+    - `revisar`: marcados por la opción mixta (`requiere_revision`).
+    - `sin_enriquecer`: sin enriquecimiento vigente o con uno fallido.
+    """
+    c = _ConsultaHallazgos(filtros)
+    base = c.select(
+        Finding.severity.label("severidad"),
+        Finding.status.label("estado"),
+        c.revisar.label("revisar"),
+        c.sin_ia.label("sin_ia"),
+    ).subquery()
+
+    total, revisar, sin_ia = db.execute(
+        select(
+            func.count(),
+            func.count().filter(base.c.revisar),
+            func.count().filter(base.c.sin_ia),
+        )
+    ).one()
+    por_severidad = dict(db.execute(
+        select(base.c.severidad, func.count()).group_by(base.c.severidad)
+    ).all())
+    por_estado = dict(db.execute(
+        select(base.c.estado, func.count()).group_by(base.c.estado)
+    ).all())
+
+    return {
+        "total": total,
+        "por_severidad": {s.value: por_severidad.get(s, 0) for s in Severidad},
+        "por_estado": {e.value: por_estado.get(e, 0) for e in EstadoHallazgo},
+        "revisar": revisar,
+        "sin_enriquecer": sin_ia,
     }
 
 
