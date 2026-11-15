@@ -25,12 +25,14 @@ export function Aviso({
   );
 }
 
-/** La API no respondió: el mismo mensaje en todas las pantallas. */
+/**
+ * La API no respondió: el mismo mensaje en todas las pantallas. `mensaje` viene
+ * de ErrorApi y nunca trae la URL interna de la API (ver SIN_CONEXION).
+ */
 export function AvisoApiCaida({ titulo, mensaje }: { titulo: string; mensaje: string }) {
   return (
     <Aviso titulo={titulo}>
-      {mensaje}. Revisa que el servicio <code className="font-mono">api</code>{" "}
-      esté levantado (<code className="font-mono">docker compose ps</code>).
+      {mensaje}. Revisa que el servicio <code className="font-mono">api</code> esté arriba.
     </Aviso>
   );
 }

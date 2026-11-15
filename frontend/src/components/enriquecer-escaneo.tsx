@@ -95,7 +95,7 @@ export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
       return (
         <Problema accion={reintentar}>
           {resultado.mensaje}. Revisa que el servicio <code className="font-mono">api</code> esté
-          levantado.
+          arriba.
         </Problema>
       );
     case "error":

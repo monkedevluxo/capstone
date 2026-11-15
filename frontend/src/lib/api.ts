@@ -73,6 +73,16 @@ export class ErrorApi extends Error {
 
 const API_URL = process.env.API_URL ?? "http://localhost:8000";
 
+/**
+ * Lo que ve el navegador cuando la API no responde. La dirección interna
+ * (http://api:8000) no se muestra: queda solo en el log del servidor.
+ */
+export const SIN_CONEXION = "No se pudo conectar con la API de SentinelAI";
+
+function registrarFallo(metodo: string, ruta: string, causa: unknown) {
+  console.error(`[api] ${metodo} ${API_URL}${ruta} falló:`, causa);
+}
+
 async function obtener<T>(ruta: string): Promise<T> {
   let respuesta: Response;
   try {
@@ -81,9 +91,8 @@ async function obtener<T>(ruta: string): Promise<T> {
       signal: AbortSignal.timeout(10_000),
     });
   } catch (causa) {
-    throw new ErrorApi(`No se pudo conectar con la API en ${API_URL}`, undefined, {
-      cause: causa,
-    });
+    registrarFallo("GET", ruta, causa);
+    throw new ErrorApi(SIN_CONEXION, undefined, { cause: causa });
   }
   if (!respuesta.ok) {
     throw new ErrorApi(`La API respondió ${respuesta.status} en ${ruta}`, respuesta.status);
@@ -179,11 +188,10 @@ export async function enviar(
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (causa) {
+    registrarFallo("POST", ruta, causa);
     const tiempo = causa instanceof DOMException && causa.name === "TimeoutError";
     throw new ErrorApi(
-      tiempo
-        ? `La API no respondió en ${Math.round(timeoutMs / 1000)} s`
-        : `No se pudo conectar con la API en ${API_URL}`,
+      tiempo ? `La API no respondió en ${Math.round(timeoutMs / 1000)} s` : SIN_CONEXION,
       undefined,
       { cause: causa },
     );
