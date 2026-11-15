@@ -5,6 +5,8 @@
 // Los tipos reflejan a mano lo que devuelve backend/app/rutas.py. Si cambia
 // la respuesta de la API, hay que cambiarlos acá.
 
+import { unstable_rethrow } from "next/navigation";
+
 export type Severidad = "critica" | "alta" | "media" | "baja" | "informativa";
 
 export type EstadoHallazgo =
@@ -91,6 +93,9 @@ async function obtener<T>(ruta: string): Promise<T> {
       signal: AbortSignal.timeout(10_000),
     });
   } catch (causa) {
+    // Errores internos de Next (ej. el que marca la ruta como dinámica al
+    // prerenderizar) no son fallas de la API: deben seguir su camino.
+    unstable_rethrow(causa);
     registrarFallo("GET", ruta, causa);
     throw new ErrorApi(SIN_CONEXION, undefined, { cause: causa });
   }
@@ -188,6 +193,7 @@ export async function enviar(
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (causa) {
+    unstable_rethrow(causa);
     registrarFallo("POST", ruta, causa);
     const tiempo = causa instanceof DOMException && causa.name === "TimeoutError";
     throw new ErrorApi(
