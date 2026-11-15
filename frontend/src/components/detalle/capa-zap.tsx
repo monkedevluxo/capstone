@@ -24,7 +24,8 @@ export function CapaZap({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
   const descripcion = parrafos(o.desc ?? h.descripcion);
   const solucion = parrafos(o.solution);
   const enlaces = referencias(o.reference);
-  const regla = [o.pluginid, o.wascid && o.wascid !== "-1" && `WASC-${o.wascid}`]
+  // Guion que no se parte (U+2011): "WASC-15" no queda en dos líneas.
+  const regla = [o.pluginid, o.wascid && o.wascid !== "-1" && `WASC\u2011${o.wascid}`]
     .filter(Boolean)
     .join(" · ");
 

@@ -41,7 +41,15 @@ export function CabeceraHallazgo({ hallazgo: h }: { hallazgo: HallazgoDetalle })
           <h1 className="mt-3 text-2xl font-semibold tracking-tight text-balance text-navy">
             {h.titulo}
           </h1>
-          <p className="mt-1.5 font-mono text-xs break-all text-escaner">{ubicacion.join(" · ")}</p>
+          <p className="mt-1.5 font-mono text-xs leading-relaxed text-escaner">
+            {ubicacion.map((parte, i) => (
+              <span key={i}>
+                {i > 0 && " · "}
+                {/* Solo la ruta (la primera parte) puede partirse; el resto va entero. */}
+                <span className={i === 0 ? "break-all" : "whitespace-nowrap"}>{parte}</span>
+              </span>
+            ))}
+          </p>
         </div>
 
         <dl className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 @4xl:w-[34rem]">
