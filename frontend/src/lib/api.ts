@@ -6,6 +6,7 @@
 // la respuesta de la API, hay que cambiarlos acá.
 
 import { unstable_rethrow } from "next/navigation";
+import { cache } from "react";
 
 export type Severidad = "critica" | "alta" | "media" | "baja" | "informativa";
 
@@ -322,7 +323,12 @@ export interface HallazgoDetalle {
   validaciones: Validacion[];
 }
 
-/** GET /findings/{id}. Con 404 lanza ErrorApi con status 404. */
-export function obtenerHallazgo(id: string) {
-  return obtener<HallazgoDetalle>(`/findings/${encodeURIComponent(id)}`);
-}
+/**
+ * GET /findings/{id}. Con 404 lanza ErrorApi con status 404.
+ *
+ * Con cache() de React: generateMetadata (el título de la pestaña) y la
+ * página lo piden en el mismo render y la API recibe una sola consulta.
+ */
+export const obtenerHallazgo = cache((id: string) =>
+  obtener<HallazgoDetalle>(`/findings/${encodeURIComponent(id)}`),
+);

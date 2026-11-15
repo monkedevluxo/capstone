@@ -14,7 +14,20 @@ import { ErrorApi, obtenerHallazgo, type HallazgoDetalle } from "@/lib/api";
 import { UUID_VALIDO, hrefVolver } from "@/lib/filtros";
 import { COOKIE_NOMBRE_REVISOR } from "@/lib/revisor";
 
-export const metadata: Metadata = { title: "Hallazgo · SentinelAI" };
+/** "<título del hallazgo> · SentinelAI" en la pestaña. */
+export async function generateMetadata({ params }: PageProps<"/hallazgos/[id]">): Promise<Metadata> {
+  const id = (await params).id.toLowerCase();
+  // Si no existe, la página llama a notFound() y queda el título del layout.
+  if (!UUID_VALIDO.test(id)) return {};
+  try {
+    // La misma consulta que la página (cache): la API recibe una sola.
+    const h = await obtenerHallazgo(id);
+    return { title: `${h.titulo} · SentinelAI` };
+  } catch {
+    // 404 o API caída: la página muestra el aviso que corresponde.
+    return { title: "Hallazgo · SentinelAI" };
+  }
+}
 
 /**
  * Detalle de un hallazgo en tres capas: lo que dijo el escáner, lo que
