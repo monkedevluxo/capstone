@@ -38,7 +38,20 @@ const ITEMS_OWASP: Record<string, string> = {
  * nueva (router.push), así el botón Atrás deshace el último filtro y la vista
  * se puede compartir copiando la dirección.
  */
-export function FiltrosHallazgos({ filtros }: { filtros: Filtros }) {
+export function FiltrosHallazgos({
+  filtros,
+  hayCriticas,
+}: {
+  filtros: Filtros;
+  /** Si hay hallazgos críticos en total (sin filtros). */
+  hayCriticas: boolean;
+}) {
+  // "Crítica" solo se ofrece si existe alguno, igual que su tarjeta. Si llegó
+  // marcada en la URL se muestra igual, para poder desmarcarla.
+  const severidades = SEVERIDADES.filter(
+    (s) => s.valor !== "critica" || hayCriticas || filtros.severidad.includes("critica"),
+  );
+
   const router = useRouter();
   const [pendiente, iniciar] = useTransition();
 
@@ -56,8 +69,11 @@ export function FiltrosHallazgos({ filtros }: { filtros: Filtros }) {
       )}
     >
       <div className="flex flex-col gap-2">
-        <span id="etiqueta-severidad" className="text-xs font-medium text-muted-foreground">
-          Severidad
+        <span className="text-xs font-medium text-muted-foreground">
+          <span id="etiqueta-severidad">Severidad</span>
+          {filtros.severidad.length === 0 && (
+            <span className="font-normal"> · Todas</span>
+          )}
         </span>
         <ToggleGroup
           multiple
@@ -68,7 +84,7 @@ export function FiltrosHallazgos({ filtros }: { filtros: Filtros }) {
           size="sm"
           className="flex-wrap"
         >
-          {SEVERIDADES.map((s) => {
+          {severidades.map((s) => {
             const activa = filtros.severidad.includes(s.valor);
             return (
               <ToggleGroupItem

@@ -1,8 +1,9 @@
 import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import type { ResumenHallazgos } from "@/lib/api";
-import { hrefHallazgos, type Filtros } from "@/lib/filtros";
+import { hayFiltros, hrefHallazgos, type Filtros } from "@/lib/filtros";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,7 +15,10 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
 
   return (
     <section aria-label="Totales" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      <Tarjeta etiqueta="Hallazgos únicos" valor={resumen.total} />
+      <Tarjeta
+        etiqueta={hayFiltros(filtros) ? "Con estos filtros" : "Hallazgos únicos"}
+        valor={resumen.total}
+      />
       {s.critica > 0 && (
         <Tarjeta etiqueta="Crítica" valor={s.critica} marca="bg-sev-critica-fondo" />
       )}
@@ -22,40 +26,40 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
       <Tarjeta etiqueta="Media" valor={s.media} marca="bg-sev-media" />
       <Tarjeta etiqueta="Baja e informativa" valor={s.baja + s.informativa} marca="bg-sev-baja" />
 
-      <Link
+      <TarjetaFiltro
+        etiqueta={
+          <>
+            <TriangleAlert aria-hidden className="size-4" />
+            Revisar primero
+          </>
+        }
+        valor={resumen.revisar}
+        activo={filtros.revisar}
         href={hrefHallazgos(filtros, { revisar: !filtros.revisar })}
-        className={cn(
-          "group rounded-lg border border-persona/40 bg-persona-suave p-4 transition-colors hover:border-persona focus-visible:ring-3 focus-visible:ring-persona/40 focus-visible:outline-none",
-          filtros.revisar && "border-persona ring-2 ring-persona/30",
-        )}
-      >
-        <span className="flex items-center gap-1.5 text-sm font-medium text-persona-fuerte">
-          <TriangleAlert aria-hidden className="size-4" />
-          Revisar primero
-        </span>
-        <span className="mt-1 block text-3xl font-semibold text-persona-fuerte tabular-nums">
-          {resumen.revisar}
-        </span>
-        <span className="mt-1 block text-xs text-persona-texto group-hover:underline">
-          {filtros.revisar ? "Quitar filtro" : "Ver solo estos"}
-        </span>
-      </Link>
+        clases={{
+          base: "border-persona/40 bg-persona-suave",
+          enlace: "hover:border-persona focus-visible:ring-persona/40",
+          activo: "border-persona ring-2 ring-persona/30",
+          etiqueta: "text-persona-fuerte",
+          valor: "text-persona-fuerte",
+          pista: "text-persona-texto",
+        }}
+      />
 
-      <Link
+      <TarjetaFiltro
+        etiqueta="Sin enriquecer"
+        valor={resumen.sin_enriquecer}
+        activo={filtros.sinEnriquecer}
         href={hrefHallazgos(filtros, { sinEnriquecer: !filtros.sinEnriquecer })}
-        className={cn(
-          "group rounded-lg border border-dashed border-muted-foreground/50 bg-card p-4 transition-colors hover:border-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/40 focus-visible:outline-none",
-          filtros.sinEnriquecer && "border-solid border-navy ring-2 ring-navy/20",
-        )}
-      >
-        <span className="text-sm font-medium text-muted-foreground">Sin enriquecer</span>
-        <span className="mt-1 block text-3xl font-semibold text-navy tabular-nums">
-          {resumen.sin_enriquecer}
-        </span>
-        <span className="mt-1 block text-xs text-muted-foreground group-hover:underline">
-          {filtros.sinEnriquecer ? "Quitar filtro" : "Ver solo estos"}
-        </span>
-      </Link>
+        clases={{
+          base: "border-dashed border-muted-foreground/50 bg-card",
+          enlace: "hover:border-muted-foreground focus-visible:ring-ring/40",
+          activo: "border-solid border-navy ring-2 ring-navy/20",
+          etiqueta: "text-muted-foreground",
+          valor: "text-navy",
+          pista: "text-muted-foreground",
+        }}
+      />
     </section>
   );
 }
@@ -69,5 +73,56 @@ function Tarjeta({ etiqueta, valor, marca }: { etiqueta: string; valor: number; 
       </span>
       <span className="mt-1 block text-3xl font-semibold text-navy tabular-nums">{valor}</span>
     </div>
+  );
+}
+
+/**
+ * Tarjeta que además activa o quita un filtro. Con conteo 0 y el filtro
+ * apagado no es enlace: llevaría a una lista vacía. Si el filtro está activo
+ * sigue siendo enlace aunque cuente 0, para poder quitarlo.
+ */
+function TarjetaFiltro({
+  etiqueta,
+  valor,
+  activo,
+  href,
+  clases,
+}: {
+  etiqueta: ReactNode;
+  valor: number;
+  activo: boolean;
+  href: string;
+  clases: Record<"base" | "enlace" | "activo" | "etiqueta" | "valor" | "pista", string>;
+}) {
+  const contenido = (
+    <>
+      <span className={cn("flex items-center gap-1.5 text-sm font-medium", clases.etiqueta)}>
+        {etiqueta}
+      </span>
+      <span className={cn("mt-1 block text-3xl font-semibold tabular-nums", clases.valor)}>
+        {valor}
+      </span>
+      <span className={cn("mt-1 block text-xs", clases.pista, (activo || valor > 0) && "group-hover:underline")}>
+        {activo ? "Quitar filtro" : valor > 0 ? "Ver solo estos" : "Ninguno"}
+      </span>
+    </>
+  );
+
+  if (!activo && valor === 0) {
+    return <div className={cn("rounded-lg border p-4 opacity-70", clases.base)}>{contenido}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group rounded-lg border p-4 transition-colors focus-visible:ring-3 focus-visible:outline-none",
+        clases.base,
+        clases.enlace,
+        activo && clases.activo,
+      )}
+    >
+      {contenido}
+    </Link>
   );
 }

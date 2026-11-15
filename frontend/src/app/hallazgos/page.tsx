@@ -30,13 +30,20 @@ export default async function PaginaHallazgos({
   const filtros = leerFiltros(await searchParams);
   const params = parametrosApi(filtros);
 
-  let pagina, resumen;
+  let pagina, resumen, hayCriticas;
   try {
     // Mismos filtros para la tabla y los totales: siempre cuadran.
-    [pagina, resumen] = await Promise.all([
+    const conFiltros = hayFiltros(filtros);
+    let global;
+    [pagina, resumen, global] = await Promise.all([
       listarHallazgos(params, POR_PAGINA, (filtros.pagina - 1) * POR_PAGINA),
       obtenerResumen(params),
+      // El chip "Crítica" depende de si hay críticos en total, no con los
+      // filtros actuales: si no, al marcar "Alta" desaparecería. Sin filtros
+      // el resumen de arriba ya es el total y no hace falta pedirlo de nuevo.
+      conFiltros ? obtenerResumen(new URLSearchParams()) : null,
     ]);
+    hayCriticas = (global ?? resumen).por_severidad.critica > 0;
   } catch (error) {
     if (error instanceof ErrorApi) {
       return (
@@ -57,7 +64,7 @@ export default async function PaginaHallazgos({
 
       <div className="mb-6 flex flex-col gap-4">
         <Totales resumen={resumen} filtros={filtros} />
-        <FiltrosHallazgos filtros={filtros} />
+        <FiltrosHallazgos filtros={filtros} hayCriticas={hayCriticas} />
       </div>
 
       {pagina.total === 0 && !hayFiltros(filtros) ? (
