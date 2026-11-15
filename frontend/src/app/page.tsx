@@ -18,34 +18,38 @@ const formatoFecha = new Intl.DateTimeFormat("es-CL", {
   timeZone: "America/Santiago",
 });
 
-export default function Inicio() {
+export default async function Inicio() {
+  let escaneo: Escaneo | undefined;
+  let fallo: ErrorApi | null = null;
+  try {
+    [escaneo] = await listarEscaneos();
+  } catch (error) {
+    if (!(error instanceof ErrorApi)) throw error;
+    fallo = error;
+  }
+
   return (
     <Marco>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <h1 className="text-2xl font-semibold tracking-tight text-navy">Inicio</h1>
-        <ImportarReporte />
-        <UltimoEscaneo />
+        {/* ImportarReporte recibe el id del último escaneo: si es el que se
+            acaba de importar, oculta el enlace repetido de "Último escaneo". */}
+        <ImportarReporte ultimoEscaneoId={escaneo?.id ?? null}>
+          {fallo ? (
+            <section aria-labelledby="titulo-ultimo">
+              <TituloUltimo />
+              <AvisoApiCaida titulo="No se pudo cargar el último escaneo" mensaje={fallo.message} />
+            </section>
+          ) : (
+            <UltimoEscaneo escaneo={escaneo} />
+          )}
+        </ImportarReporte>
       </div>
     </Marco>
   );
 }
 
-async function UltimoEscaneo() {
-  let escaneo: Escaneo | undefined;
-  try {
-    [escaneo] = await listarEscaneos();
-  } catch (error) {
-    if (error instanceof ErrorApi) {
-      return (
-        <section aria-labelledby="titulo-ultimo">
-          <TituloUltimo />
-          <AvisoApiCaida titulo="No se pudo cargar el último escaneo" mensaje={error.message} />
-        </section>
-      );
-    }
-    throw error;
-  }
-
+function UltimoEscaneo({ escaneo }: { escaneo: Escaneo | undefined }) {
   return (
     <section aria-labelledby="titulo-ultimo">
       <TituloUltimo />
@@ -83,7 +87,9 @@ async function UltimoEscaneo() {
               </>
             )}
           </dl>
-          <div className="mt-4 border-t pt-4">
+          {/* Oculto si es el escaneo recién importado (o el que un 409 dice que
+              ya estaba): el resultado de arriba ya enlaza a sus hallazgos. */}
+          <div className="mt-4 border-t pt-4 group-data-[recien-importado=true]/ultimo:hidden">
             <Link href={hrefHallazgosDeEscaneo(escaneo.id)} className={claseEnlace}>
               Ver sus hallazgos
             </Link>

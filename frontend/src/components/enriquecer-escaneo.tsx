@@ -34,7 +34,13 @@ export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
 
   if (!resultado) {
     return (
-      <Button type="button" size="lg" variant="outline" onClick={enriquecer} className={cn("px-4", claseBotonIA)}>
+      <Button
+        type="button"
+        size="lg"
+        variant="outline"
+        onClick={enriquecer}
+        className={cn("self-start px-4", claseBotonIA)}
+      >
         <Sparkles aria-hidden />
         Enriquecer pendientes
       </Button>

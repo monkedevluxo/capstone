@@ -27,7 +27,15 @@ import { cn } from "@/lib/utils";
  * Subida del reporte de ZAP: arrastrar y soltar o "Elegir archivo". El archivo
  * va a una Server Action (app/acciones.ts), nunca directo a la API.
  */
-export function ImportarReporte() {
+export function ImportarReporte({
+  ultimoEscaneoId,
+  children,
+}: {
+  /** Id del escaneo más reciente según el servidor. */
+  ultimoEscaneoId: string | null;
+  /** La sección "Último escaneo", que va debajo del resultado. */
+  children: React.ReactNode;
+}) {
   const entrada = useRef<HTMLInputElement>(null);
   const [arrastrando, setArrastrando] = useState(false);
   const [nombre, setNombre] = useState<string | null>(null);
@@ -143,6 +151,17 @@ export function ImportarReporte() {
 
       <div aria-live="polite">
         {resultado && !importando && <Resultado resultado={resultado} />}
+      </div>
+
+      <div
+        className="group/ultimo mt-4"
+        data-recien-importado={
+          ultimoEscaneoId !== null &&
+          ((resultado?.tipo === "ok" && resultado.resumen.scan_id === ultimoEscaneoId) ||
+            (resultado?.tipo === "repetido" && resultado.scanId === ultimoEscaneoId))
+        }
+      >
+        {children}
       </div>
     </div>
   );
