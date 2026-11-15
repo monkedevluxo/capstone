@@ -1,6 +1,9 @@
-/** Contenedor de cada página, bajo la barra superior. */
+/**
+ * Contenedor de cada página: limita el ancho del contenido. Es un div porque
+ * el <main> ya lo pone SidebarInset en el layout.
+ */
 export function Marco({ children }: { children: React.ReactNode }) {
-  return <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>;
+  return <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</div>;
 }
 
 /** Mensaje en una tarjeta: errores, estados vacíos, páginas en construcción. */

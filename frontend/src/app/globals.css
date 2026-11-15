@@ -49,6 +49,14 @@
   --color-persona-fuerte: var(--persona-fuerte);
   --color-revisar-fondo: var(--revisar-fondo);
 
+  /* Navegación lateral (components/ui/sidebar.tsx) */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   /* Severidades: siempre acompañadas de su texto, nunca solo color */
   --color-sev-critica: var(--sev-critica);
   --color-sev-critica-fondo: var(--sev-critica-fondo);
@@ -82,6 +90,18 @@
   --persona-fuerte: #8a3b0b;
   /* Fila que una persona debería mirar primero (requiere_revision) */
   --revisar-fondo: #fffbf7;
+
+  /*
+   * Navegación en navy, como la barra superior que reemplaza: el marco de la
+   * herramienta queda oscuro y los datos sobre fondo claro. El texto en reposo
+   * (#c5d0dc) tiene contraste 9,8:1 sobre el navy.
+   */
+  --sidebar: #14263d;
+  --sidebar-foreground: #c5d0dc;
+  --sidebar-accent: #233c5a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a405a;
+  --sidebar-ring: rgb(255 255 255 / 0.7);
 
   --background: #f5f7f9;
   --foreground: #14263d;

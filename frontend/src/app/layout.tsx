@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { cookies } from "next/headers";
 
-import { BarraSuperior } from "@/components/barra-superior";
+import { BarraLateral } from "@/components/barra-lateral";
+import { FranjaSuperior } from "@/components/franja-superior";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 // Fuentes empaquetadas (Fontsource), no Google Fonts: el dashboard tiene que
@@ -35,15 +39,26 @@ export const metadata: Metadata = {
     "Hallazgos de OWASP ZAP normalizados, enriquecidos con IA local y validados por una persona.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // La barra lateral recuerda si quedó colapsada (cookie que escribe
+  // SidebarProvider). Leerla acá evita que parpadee al recargar.
+  const abierta = (await cookies()).get("sidebar_state")?.value !== "false";
+
   return (
     <html
       lang="es"
       className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
-        <BarraSuperior />
-        {children}
+      <body className="min-h-full">
+        <TooltipProvider>
+          <SidebarProvider defaultOpen={abierta}>
+            <BarraLateral />
+            <SidebarInset className="min-w-0">
+              <FranjaSuperior />
+              {children}
+            </SidebarInset>
+          </SidebarProvider>
+        </TooltipProvider>
       </body>
     </html>
   );
