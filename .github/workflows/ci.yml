@@ -106,7 +106,7 @@ jobs:
       # cliente de Ollama falso. Vacían las tablas, por eso van después de
       # verificar las restricciones.
       - name: Tests de ingesta, consulta y enriquecimiento
-        run: python -m pytest tests/test_ingesta.py tests/test_enriquecimiento_api.py -v
+        run: python -m pytest tests/test_ingesta.py tests/test_enriquecimiento_api.py tests/test_resumen_filtros_api.py -v
 
       - name: Revertir y reaplicar migraciones
         run: |
