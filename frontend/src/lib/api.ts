@@ -229,6 +229,8 @@ export interface ResumenLote {
 
 /** `ia` completo en GET /findings/{id}. */
 export interface DetalleIA extends ResumenIA {
+  /** Id de la sugerencia: el formulario de validación lo manda como enrichment_id. */
+  id: string;
   explicacion: string | null;
   impacto: string | null;
   remediacion: string | null;
@@ -250,12 +252,22 @@ export type DecisionValidacion =
   | "requiere_segunda_opinion";
 
 export interface Validacion {
+  id: string;
   decision: DecisionValidacion;
   revisor: string;
   /** ISO 8601 */
   fecha: string;
   comentario: string | null;
   prioridad_corregida: Prioridad | null;
+  /** Qué sugerencia del modelo se juzgó; null si no había. */
+  enrichment_id: string | null;
+  // Banderas del golden set (true, false o null = "no sé"). El historial no
+  // las muestra: cada revisor anota sin ver lo que respondieron los demás.
+  ai_owasp_correcto: boolean | null;
+  ai_prioridad_correcta: boolean | null;
+  ai_remediacion_util: boolean | null;
+  ai_alucinacion: boolean | null;
+  ai_nota: string | null;
 }
 
 /** Una instancia tal como la trae la alerta de ZAP en `origen.instances`. */

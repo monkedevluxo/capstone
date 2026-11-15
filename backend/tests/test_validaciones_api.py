@@ -282,3 +282,23 @@ def test_campos_desconocidos_dan_422():
     f = _id("SQL Injection")
     r = _validar(f, estado="remediado")
     assert r.status_code == 422
+
+
+# ── Detalle ───────────────────────────────────────────────────────────────
+
+def test_el_detalle_trae_la_sugerencia_vigente_y_las_banderas_de_cada_validacion():
+    f = _id("SQL Injection")
+    _enriquecer(f)
+    sugerencia = _id_sugerencia(f)
+    _validar(f, enrichment_id=sugerencia, ai_owasp_correcto=True, ai_alucinacion=False)
+
+    d = api.get(f"/findings/{f}").json()
+    assert d["ia"]["id"] == sugerencia
+    [v] = d["validaciones"]
+    assert v["enrichment_id"] == sugerencia
+    assert v["ai_owasp_correcto"] is True
+    assert v["ai_alucinacion"] is False
+    assert v["ai_prioridad_correcta"] is None
+    assert v["ai_remediacion_util"] is None
+    assert v["ai_nota"] is None
+    assert v["id"]

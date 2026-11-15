@@ -122,6 +122,9 @@ def _detalle_ia(e: AiEnrichment | None) -> dict | None:
     if e is None:
         return None
     return {
+        # El formulario de validación lo devuelve como enrichment_id: así se
+        # sabe qué sugerencia tenía la persona en pantalla al decidir.
+        "id": str(e.id),
         **_resumen_ia(e),
         "explicacion": e.explanation,
         "impacto": e.impact,
@@ -407,16 +410,7 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
         "origen": f.source_raw,
         "ia": _detalle_ia(ia_vigente),
         "referencia": referencia(f, ia_vigente),
-        "validaciones": [
-            {
-                "decision": v.decision.value,
-                "revisor": v.reviewer,
-                "fecha": v.reviewed_at,
-                "comentario": v.comment,
-                "prioridad_corregida": v.priority_override.value if v.priority_override else None,
-            }
-            for v in validaciones
-        ],
+        "validaciones": [_validacion(v) for v in validaciones],
     }
 
 

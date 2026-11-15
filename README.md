@@ -289,7 +289,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 | **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
-En total son 191 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 192 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 
