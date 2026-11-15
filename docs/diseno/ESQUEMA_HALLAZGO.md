@@ -176,10 +176,23 @@ Cuidado adicional: mucho material de entrenamiento de los LLM es anterior a 2025
 ```
 nuevo ──→ en_triage ──┬──→ confirmado ──→ remediado
                       ├──→ falso_positivo
-                      └──→ riesgo_aceptado
+                      ├──→ riesgo_aceptado
+                      └──→ duplicado
 ```
 
 `nuevo` lo pone la ingesta. Todas las demás transiciones exigen un bloque `validation` con autor y fecha. La transición no se guarda sin ese registro: es la implementación literal de "la validación final es siempre humana y queda registrada".
+
+El estado lo fija la validación más reciente, en la misma transacción que la guarda (`POST /findings/{id}/validaciones`):
+
+| Decisión | Estado del hallazgo |
+|---|---|
+| `confirmado` | `confirmado` |
+| `falso_positivo` | `falso_positivo` |
+| `riesgo_aceptado` | `riesgo_aceptado` |
+| `duplicado` | `duplicado` |
+| `requiere_segunda_opinion` | `en_triage` |
+
+`duplicado` significa que una persona lo reconoció como el mismo problema que otro hallazgo que la deduplicación automática no unió (por ejemplo, otra ruta o parámetro). Sale de la cola sin afirmar que el problema no existe, que es lo que diría `falso_positivo`. Se pide (no se exige) indicar en el comentario cuál es el original. `remediado` no sale de una validación: queda para cuando se verifique la corrección.
 
 ---
 

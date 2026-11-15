@@ -11,6 +11,7 @@ export const ESTADO_HALLAZGO: Record<EstadoHallazgo, string> = {
   falso_positivo: "Falso positivo",
   riesgo_aceptado: "Riesgo aceptado",
   remediado: "Remediado",
+  duplicado: "Duplicado",
 };
 
 /** motivo_revision de la referencia (app/ia/owasp_por_cwe.py). */

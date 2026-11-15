@@ -15,7 +15,8 @@ export type EstadoHallazgo =
   | "confirmado"
   | "falso_positivo"
   | "riesgo_aceptado"
-  | "remediado";
+  | "remediado"
+  | "duplicado";
 
 export type Prioridad = "p1" | "p2" | "p3" | "p4";
 
