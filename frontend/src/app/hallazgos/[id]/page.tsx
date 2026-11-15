@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { CabeceraHallazgo } from "@/components/detalle/cabecera";
 import { CapaIA } from "@/components/detalle/capa-ia";
+import { CapaPersona } from "@/components/detalle/capa-persona";
 import { CapaZap } from "@/components/detalle/capa-zap";
 import { EnriquecerHallazgo } from "@/components/detalle/enriquecer-hallazgo";
 import { AvisoApiCaida, Marco } from "@/components/marco";
@@ -66,6 +67,8 @@ export default async function PaginaHallazgo({ params, searchParams }: PageProps
           />
         </div>
       </div>
+
+      <CapaPersona hallazgo={hallazgo} />
     </Marco>
   );
 }
