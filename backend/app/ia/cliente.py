@@ -10,6 +10,7 @@ Toda la configuración sale de variables de entorno (app/config.py).
 
 from __future__ import annotations
 
+import http.client
 import json
 import socket
 import time
@@ -100,6 +101,12 @@ class ClienteOllama:
             if isinstance(exc.reason, (TimeoutError, socket.timeout)):
                 raise OllamaTimeout(f"sin respuesta en {self.timeout_s:.0f}s") from exc
             raise OllamaNoDisponible(f"no se pudo conectar a {self.url}: {exc.reason}") from exc
+        except (ConnectionError, http.client.RemoteDisconnected, http.client.IncompleteRead) as exc:
+            # Ollama se cayó con la conexión ya abierta (a mitad de la respuesta):
+            # urllib no lo envuelve en URLError. Para quien llama es lo mismo que
+            # encontrarlo apagado. RemoteDisconnected ya es un ConnectionError;
+            # va explícito porque es el caso más común.
+            raise OllamaNoDisponible(f"Ollama cortó la conexión: {exc!r}") from exc
         except (json.JSONDecodeError, ValueError) as exc:
             raise OllamaRespuestaInvalida("Ollama no devolvio JSON") from exc
 
