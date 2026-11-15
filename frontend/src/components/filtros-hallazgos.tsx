@@ -164,6 +164,18 @@ export function FiltrosHallazgos({
 
       {hayFiltros(filtros) && (
         <div className="flex flex-wrap items-center gap-2 border-t pt-3 text-sm">
+          {filtros.scanId && (
+            <button
+              type="button"
+              onClick={() => ir({ scanId: null })}
+              title={`Escaneo ${filtros.scanId}`}
+              className="inline-flex h-7 items-center gap-1 rounded-full border border-escaner/40 bg-escaner-suave px-2.5 text-escaner hover:border-escaner hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              Escaneo <span className="font-mono">{filtros.scanId.slice(0, 8)}</span>
+              <span aria-hidden className="text-escaner/60">·</span>
+              Quitar
+            </button>
+          )}
           {filtros.sinEnriquecer && (
             <button
               type="button"

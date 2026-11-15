@@ -38,9 +38,18 @@ export interface Filtros {
   sinEnriquecer: boolean;
   /** Categoría de la tabla CWE -> OWASP (owasp_ref en la API). */
   owaspRef: string | null;
+  /** Solo los hallazgos que vio ese escaneo (scan_id en la API). */
+  scanId: string | null;
   q: string;
   /** Empieza en 1. */
   pagina: number;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/** URL de /hallazgos con solo los hallazgos de un escaneo. */
+export function hrefHallazgosDeEscaneo(scanId: string): string {
+  return `/hallazgos?scan_id=${encodeURIComponent(scanId)}`;
 }
 
 export type SearchParams = Record<string, string | string[] | undefined>;
@@ -71,18 +80,30 @@ export function leerFiltros(sp: SearchParams): Filtros {
 
   const pagina = Number.parseInt(primero(sp.pagina) ?? "1", 10);
 
+  // La API exige un UUID: cualquier otra cosa terminaría en 422.
+  const scan = primero(sp.scan_id)?.toLowerCase();
+  const scanId = scan && UUID.test(scan) ? scan : null;
+
   return {
     severidad,
     revisar: primero(sp.revisar) === "true",
     sinEnriquecer: primero(sp.con_ia) === "false",
     owaspRef,
+    scanId,
     q: q.length >= 2 ? q : "",
     pagina: Number.isFinite(pagina) && pagina >= 1 ? pagina : 1,
   };
 }
 
 export function hayFiltros(f: Filtros): boolean {
-  return f.severidad.length > 0 || f.revisar || f.sinEnriquecer || f.owaspRef !== null || f.q !== "";
+  return (
+    f.severidad.length > 0 ||
+    f.revisar ||
+    f.sinEnriquecer ||
+    f.owaspRef !== null ||
+    f.scanId !== null ||
+    f.q !== ""
+  );
 }
 
 /** Parámetros de filtro comunes a la URL del dashboard y a la API. */
@@ -92,6 +113,7 @@ function parametrosFiltro(f: Filtros): URLSearchParams {
   if (f.revisar) p.set("revisar", "true");
   if (f.sinEnriquecer) p.set("con_ia", "false");
   if (f.owaspRef) p.set("owasp_ref", f.owaspRef);
+  if (f.scanId) p.set("scan_id", f.scanId);
   if (f.q) p.set("q", f.q);
   return p;
 }
