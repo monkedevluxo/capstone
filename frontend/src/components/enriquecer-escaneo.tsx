@@ -53,7 +53,9 @@ export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
       const l = resultado.lote;
       return (
         <div className="w-full" role="status">
-          <h4 className="text-sm font-semibold text-ia">Enriquecimiento terminado</h4>
+          <h4 className="text-sm font-semibold text-ia">
+            {l.detenido_por ? "Enriquecimiento detenido" : "Enriquecimiento terminado"}
+          </h4>
           <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
             <Cifra etiqueta="Enriquecidos" valor={l.enriquecidos} />
             <Cifra etiqueta="Fallidos" valor={l.fallidos} />
