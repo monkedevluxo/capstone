@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { FiltrosHallazgos } from "@/components/filtros-hallazgos";
-import { Aviso, Marco } from "@/components/marco";
+import { Aviso, AvisoApiCaida, Marco } from "@/components/marco";
 import { Paginacion } from "@/components/paginacion";
 import { TablaHallazgos } from "@/components/tabla-hallazgos";
 import { Totales } from "@/components/totales";
@@ -48,10 +48,7 @@ export default async function PaginaHallazgos({
     if (error instanceof ErrorApi) {
       return (
         <Marco>
-          <Aviso titulo="No se pudo cargar la lista de hallazgos">
-            {error.message}. Revisa que el servicio <code className="font-mono">api</code>{" "}
-            esté levantado (<code className="font-mono">docker compose ps</code>).
-          </Aviso>
+          <AvisoApiCaida titulo="No se pudo cargar la lista de hallazgos" mensaje={error.message} />
         </Marco>
       );
     }

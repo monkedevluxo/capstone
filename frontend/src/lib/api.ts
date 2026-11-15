@@ -113,3 +113,103 @@ export function obtenerResumen(filtros: URLSearchParams) {
   const qs = filtros.toString();
   return obtener<ResumenHallazgos>(`/findings/resumen${qs ? `?${qs}` : ""}`);
 }
+
+// ── Escaneos e importación ───────────────────────────────────────────────
+
+export interface Escaneo {
+  id: string;
+  target_id: string;
+  herramienta: string;
+  version: string | null;
+  estado: string;
+  /** ISO 8601 */
+  fecha: string;
+  stats: {
+    hallazgos?: number;
+    nuevos?: number;
+    repetidos?: number;
+    descartados?: number;
+    por_severidad?: Partial<Record<Severidad, number>>;
+  } | null;
+}
+
+/** GET /scans: el primero es el más reciente. */
+export function listarEscaneos() {
+  return obtener<Escaneo[]>("/scans");
+}
+
+/**
+ * Objetivo (origen de la URL) de un escaneo. GET /scans no lo trae, así que
+ * se saca de la URL de uno de sus hallazgos. null si el escaneo no tiene
+ * hallazgos.
+ */
+export async function objetivoDeEscaneo(scanId: string): Promise<string | null> {
+  const q = new URLSearchParams({ scan_id: scanId });
+  const pagina = await listarHallazgos(q, 1, 0);
+  const primero = pagina.items[0];
+  if (!primero) return null;
+  const detalle = await obtener<{ url: string | null }>(`/findings/${primero.id}`);
+  if (!detalle.url) return null;
+  try {
+    return new URL(detalle.url).origin;
+  } catch {
+    return null;
+  }
+}
+
+/** Respuesta 201 de POST /scans/import. */
+export interface ResumenImportacion {
+  scan_id: string;
+  target_id: string;
+  objetivo: string;
+  /** Tipos de alerta en el reporte de ZAP. */
+  hallazgos_en_reporte: number;
+  nuevos: number;
+  repetidos: number;
+  descartados: number;
+  por_severidad: Partial<Record<Severidad, number>>;
+}
+
+/** Respuesta sin interpretar: el que llama decide qué hacer con cada código. */
+export interface RespuestaApi {
+  status: number;
+  datos: unknown;
+}
+
+/**
+ * POST a la API. A diferencia de obtener(), no lanza error si la API responde
+ * con un código de error: devuelve el código y el cuerpo. Solo lanza ErrorApi
+ * si no hubo respuesta (API caída o se acabó el tiempo).
+ */
+export async function enviar(
+  ruta: string,
+  cuerpo: string | undefined,
+  timeoutMs: number,
+): Promise<RespuestaApi> {
+  let respuesta: Response;
+  try {
+    respuesta = await fetch(`${API_URL}${ruta}`, {
+      method: "POST",
+      cache: "no-store",
+      headers: cuerpo === undefined ? undefined : { "Content-Type": "application/json" },
+      body: cuerpo,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (causa) {
+    const tiempo = causa instanceof DOMException && causa.name === "TimeoutError";
+    throw new ErrorApi(
+      tiempo
+        ? `La API no respondió en ${Math.round(timeoutMs / 1000)} s`
+        : `No se pudo conectar con la API en ${API_URL}`,
+      undefined,
+      { cause: causa },
+    );
+  }
+  let datos: unknown = null;
+  try {
+    datos = await respuesta.json();
+  } catch {
+    // Cuerpo vacío o que no es JSON: el código basta.
+  }
+  return { status: respuesta.status, datos };
+}

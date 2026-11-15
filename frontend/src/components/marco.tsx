@@ -24,3 +24,13 @@ export function Aviso({
     </div>
   );
 }
+
+/** La API no respondió: el mismo mensaje en todas las pantallas. */
+export function AvisoApiCaida({ titulo, mensaje }: { titulo: string; mensaje: string }) {
+  return (
+    <Aviso titulo={titulo}>
+      {mensaje}. Revisa que el servicio <code className="font-mono">api</code>{" "}
+      esté levantado (<code className="font-mono">docker compose ps</code>).
+    </Aviso>
+  );
+}
