@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { CabeceraHallazgo } from "@/components/detalle/cabecera";
 import { CapaIA } from "@/components/detalle/capa-ia";
 import { CapaZap } from "@/components/detalle/capa-zap";
+import { EnriquecerHallazgo } from "@/components/detalle/enriquecer-hallazgo";
 import { AvisoApiCaida, Marco } from "@/components/marco";
 import { ErrorApi, obtenerHallazgo, type HallazgoDetalle } from "@/lib/api";
 import { UUID_VALIDO, hrefVolver } from "@/lib/filtros";
@@ -48,7 +49,21 @@ export default async function PaginaHallazgo({ params, searchParams }: PageProps
       <div className="@container mt-8">
         <div className="grid items-start gap-6 @4xl:grid-cols-2">
           <CapaZap hallazgo={hallazgo} />
-          <CapaIA hallazgo={hallazgo} />
+          <CapaIA
+            hallazgo={hallazgo}
+            acciones={
+              <EnriquecerHallazgo
+                id={hallazgo.id}
+                situacion={
+                  hallazgo.ia === null
+                    ? "sin_enriquecer"
+                    : hallazgo.ia.estado === "failed"
+                      ? "fallido"
+                      : "ok"
+                }
+              />
+            }
+          />
         </div>
       </div>
     </Marco>

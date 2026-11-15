@@ -6,7 +6,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { ErrorApi, enviar, type ResumenImportacion, type ResumenLote } from "@/lib/api";
+import {
+  ErrorApi,
+  enviar,
+  type DetalleIA,
+  type ResumenImportacion,
+  type ResumenLote,
+} from "@/lib/api";
 import { MAX_REPORTE_BYTES } from "@/lib/limites";
 
 export type ResultadoImportacion =
@@ -142,6 +148,54 @@ export async function enriquecerEscaneo(scanId: string): Promise<ResultadoEnriqu
   switch (respuesta.status) {
     case 200:
       return { tipo: "ok", lote: respuesta.datos as ResumenLote };
+    case 503:
+      return { tipo: "ollama_apagado" };
+    case 404:
+      return { tipo: "no_existe" };
+    default:
+      return { tipo: "error", mensaje: `La API respondió ${respuesta.status} al enriquecer.` };
+  }
+}
+
+// ── Enriquecer un hallazgo (detalle) ──────────────────────────────────────
+
+export type ResultadoEnriquecerHallazgo =
+  /** El modelo respondió. vigente:false = falló y se conservó el anterior. */
+  | { tipo: "ok"; vigente: boolean; estado: "ok" | "failed"; motivoFallo: string | null }
+  | { tipo: "ollama_apagado" }
+  | { tipo: "no_existe" }
+  | { tipo: "tiempo" }
+  | { tipo: "api_caida"; mensaje: string }
+  | { tipo: "error"; mensaje: string };
+
+export async function enriquecerHallazgo(id: string): Promise<ResultadoEnriquecerHallazgo> {
+  if (typeof id !== "string" || !UUID.test(id)) return { tipo: "no_existe" };
+
+  let respuesta;
+  try {
+    // Hasta 3 intentos del modelo: el mismo margen que el lote.
+    respuesta = await enviar(`/findings/${id}/enrich`, undefined, TIMEOUT_ENRIQUECER_MS);
+  } catch (error) {
+    if (error instanceof ErrorApi) {
+      const causa = error.cause;
+      if (causa instanceof DOMException && causa.name === "TimeoutError") return { tipo: "tiempo" };
+      return { tipo: "api_caida", mensaje: error.message };
+    }
+    throw error;
+  }
+
+  switch (respuesta.status) {
+    case 200: {
+      const datos = respuesta.datos as { vigente: boolean; ia: DetalleIA };
+      // La página vuelve a pedir el hallazgo y muestra lo nuevo.
+      revalidatePath(`/hallazgos/${id}`);
+      return {
+        tipo: "ok",
+        vigente: datos.vigente,
+        estado: datos.ia.estado,
+        motivoFallo: datos.ia.motivo_fallo,
+      };
+    }
     case 503:
       return { tipo: "ollama_apagado" };
     case 404:
