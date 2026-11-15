@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
   // El indicador de desarrollo va a la derecha: abajo a la izquierda tapaba
   // "Laboratorio aislado" en el pie de la barra lateral. Solo existe en dev.
   devIndicators: { position: "bottom-right" },
+  // En dev, Next bloquea los recursos de desarrollo (HMR, chunks) pedidos
+  // desde un hostname distinto de localhost: abierta como 127.0.0.1 la página
+  // no hidrata. Solo afecta a `next dev`.
+  allowedDevOrigins: ["127.0.0.1"],
   experimental: {
     serverActions: {
       bodySizeLimit: "5mb",
