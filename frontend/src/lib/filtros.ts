@@ -47,6 +47,35 @@ export interface Filtros {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+export const UUID_VALIDO = UUID;
+
+/**
+ * Detalle de un hallazgo recordando la vista de la lista (filtros y página)
+ * en ?desde=, para que "Volver a hallazgos" vuelva a esa misma vista.
+ */
+export function hrefDetalle(id: string, f: Filtros): string {
+  const lista = hrefHallazgos(f, { pagina: f.pagina });
+  const consulta = lista.split("?")[1];
+  return `/hallazgos/${id}${consulta ? `?desde=${encodeURIComponent(consulta)}` : ""}`;
+}
+
+/**
+ * "Volver a hallazgos" desde el detalle. `desde` viene de la URL, así que no
+ * se usa tal cual: se vuelve a leer como filtros y se arma la URL de nuevo.
+ * Cualquier cosa rara se descarta y nunca sale de /hallazgos.
+ */
+export function hrefVolver(desde: string | string[] | undefined): string {
+  const valor = Array.isArray(desde) ? desde[0] : desde;
+  if (!valor) return "/hallazgos";
+  const sp: SearchParams = {};
+  for (const [k, v] of new URLSearchParams(valor)) {
+    const previo = sp[k];
+    sp[k] = previo === undefined ? v : [...(Array.isArray(previo) ? previo : [previo]), v];
+  }
+  const f = leerFiltros(sp);
+  return hrefHallazgos(f, { pagina: f.pagina });
+}
+
 /** URL de /hallazgos con solo los hallazgos de un escaneo. */
 export function hrefHallazgosDeEscaneo(scanId: string): string {
   return `/hallazgos?scan_id=${encodeURIComponent(scanId)}`;

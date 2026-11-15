@@ -223,3 +223,93 @@ export interface ResumenLote {
   detenido_por: string | null;
   hallazgos: { id: string; titulo: string; estado: "ok" | "failed"; motivo_fallo: string | null }[];
 }
+
+// ── Detalle de un hallazgo ───────────────────────────────────────────────
+
+/** `ia` completo en GET /findings/{id}. */
+export interface DetalleIA extends ResumenIA {
+  explicacion: string | null;
+  impacto: string | null;
+  remediacion: string | null;
+  pasos: string[] | null;
+  modelo: string;
+  prompt_version: string;
+  prompt_sha256: string;
+  intentos: number;
+  latencia_ms: number | null;
+  /** ISO 8601 */
+  generado: string;
+}
+
+export type DecisionValidacion =
+  | "confirmado"
+  | "falso_positivo"
+  | "riesgo_aceptado"
+  | "duplicado"
+  | "requiere_segunda_opinion";
+
+export interface Validacion {
+  decision: DecisionValidacion;
+  revisor: string;
+  /** ISO 8601 */
+  fecha: string;
+  comentario: string | null;
+  prioridad_corregida: Prioridad | null;
+}
+
+/** Una instancia tal como la trae la alerta de ZAP en `origen.instances`. */
+export interface InstanciaZap {
+  uri?: string;
+  method?: string;
+  param?: string;
+  attack?: string;
+  evidence?: string;
+  otherinfo?: string;
+}
+
+/** La alerta de ZAP sin modificar (source_raw). Solo los campos que se usan. */
+export interface OrigenZap {
+  pluginid?: string;
+  alertRef?: string;
+  wascid?: string;
+  riskdesc?: string;
+  confidence?: string;
+  desc?: string;
+  solution?: string;
+  reference?: string;
+  otherinfo?: string;
+  instances?: InstanciaZap[];
+  [campo: string]: unknown;
+}
+
+export interface HallazgoDetalle {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  severidad: Severidad;
+  /** Ej. "High" */
+  severidad_herramienta: string | null;
+  /** Ej. "low", "medium", "high", "confirmed" */
+  confianza_herramienta: string | null;
+  estado: EstadoHallazgo;
+  cwe: number | null;
+  url: string | null;
+  ruta: string | null;
+  metodo: string | null;
+  parametro: string | null;
+  evidencia: string | null;
+  ocurrencias: number;
+  primera_vez: string;
+  ultima_vez: string;
+  escaneos: string[];
+  instancias: { url: string; metodo: string | null; parametro: string | null }[];
+  origen: OrigenZap | null;
+  ia: DetalleIA | null;
+  referencia: Referencia;
+  validaciones: Validacion[];
+}
+
+/** GET /findings/{id}. Con 404 lanza ErrorApi con status 404. */
+export function obtenerHallazgo(id: string) {
+  return obtener<HallazgoDetalle>(`/findings/${encodeURIComponent(id)}`);
+}

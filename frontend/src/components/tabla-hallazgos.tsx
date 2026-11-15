@@ -11,13 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { HallazgoResumen } from "@/lib/api";
+import { MOTIVO_REVISION } from "@/lib/etiquetas";
+import { hrefDetalle, type Filtros } from "@/lib/filtros";
+import { confianza as formatearConfianza } from "@/lib/formato";
 import { cn } from "@/lib/utils";
-
-/** Texto para cada motivo_revision que devuelve la API. */
-const MOTIVO_REVISION: Record<string, string> = {
-  categoria_distinta: "categoría distinta",
-  cwe_fuera_de_tabla: "CWE fuera de la tabla",
-};
 
 /**
  * Lista de hallazgos: tabla cuando el espacio alcanza, tarjetas apiladas si
@@ -29,7 +26,14 @@ const MOTIVO_REVISION: Record<string, string> = {
  * lleva lo que sobra: el título se parte en líneas y la ruta se trunca con
  * la ruta completa en el title. Así nunca necesita scroll horizontal.
  */
-export function TablaHallazgos({ hallazgos }: { hallazgos: HallazgoResumen[] }) {
+export function TablaHallazgos({
+  hallazgos,
+  filtros,
+}: {
+  hallazgos: HallazgoResumen[];
+  /** Para que el detalle sepa a qué vista de la lista volver. */
+  filtros: Filtros;
+}) {
   return (
     <div className="@container">
       <div className="hidden rounded-lg border bg-card @3xl:block">
@@ -46,7 +50,7 @@ export function TablaHallazgos({ hallazgos }: { hallazgos: HallazgoResumen[] }) 
           </TableHeader>
           <TableBody>
             {hallazgos.map((h) => (
-              <FilaHallazgo key={h.id} hallazgo={h} />
+              <FilaHallazgo key={h.id} hallazgo={h} href={hrefDetalle(h.id, filtros)} />
             ))}
           </TableBody>
         </Table>
@@ -54,14 +58,14 @@ export function TablaHallazgos({ hallazgos }: { hallazgos: HallazgoResumen[] }) 
 
       <ul className="flex flex-col gap-3 @3xl:hidden">
         {hallazgos.map((h) => (
-          <TarjetaHallazgo key={h.id} hallazgo={h} />
+          <TarjetaHallazgo key={h.id} hallazgo={h} href={hrefDetalle(h.id, filtros)} />
         ))}
       </ul>
     </div>
   );
 }
 
-function FilaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
+function FilaHallazgo({ hallazgo: h, href }: { hallazgo: HallazgoResumen; href: string }) {
   const revisar = h.referencia.requiere_revision;
   return (
     <TableRow className={cn(revisar && "bg-revisar-fondo hover:bg-revisar-fondo")}>
@@ -69,7 +73,7 @@ function FilaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
         <InsigniaSeveridad severidad={h.severidad} />
       </TableCell>
       <TableCell className="whitespace-normal">
-        <TituloHallazgo hallazgo={h} />
+        <TituloHallazgo hallazgo={h} href={href} />
         <RutaHallazgo hallazgo={h} />
       </TableCell>
       <TableCell className="text-right tabular-nums">{h.ocurrencias}</TableCell>
@@ -86,7 +90,7 @@ function FilaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
   );
 }
 
-function TarjetaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
+function TarjetaHallazgo({ hallazgo: h, href }: { hallazgo: HallazgoResumen; href: string }) {
   const revisar = h.referencia.requiere_revision;
   return (
     <li
@@ -102,7 +106,7 @@ function TarjetaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
         </span>
       </div>
       <div className="mt-2">
-        <TituloHallazgo hallazgo={h} />
+        <TituloHallazgo hallazgo={h} href={href} />
         <RutaHallazgo hallazgo={h} />
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
@@ -129,10 +133,10 @@ function TarjetaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
   );
 }
 
-function TituloHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
+function TituloHallazgo({ hallazgo: h, href }: { hallazgo: HallazgoResumen; href: string }) {
   return (
     <Link
-      href={`/hallazgos/${h.id}`}
+      href={href}
       className="rounded-sm font-medium text-foreground underline-offset-4 hover:text-ia hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       {h.titulo}
@@ -178,11 +182,6 @@ function PrioridadRegla({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
       <div className="text-xs text-muted-foreground">por regla</div>
     </>
   );
-}
-
-/** 0.94 -> "0,94" */
-function formatearConfianza(valor: number) {
-  return valor.toFixed(2).replace(".", ",");
 }
 
 function ConfianzaIA({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
