@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 
 import { importarReporte, type ResultadoImportacion } from "@/app/acciones";
+import { EnriquecerEscaneo } from "@/components/enriquecer-escaneo";
 import { AvisoApiCaida } from "@/components/marco";
 import { InsigniaSeveridad } from "@/components/severidad";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -274,13 +275,16 @@ function ReporteImportado({ resumen: r }: { resumen: ResumenImportacion }) {
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-4">
-        <Link
-          href={hrefHallazgosDeEscaneo(r.scan_id)}
-          className={cn(buttonVariants({ size: "lg" }), "px-4", claseBotonPrincipal)}
-        >
-          Ver hallazgos de este escaneo
-        </Link>
+      <div className="mt-5 flex flex-col gap-4 border-t pt-4">
+        <EnriquecerEscaneo scanId={r.scan_id} />
+        <div>
+          <Link
+            href={hrefHallazgosDeEscaneo(r.scan_id)}
+            className={cn(buttonVariants({ size: "lg" }), "px-4", claseBotonPrincipal)}
+          >
+            Ver hallazgos de este escaneo
+          </Link>
+        </div>
       </div>
     </section>
   );

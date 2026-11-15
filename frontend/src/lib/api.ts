@@ -213,3 +213,16 @@ export async function enviar(
   }
   return { status: respuesta.status, datos };
 }
+
+/** Respuesta 200 de POST /scans/{id}/enrich. */
+export interface ResumenLote {
+  scan_id: string;
+  procesados: number;
+  enriquecidos: number;
+  fallidos: number;
+  /** Ya tenían un enriquecimiento válido (solo_pendientes=true). */
+  omitidos: number;
+  /** Ej. "ollama_no_disponible" si Ollama se cayó a la mitad. */
+  detenido_por: string | null;
+  hallazgos: { id: string; titulo: string; estado: "ok" | "failed"; motivo_fallo: string | null }[];
+}

@@ -6,7 +6,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { ErrorApi, enviar, type ResumenImportacion } from "@/lib/api";
+import { ErrorApi, enviar, type ResumenImportacion, type ResumenLote } from "@/lib/api";
 import { MAX_REPORTE_BYTES } from "@/lib/limites";
 
 export type ResultadoImportacion =
@@ -95,4 +95,58 @@ function hostDelReporte(reporte: object): string | null {
 function hostDelError(detalle: Record<string, unknown> | null): string {
   const texto = typeof detalle?.error === "string" ? detalle.error : "";
   return /^'([^']+)'/.exec(texto)?.[1] ?? "un host desconocido";
+}
+
+// ── Enriquecimiento ───────────────────────────────────────────────────────
+
+/**
+ * El lote es síncrono: 1-2 s por hallazgo y más la primera vez, mientras
+ * Ollama carga el modelo. Los 10 s de obtener() no alcanzan. Queda bajo los
+ * 300 s que espera por defecto el fetch de Node (undici) a que lleguen las
+ * cabeceras, para que el corte sea nuestro y con mensaje claro.
+ */
+const TIMEOUT_ENRIQUECER_MS = 290_000;
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type ResultadoEnriquecimiento =
+  | { tipo: "ok"; lote: ResumenLote }
+  /** 503: Ollama no respondió y no se procesó nada. */
+  | { tipo: "ollama_apagado" }
+  /** 404 */
+  | { tipo: "no_existe" }
+  /** Se acabó el tiempo; lo ya procesado quedó guardado. */
+  | { tipo: "tiempo" }
+  | { tipo: "api_caida"; mensaje: string }
+  | { tipo: "error"; mensaje: string };
+
+export async function enriquecerEscaneo(scanId: string): Promise<ResultadoEnriquecimiento> {
+  if (typeof scanId !== "string" || !UUID.test(scanId)) return { tipo: "no_existe" };
+
+  let respuesta;
+  try {
+    respuesta = await enviar(
+      `/scans/${scanId}/enrich?solo_pendientes=true`,
+      undefined,
+      TIMEOUT_ENRIQUECER_MS,
+    );
+  } catch (error) {
+    if (error instanceof ErrorApi) {
+      const causa = error.cause;
+      if (causa instanceof DOMException && causa.name === "TimeoutError") return { tipo: "tiempo" };
+      return { tipo: "api_caida", mensaje: error.message };
+    }
+    throw error;
+  }
+
+  switch (respuesta.status) {
+    case 200:
+      return { tipo: "ok", lote: respuesta.datos as ResumenLote };
+    case 503:
+      return { tipo: "ollama_apagado" };
+    case 404:
+      return { tipo: "no_existe" };
+    default:
+      return { tipo: "error", mensaje: `La API respondió ${respuesta.status} al enriquecer.` };
+  }
 }
