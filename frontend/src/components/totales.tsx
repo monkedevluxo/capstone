@@ -14,53 +14,57 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
   const s = resumen.por_severidad;
 
   return (
-    <section aria-label="Totales" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-      <Tarjeta
-        etiqueta={hayFiltros(filtros) ? "Con estos filtros" : "Hallazgos únicos"}
-        valor={resumen.total}
-      />
-      {s.critica > 0 && (
-        <Tarjeta etiqueta="Crítica" valor={s.critica} marca="bg-sev-critica-fondo" />
-      )}
-      <Tarjeta etiqueta="Alta" valor={s.alta} marca="bg-sev-alta" />
-      <Tarjeta etiqueta="Media" valor={s.media} marca="bg-sev-media" />
-      <Tarjeta etiqueta="Baja e informativa" valor={s.baja + s.informativa} marca="bg-sev-baja" />
+    // Columnas según el espacio del contenedor, no de la ventana: con la barra
+    // lateral abierta seis tarjetas no caben hasta ~1440 px.
+    <div className="@container">
+      <section aria-label="Totales" className="grid grid-cols-2 gap-3 @xl:grid-cols-3 @5xl:grid-cols-6">
+        <Tarjeta
+          etiqueta={hayFiltros(filtros) ? "Con estos filtros" : "Hallazgos únicos"}
+          valor={resumen.total}
+        />
+        {s.critica > 0 && (
+          <Tarjeta etiqueta="Crítica" valor={s.critica} marca="bg-sev-critica-fondo" />
+        )}
+        <Tarjeta etiqueta="Alta" valor={s.alta} marca="bg-sev-alta" />
+        <Tarjeta etiqueta="Media" valor={s.media} marca="bg-sev-media" />
+        <Tarjeta etiqueta="Baja e informativa" valor={s.baja + s.informativa} marca="bg-sev-baja" />
 
-      <TarjetaFiltro
-        etiqueta={
-          <>
-            <TriangleAlert aria-hidden className="size-4" />
-            Revisar primero
-          </>
-        }
-        valor={resumen.revisar}
-        activo={filtros.revisar}
-        href={hrefHallazgos(filtros, { revisar: !filtros.revisar })}
-        clases={{
-          base: "border-persona/40 bg-persona-suave",
-          enlace: "hover:border-persona focus-visible:ring-persona/40",
-          activo: "border-persona ring-2 ring-persona/30",
-          etiqueta: "text-persona-fuerte",
-          valor: "text-persona-fuerte",
-          pista: "text-persona-texto",
-        }}
-      />
+        <TarjetaFiltro
+          etiqueta={
+            <>
+              <TriangleAlert aria-hidden className="size-4" />
+              Revisar primero
+            </>
+          }
+          valor={resumen.revisar}
+          activo={filtros.revisar}
+          href={hrefHallazgos(filtros, { revisar: !filtros.revisar })}
+          clases={{
+            base: "border-persona/40 bg-persona-suave",
+            enlace: "hover:border-persona focus-visible:ring-persona/40",
+            activo: "border-persona ring-2 ring-persona/30",
+            etiqueta: "text-persona-fuerte",
+            valor: "text-persona-fuerte",
+            pista: "text-persona-texto",
+          }}
+        />
 
-      <TarjetaFiltro
-        etiqueta="Sin enriquecer"
-        valor={resumen.sin_enriquecer}
-        activo={filtros.sinEnriquecer}
-        href={hrefHallazgos(filtros, { sinEnriquecer: !filtros.sinEnriquecer })}
-        clases={{
-          base: "border-dashed border-muted-foreground/50 bg-card",
-          enlace: "hover:border-muted-foreground focus-visible:ring-ring/40",
-          activo: "border-solid border-navy ring-2 ring-navy/20",
-          etiqueta: "text-muted-foreground",
-          valor: "text-navy",
-          pista: "text-muted-foreground",
-        }}
-      />
-    </section>
+        <TarjetaFiltro
+          etiqueta="Sin enriquecer"
+          valor={resumen.sin_enriquecer}
+          activo={filtros.sinEnriquecer}
+          href={hrefHallazgos(filtros, { sinEnriquecer: !filtros.sinEnriquecer })}
+          clases={{
+            base: "border-dashed border-muted-foreground/50 bg-card",
+            enlace: "hover:border-muted-foreground focus-visible:ring-ring/40",
+            activo: "border-solid border-navy ring-2 ring-navy/20",
+            etiqueta: "text-muted-foreground",
+            valor: "text-navy",
+            pista: "text-muted-foreground",
+          }}
+        />
+      </section>
+    </div>
   );
 }
 

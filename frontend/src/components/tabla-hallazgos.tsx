@@ -20,22 +20,28 @@ const MOTIVO_REVISION: Record<string, string> = {
 };
 
 /**
- * Lista de hallazgos: tabla desde md, tarjetas apiladas en el teléfono.
+ * Lista de hallazgos: tabla cuando el espacio alcanza, tarjetas apiladas si
+ * no. Lo decide el ancho del contenedor (@container), no el de la ventana:
+ * con la barra lateral abierta a 1024 px quedan ~720 px y la tabla no cabe.
  * Los dos muestran los mismos datos.
+ *
+ * La tabla usa anchos fijos (table-fixed) para todo menos "Hallazgo", que se
+ * lleva lo que sobra: el título se parte en líneas y la ruta se trunca con
+ * la ruta completa en el title. Así nunca necesita scroll horizontal.
  */
 export function TablaHallazgos({ hallazgos }: { hallazgos: HallazgoResumen[] }) {
   return (
-    <>
-      <div className="hidden rounded-lg border bg-card md:block">
-        <Table>
+    <div className="@container">
+      <div className="hidden rounded-lg border bg-card @3xl:block">
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-28">Severidad</TableHead>
+              <TableHead className="w-[6.5rem] pl-3">Severidad</TableHead>
               <TableHead>Hallazgo</TableHead>
-              <TableHead className="text-right">Ocurrencias</TableHead>
-              <TableHead>OWASP tabla · modelo</TableHead>
-              <TableHead>Prioridad</TableHead>
-              <TableHead>Confianza IA</TableHead>
+              <TableHead className="w-[6.5rem] text-right">Ocurrencias</TableHead>
+              <TableHead className="w-52 whitespace-normal">OWASP tabla · modelo</TableHead>
+              <TableHead className="w-20">Prioridad</TableHead>
+              <TableHead className="w-32 pr-3">Confianza IA</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -46,12 +52,12 @@ export function TablaHallazgos({ hallazgos }: { hallazgos: HallazgoResumen[] }) 
         </Table>
       </div>
 
-      <ul className="flex flex-col gap-3 md:hidden">
+      <ul className="flex flex-col gap-3 @3xl:hidden">
         {hallazgos.map((h) => (
           <TarjetaHallazgo key={h.id} hallazgo={h} />
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
@@ -59,21 +65,21 @@ function FilaHallazgo({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
   const revisar = h.referencia.requiere_revision;
   return (
     <TableRow className={cn(revisar && "bg-revisar-fondo hover:bg-revisar-fondo")}>
-      <TableCell>
+      <TableCell className="pl-3">
         <InsigniaSeveridad severidad={h.severidad} />
       </TableCell>
-      <TableCell className="max-w-md whitespace-normal">
+      <TableCell className="whitespace-normal">
         <TituloHallazgo hallazgo={h} />
         <RutaHallazgo hallazgo={h} />
       </TableCell>
       <TableCell className="text-right tabular-nums">{h.ocurrencias}</TableCell>
-      <TableCell>
+      <TableCell className="whitespace-normal">
         <CategoriasOwasp hallazgo={h} />
       </TableCell>
       <TableCell>
         <PrioridadRegla hallazgo={h} />
       </TableCell>
-      <TableCell className="text-xs">
+      <TableCell className="pr-3 text-xs">
         <ConfianzaIA hallazgo={h} />
       </TableCell>
     </TableRow>
@@ -154,8 +160,8 @@ function CategoriasOwasp({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
         <span className="text-ia">{h.ia?.estado === "ok" ? (h.ia.owasp ?? "—") : "—"}</span>
       </div>
       {h.referencia.requiere_revision && (
-        <div className="mt-1 flex items-center gap-1 text-xs font-medium text-persona-texto">
-          <TriangleAlert aria-hidden className="size-3.5 shrink-0" />
+        <div className="mt-1 flex items-start gap-1 text-xs font-medium text-persona-texto">
+          <TriangleAlert aria-hidden className="mt-px size-3.5 shrink-0" />
           Revisar
           {h.referencia.motivo_revision &&
             ` · ${MOTIVO_REVISION[h.referencia.motivo_revision] ?? h.referencia.motivo_revision}`}
@@ -203,7 +209,7 @@ function ConfianzaIA({ hallazgo: h }: { hallazgo: HallazgoResumen }) {
   const porcentaje = Math.min(Math.max(h.ia.confianza, 0), 1) * 100;
   return (
     <span className="inline-flex items-center gap-2">
-      <span aria-hidden className="h-1.5 w-[72px] overflow-hidden rounded-full bg-ia-suave">
+      <span aria-hidden className="h-1.5 w-14 overflow-hidden rounded-full bg-ia-suave">
         <span className="block h-full rounded-full bg-ia" style={{ width: `${porcentaje}%` }} />
       </span>
       <span className="font-mono text-ia tabular-nums">{formatearConfianza(h.ia.confianza)}</span>
