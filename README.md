@@ -185,7 +185,7 @@ curl "localhost:8000/findings?severidad=alta"
 | Endpoint | Qué hace |
 |---|---|
 | `POST /scans/import` | Importa un reporte de ZAP en una transacción. 403 si el host no es del laboratorio, 409 si el reporte ya se importó, 422 si no es un reporte de ZAP |
-| `GET /scans` | Lista los escaneos importados |
+| `GET /scans` | Lista los escaneos importados, del más reciente al más antiguo, con su objetivo |
 | `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP del modelo (`owasp`) o de la tabla CWE (`owasp_ref`), enriquecimiento, `revisar` y texto. Orden: severidad, después los marcados para revisar, después ocurrencias |
 | `GET /findings/resumen` | Total y conteos por severidad, por estado, para revisar y sin enriquecer, con los mismos filtros que `GET /findings` |
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |

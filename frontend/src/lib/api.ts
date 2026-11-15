@@ -119,6 +119,8 @@ export function obtenerResumen(filtros: URLSearchParams) {
 export interface Escaneo {
   id: string;
   target_id: string;
+  /** base_url del target, ej. "http://juiceshop:3000". */
+  objetivo: string;
   herramienta: string;
   version: string | null;
   estado: string;
@@ -136,25 +138,6 @@ export interface Escaneo {
 /** GET /scans: el primero es el más reciente. */
 export function listarEscaneos() {
   return obtener<Escaneo[]>("/scans");
-}
-
-/**
- * Objetivo (origen de la URL) de un escaneo. GET /scans no lo trae, así que
- * se saca de la URL de uno de sus hallazgos. null si el escaneo no tiene
- * hallazgos.
- */
-export async function objetivoDeEscaneo(scanId: string): Promise<string | null> {
-  const q = new URLSearchParams({ scan_id: scanId });
-  const pagina = await listarHallazgos(q, 1, 0);
-  const primero = pagina.items[0];
-  if (!primero) return null;
-  const detalle = await obtener<{ url: string | null }>(`/findings/${primero.id}`);
-  if (!detalle.url) return null;
-  try {
-    return new URL(detalle.url).origin;
-  } catch {
-    return null;
-  }
 }
 
 /** Respuesta 201 de POST /scans/import. */

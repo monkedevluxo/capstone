@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ImportarReporte } from "@/components/importar-reporte";
 import { Aviso, AvisoApiCaida, Marco } from "@/components/marco";
 import { claseEnlace } from "@/lib/estilos";
-import { ErrorApi, listarEscaneos, objetivoDeEscaneo, type Escaneo } from "@/lib/api";
+import { ErrorApi, listarEscaneos, type Escaneo } from "@/lib/api";
 import { hrefHallazgosDeEscaneo } from "@/lib/filtros";
 
 export const metadata: Metadata = { title: "Inicio · SentinelAI" };
@@ -32,10 +32,8 @@ export default function Inicio() {
 
 async function UltimoEscaneo() {
   let escaneo: Escaneo | undefined;
-  let objetivo: string | null = null;
   try {
     [escaneo] = await listarEscaneos();
-    if (escaneo) objetivo = await objetivoDeEscaneo(escaneo.id);
   } catch (error) {
     if (error instanceof ErrorApi) {
       return (
@@ -69,7 +67,7 @@ async function UltimoEscaneo() {
               {escaneo.version && <span className="text-muted-foreground"> {escaneo.version}</span>}
             </dd>
             <dt className="text-muted-foreground">Objetivo</dt>
-            <dd className="font-mono break-all text-escaner">{objetivo ?? "—"}</dd>
+            <dd className="font-mono break-all text-escaner">{escaneo.objetivo}</dd>
             {escaneo.stats?.hallazgos !== undefined && (
               <>
                 <dt className="text-muted-foreground">Hallazgos</dt>
