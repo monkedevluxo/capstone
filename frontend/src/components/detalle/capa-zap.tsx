@@ -1,6 +1,7 @@
 import { ChevronRight, ExternalLink, ScanSearch } from "lucide-react";
 
 import { Apartado, Capa, Texto } from "@/components/detalle/capa";
+import { Plegable } from "@/components/detalle/plegable";
 import type { HallazgoDetalle, OrigenZap } from "@/lib/api";
 import {
   instanciasConEvidencia,
@@ -45,7 +46,9 @@ export function CapaZap({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
 
       {descripcion.length > 0 && (
         <Apartado titulo="Descripción">
-          <Texto parrafos={descripcion} />
+          <Plegable etiqueta="de la descripción">
+            <Texto parrafos={descripcion} />
+          </Plegable>
         </Apartado>
       )}
 
@@ -69,29 +72,18 @@ export function CapaZap({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
         )}
       </Apartado>
 
-      {solucion.length > 0 && (
+      {(solucion.length > 0 || enlaces.length > 0) && (
         <Apartado titulo="Solución que propone ZAP">
-          <Texto parrafos={solucion} />
-        </Apartado>
-      )}
-
-      {enlaces.length > 0 && (
-        <Apartado titulo="Referencias">
-          <ul className="flex flex-col gap-1 text-sm">
-            {enlaces.map((url) => (
-              <li key={url} className="min-w-0">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="inline-flex max-w-full items-center gap-1 rounded-sm text-navy underline decoration-navy/30 underline-offset-4 hover:decoration-navy focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                >
-                  <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
-                  <ExternalLink aria-hidden className="size-3.5 shrink-0" />
-                </a>
-              </li>
-            ))}
-          </ul>
+          <Plegable
+            etiqueta="de la solución y las referencias"
+            extra={enlaces.length > 0 && <Referencias enlaces={enlaces} />}
+          >
+            {solucion.length > 0 ? (
+              <Texto parrafos={solucion} />
+            ) : (
+              <p className="text-sm text-muted-foreground">ZAP no propone una solución.</p>
+            )}
+          </Plegable>
         </Apartado>
       )}
 
@@ -147,5 +139,29 @@ function Campo({ nombre, valor }: { nombre: string; valor: string }) {
       {/* Texto que viene del sitio escaneado: siempre como texto, nunca HTML. */}
       <dd className="break-all whitespace-pre-wrap">{valor}</dd>
     </>
+  );
+}
+
+/** Enlaces de `reference`: solo http(s), se abren aparte. */
+function Referencias({ enlaces }: { enlaces: string[] }) {
+  return (
+    <div className="mt-3">
+      <h4 className="mb-1 text-xs font-semibold text-muted-foreground">Referencias</h4>
+      <ul className="flex flex-col gap-1 text-sm">
+        {enlaces.map((url) => (
+          <li key={url} className="min-w-0">
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex max-w-full items-center gap-1 rounded-sm text-navy underline decoration-navy/30 underline-offset-4 hover:decoration-navy focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+              <ExternalLink aria-hidden className="size-3.5 shrink-0" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
