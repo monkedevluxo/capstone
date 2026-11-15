@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { CabeceraHallazgo } from "@/components/detalle/cabecera";
@@ -11,6 +12,7 @@ import { EnriquecerHallazgo } from "@/components/detalle/enriquecer-hallazgo";
 import { AvisoApiCaida, Marco } from "@/components/marco";
 import { ErrorApi, obtenerHallazgo, type HallazgoDetalle } from "@/lib/api";
 import { UUID_VALIDO, hrefVolver } from "@/lib/filtros";
+import { COOKIE_NOMBRE_REVISOR } from "@/lib/revisor";
 
 export const metadata: Metadata = { title: "Hallazgo · SentinelAI" };
 
@@ -68,7 +70,10 @@ export default async function PaginaHallazgo({ params, searchParams }: PageProps
         </div>
       </div>
 
-      <CapaPersona hallazgo={hallazgo} />
+      <CapaPersona
+        hallazgo={hallazgo}
+        revisorInicial={(await cookies()).get(COOKIE_NOMBRE_REVISOR)?.value ?? ""}
+      />
     </Marco>
   );
 }

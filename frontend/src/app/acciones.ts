@@ -5,15 +5,20 @@
 // API no necesita CORS y su dirección no llega al navegador.
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 import {
   ErrorApi,
   enviar,
+  type DecisionValidacion,
   type DetalleIA,
+  type EstadoHallazgo,
+  type Prioridad,
   type ResumenImportacion,
   type ResumenLote,
 } from "@/lib/api";
 import { MAX_REPORTE_BYTES } from "@/lib/limites";
+import { COOKIE_NOMBRE_REVISOR } from "@/lib/revisor";
 
 export type ResultadoImportacion =
   | { tipo: "ok"; resumen: ResumenImportacion }
@@ -204,3 +209,139 @@ export async function enriquecerHallazgo(id: string): Promise<ResultadoEnriquece
       return { tipo: "error", mensaje: `La API respondió ${respuesta.status} al enriquecer.` };
   }
 }
+
+// ── Decisión humana (T-056) ───────────────────────────────────────────────
+
+// Cookie con el nombre del revisor (sin login: es un laboratorio). La página
+// del detalle la lee con el mismo nombre (lib/revisor.ts).
+const COOKIE_REVISOR = COOKIE_NOMBRE_REVISOR;
+
+export interface DatosDecision {
+  decision: DecisionValidacion;
+  revisor: string;
+  comentario: string;
+  /** null = la prioridad por regla, sin corregir. */
+  prioridadCorregida: Prioridad | null;
+  /** La sugerencia que se mostró en pantalla al decidir, o null si no había. */
+  enrichmentId: string | null;
+  ai: {
+    owaspCorrecto: boolean | null;
+    prioridadCorrecta: boolean | null;
+    remediacionUtil: boolean | null;
+    alucinacion: boolean | null;
+    nota: string;
+  } | null;
+}
+
+/** Campos del formulario a los que se les puede pegar un error. */
+export type CampoDecision = "decision" | "revisor" | "comentario" | "prioridad" | "ai" | "general";
+
+export type ResultadoDecision =
+  | { tipo: "ok"; estado: EstadoHallazgo }
+  /** 409: la sugerencia cambió mientras la persona decidía. */
+  | { tipo: "sugerencia_cambio" }
+  | { tipo: "invalido"; errores: Partial<Record<CampoDecision, string>> }
+  | { tipo: "no_existe" }
+  | { tipo: "api_caida"; mensaje: string }
+  | { tipo: "error"; mensaje: string };
+
+/** De nombre de campo de la API a campo del formulario. */
+const CAMPO_API: Record<string, CampoDecision> = {
+  decision: "decision",
+  revisor: "revisor",
+  comentario: "comentario",
+  prioridad_corregida: "prioridad",
+  enrichment_id: "general",
+  ai_owasp_correcto: "ai",
+  ai_prioridad_correcta: "ai",
+  ai_remediacion_util: "ai",
+  ai_alucinacion: "ai",
+  ai_nota: "ai",
+};
+
+const MENSAJE_CAMPO: Record<CampoDecision, string> = {
+  decision: "Elige una decisión.",
+  revisor: "Escribe tu nombre (hasta 120 caracteres).",
+  comentario: "El comentario es demasiado largo.",
+  prioridad: "Elige una prioridad válida.",
+  ai: "Las respuestas sobre la sugerencia no se pudieron guardar.",
+  general: "No se pudo registrar la decisión.",
+};
+
+export async function registrarDecision(
+  id: string,
+  datos: DatosDecision,
+): Promise<ResultadoDecision> {
+  if (typeof id !== "string" || !UUID.test(id)) return { tipo: "no_existe" };
+
+  // Primera validación acá, para no ir a la API con algo que va a rechazar.
+  const revisor = typeof datos.revisor === "string" ? datos.revisor.trim() : "";
+  const errores: Partial<Record<CampoDecision, string>> = {};
+  if (!datos.decision) errores.decision = MENSAJE_CAMPO.decision;
+  if (!revisor || revisor.length > 120) errores.revisor = MENSAJE_CAMPO.revisor;
+  if (Object.keys(errores).length > 0) return { tipo: "invalido", errores };
+
+  const cuerpo = {
+    decision: datos.decision,
+    revisor,
+    comentario: datos.comentario || null,
+    prioridad_corregida: datos.prioridadCorregida,
+    enrichment_id: datos.enrichmentId,
+    ai_owasp_correcto: datos.ai?.owaspCorrecto ?? null,
+    ai_prioridad_correcta: datos.ai?.prioridadCorrecta ?? null,
+    ai_remediacion_util: datos.ai?.remediacionUtil ?? null,
+    ai_alucinacion: datos.ai?.alucinacion ?? null,
+    ai_nota: datos.ai?.nota || null,
+  };
+
+  let respuesta;
+  try {
+    respuesta = await enviar(`/findings/${id}/validaciones`, JSON.stringify(cuerpo), 15_000);
+  } catch (error) {
+    if (error instanceof ErrorApi) return { tipo: "api_caida", mensaje: error.message };
+    throw error;
+  }
+
+  switch (respuesta.status) {
+    case 201: {
+      // Para la próxima vez: el nombre ya viene escrito.
+      (await cookies()).set(COOKIE_REVISOR, revisor, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+        httpOnly: true,
+      });
+      revalidatePath(`/hallazgos/${id}`);
+      return { tipo: "ok", estado: (respuesta.datos as { estado: EstadoHallazgo }).estado };
+    }
+    case 409:
+      return { tipo: "sugerencia_cambio" };
+    case 404:
+      return { tipo: "no_existe" };
+    case 422:
+      return { tipo: "invalido", errores: erroresDe422(respuesta.datos) };
+    default:
+      return { tipo: "error", mensaje: `La API respondió ${respuesta.status} al guardar.` };
+  }
+}
+
+/** Errores de FastAPI (lista de Pydantic) o propios ({error, campo}). */
+function erroresDe422(datos: unknown): Partial<Record<CampoDecision, string>> {
+  const errores: Partial<Record<CampoDecision, string>> = {};
+  const detail = (datos as { detail?: unknown } | null)?.detail;
+  if (Array.isArray(detail)) {
+    for (const e of detail) {
+      const loc = (e as { loc?: unknown[] }).loc;
+      const campo = CAMPO_API[String(loc?.[loc.length - 1] ?? "")] ?? "general";
+      errores[campo] ??= MENSAJE_CAMPO[campo];
+    }
+  } else if (detail && typeof detail === "object") {
+    const d = detail as { error?: unknown; campo?: unknown };
+    const campo = CAMPO_API[String(d.campo ?? "")] ?? "general";
+    errores[campo] = typeof d.error === "string" ? primeraMayuscula(d.error) + "." : MENSAJE_CAMPO[campo];
+  }
+  if (Object.keys(errores).length === 0) errores.general = MENSAJE_CAMPO.general;
+  return errores;
+}
+
+const primeraMayuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
