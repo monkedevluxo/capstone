@@ -191,7 +191,7 @@ curl "localhost:8000/findings?severidad=alta"
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
 | `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
 | `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
-| `POST /findings/{id}/validaciones` | Registra la decisión de una persona (confirmado, falso positivo, riesgo aceptado, duplicado o requiere segunda opinión) y actualiza el estado del hallazgo en la misma transacción. Guarda qué sugerencia del modelo se juzgó y las banderas del golden set. 409 si la sugerencia cambió mientras se decidía |
+| `POST /findings/{id}/validaciones` | Registra la decisión de una persona (confirmado, falso positivo, riesgo aceptado, duplicado o requiere segunda opinión) y actualiza el estado del hallazgo en la misma transacción: cada decisión deja su estado homónimo, `duplicado` incluido (estado propio desde la migración `7c2e9d41b3a5`), y "requiere segunda opinión" lo deja `en_triage` (ciclo de vida en `docs/diseno/ESQUEMA_HALLAZGO.md`, sección 7). Guarda qué sugerencia del modelo se juzgó y las banderas del golden set. 409 si la sugerencia cambió mientras se decidía |
 
 Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP según la tabla CWE → OWASP 2025, la prioridad por regla y la marca `requiere_revision` de la opción mixta. Se calcula al consultar; no se guarda.
 
