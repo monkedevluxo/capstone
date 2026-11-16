@@ -101,6 +101,29 @@ TOTAL="$(campo "${RESUMEN}" total)"
 [[ "${TOTAL}" == "${NUEVOS}" ]] && ok "${TOTAL} hallazgos, igual que los importados" \
   || falla "el resumen dice ${TOTAL} y se importaron ${NUEVOS}"
 
+paso "6. Enriquecer el escaneo con la IA"
+RESPUESTA="$(curl -s -w '\n%{http_code}' -X POST "${API}/scans/${SCAN_ID}/enrich")"
+CODIGO="$(tail -1 <<<"${RESPUESTA}")"
+CUERPO="$(sed '$d' <<<"${RESPUESTA}")"
+case "${CODIGO}" in
+  200) ok "200 · $(campo "${CUERPO}" procesados) hallazgos procesados" ;;
+  503) aviso "Ollama no responde: los hallazgos quedan 'sin enriquecer' y el flujo sigue" ;;
+  *)   falla "se esperaba 200 o 503 y llegó ${CODIGO}: ${CUERPO}" ;;
+esac
+
+paso "7. Generar el informe técnico"
+mkdir -p lab/salidas
+docker exec "${CONTENEDOR}" python scripts/informe.py > "${INFORME}" 2>/dev/null \
+  || falla "scripts/informe.py terminó con error"
+FALTAN=0
+for seccion in "1. Resumen" "2. Escaneos de origen" "3. Hallazgos" "4. Descartados" "5. Calidad de la IA"; do
+  grep -q "${seccion}" "${INFORME}" || { falla "al informe le falta la sección '${seccion}'"; FALTAN=1; }
+done
+FICHAS="$(grep -o '<article class="hallazgo"' "${INFORME}" | wc -l)"
+[[ "${FALTAN}" -eq 0 ]] && ok "${INFORME} · 5 secciones · ${FICHAS} fichas de hallazgo"
+[[ "${FICHAS}" == "${TOTAL}" ]] && ok "una ficha por hallazgo" \
+  || falla "el informe trae ${FICHAS} fichas y la base tiene ${TOTAL} hallazgos"
+
 # --- Resultado ----------------------------------------------------------------
 
 echo
