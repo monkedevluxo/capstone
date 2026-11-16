@@ -1,0 +1,23 @@
+meta {
+  name: Validar con revisor vacío (422)
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/findings/{{findingId}}/validaciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "decision": "confirmado",
+    "revisor": "   "
+  }
+}
+
+assert {
+  res.status: eq 422
+  res.body.detail: isArray
+}

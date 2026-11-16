@@ -1,0 +1,25 @@
+meta {
+  name: Reenriquecer el mismo hallazgo
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/findings/{{findingId}}/enrich
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.ia.estado: eq ok
+  res.body.ia.id: neq {{sugerenciaVieja}}
+}
+
+script:post-response {
+  bru.setVar("sugerenciaVigente", res.getBody().ia.id);
+}
+
+docs {
+  La sugerencia anterior pasa a histórica.
+}

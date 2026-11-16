@@ -1,0 +1,24 @@
+meta {
+  name: Hallazgos por texto
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/findings?q=header
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+}

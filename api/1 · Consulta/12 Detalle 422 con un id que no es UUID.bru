@@ -1,0 +1,16 @@
+meta {
+  name: Detalle 422 con un id que no es UUID
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/findings/no-es-un-uuid
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 422
+  res.body.detail: isArray
+}

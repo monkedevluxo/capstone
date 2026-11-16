@@ -1,0 +1,28 @@
+meta {
+  name: Hallazgos de un escaneo
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/findings?scan_id={{scanId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+}
+
+docs {
+  Usa el id del primer escaneo de la request 02.
+}

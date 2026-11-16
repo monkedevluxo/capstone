@@ -1,0 +1,31 @@
+meta {
+  name: Validar con la sugerencia vigente (201)
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/findings/{{findingId}}/validaciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "decision": "confirmado",
+    "revisor": "Bruno",
+    "enrichment_id": "{{sugerenciaVigente}}",
+    "ai_owasp_correcto": true,
+    "ai_prioridad_correcta": true,
+    "ai_remediacion_util": true,
+    "ai_alucinacion": false,
+    "comentario": "Validación de prueba desde Bruno."
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.estado: eq confirmado
+  res.body.validacion.enrichment_id: eq {{sugerenciaVigente}}
+  res.body.validacion.ai_owasp_correcto: eq true
+}

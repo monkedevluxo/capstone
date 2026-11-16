@@ -1,0 +1,16 @@
+meta {
+  name: Detalle 404 con un UUID inventado
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/findings/00000000-0000-4000-8000-000000000000
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+  res.body.detail: eq hallazgo no encontrado
+}

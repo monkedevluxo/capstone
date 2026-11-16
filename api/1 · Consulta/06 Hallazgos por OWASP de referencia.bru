@@ -1,0 +1,27 @@
+meta {
+  name: Hallazgos por OWASP de referencia
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/findings?owasp_ref=A05:2025
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+  test("todos son A05:2025 según la tabla CWE", () => {
+    for (const f of res.getBody().items) expect(f.referencia.owasp_referencia).to.equal("A05:2025");
+  });
+}

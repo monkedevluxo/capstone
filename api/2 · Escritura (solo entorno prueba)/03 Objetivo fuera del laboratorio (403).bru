@@ -1,0 +1,32 @@
+meta {
+  name: Objetivo fuera del laboratorio (403)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/scans/import
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "@programName": "ZAP",
+    "@version": "2.16.0",
+    "site": [
+      {
+        "@name": "http://example.com",
+        "@host": "example.com",
+        "@port": "80",
+        "@ssl": "false",
+        "alerts": []
+      }
+    ]
+  }
+}
+
+assert {
+  res.status: eq 403
+  res.body.detail.error: contains no es un objetivo del laboratorio
+}

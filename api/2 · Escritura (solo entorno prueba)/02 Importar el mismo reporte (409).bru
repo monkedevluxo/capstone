@@ -1,0 +1,20 @@
+meta {
+  name: Importar el mismo reporte (409)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/scans/import
+  body: file
+  auth: none
+}
+
+body:file {
+  file: @file(../lab/fixtures/zap_juiceshop_baseline_v1.json) @contentType(application/json)
+}
+
+assert {
+  res.status: eq 409
+  res.body.detail.error: isString
+}

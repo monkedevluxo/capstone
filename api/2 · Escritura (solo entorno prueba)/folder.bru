@@ -1,0 +1,22 @@
+meta {
+  name: 2 · Escritura (solo entorno prueba)
+  seq: 2
+}
+
+script:pre-request {
+  // Barrera: esta carpeta escribe. Nunca contra la base de la demo.
+  const entorno = bru.getEnvName();
+  const base = String(bru.getEnvVar("baseUrl") || "");
+  if (entorno !== "prueba" || bru.getEnvVar("escritura") !== "si" || /:8000(\/|$)/.test(base)) {
+    throw new Error(
+      `BLOQUEADO: esta carpeta escribe en la base. Solo corre con el entorno "prueba" ` +
+      `y nunca contra :8000 (la API de la demo); usa una API apuntada a sentinelai_test. ` +
+      `Entorno actual: "${entorno || "ninguno"}", URL: ${base || "(vacía)"}.`
+    );
+  }
+}
+
+docs {
+  Escribe en la base. Solo con el entorno "prueba", contra una API apuntada a
+  sentinelai_test vacía y con un Ollama (real o falso) para los enrich.
+}

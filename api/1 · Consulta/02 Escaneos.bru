@@ -1,0 +1,28 @@
+meta {
+  name: Escaneos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/scans
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body: isArray
+}
+
+script:post-response {
+  const s = res.getBody(); if (s.length) bru.setVar("scanId", s[0].id);
+}
+
+tests {
+  test("cada escaneo trae objetivo y herramienta", () => {
+    for (const s of res.getBody()) {
+      expect(s).to.include.keys("id", "objetivo", "herramienta", "estado", "fecha");
+    }
+  });
+}
