@@ -362,7 +362,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 | **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
-En total son 192 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 229 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 
@@ -391,7 +391,7 @@ docker compose exec api python scripts/verificar_bd.py
 `verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
 datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
 
-Los tests de ingesta, enriquecimiento, resumen y validaciones (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`, `tests/test_validaciones_api.py`) se saltan si no hay una base
+Los tests de ingesta, enriquecimiento, resumen y validaciones (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`, `tests/test_validaciones_api.py`, `tests/test_intercambio.py`) se saltan si no hay una base
 PostgreSQL disponible, y vacían las tablas antes de cada prueba: no los corras
 contra una base con datos que quieras conservar.
 
@@ -412,9 +412,9 @@ El plan parte el 7 de septiembre de 2026 y termina el 13 de diciembre, dentro de
 - [x] **S1 · 7 sep – 20 sep** — Laboratorio, aislamiento de red, primer escaneo
 - [x] **S2 · 21 sep – 4 oct** — Modelo de datos y migraciones
 - [x] **S3 · 5 oct – 18 oct** — Parser, normalización y API de ingesta
-- [ ] **S4 · 19 oct – 1 nov** — IA integrada a la API y enriquecimiento por lote *(módulo de IA ya adelantado)*
-- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(golden set inicial ya adelantado)*
-- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega)
+- [x] **S4 · 19 oct – 1 nov** — IA integrada a la API y enriquecimiento por lote
+- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(dashboard hecho: inicio, lista con filtros y detalle, PR #21 en revisión; golden set: la herramienta para anotarlo entre varios revisores está lista, falta la anotación)*
+- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega) *(validación humana hecha: decisión desde el detalle y estado `duplicado`; falta el informe técnico)*
 - [ ] **S7 · 30 nov – 13 dic** — Documentación, evidencias y defensa
 
 El detalle de las 71 tareas, con su estado y responsable, está en la planilla de sprints.
