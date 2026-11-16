@@ -112,3 +112,40 @@ jobs:
         run: |
           alembic downgrade base
           alembic upgrade head
+
+  # Dashboard: bun instala, Node ejecuta (igual que en el contenedor).
+  # No necesita la API: la página de hallazgos se renderiza por request, así
+  # que `next build` no la llama. Tampoco necesita internet para las fuentes.
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      # tsc de TypeScript 7. El paquete `typescript` es TS 6, que es el que
+      # usan ESLint y `next build` (ver los alias en package.json).
+      - name: Tipos
+        run: bun run typecheck
+
+      - name: Build
+        run: bun run build

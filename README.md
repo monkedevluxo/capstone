@@ -86,7 +86,7 @@ Un escaneo completo demora entre 9 y 40 minutos según el equipo y si usa Ajax S
 | Backend | Python · FastAPI · SQLAlchemy · Alembic |
 | Base de datos | PostgreSQL 16 |
 | IA | Ollama · Llama 3.1 8B (q4_K_M) · validación con Pydantic |
-| Frontend | Next.js · React |
+| Frontend | Next.js 16 (App Router) · React · TypeScript · Tailwind CSS · shadcn/ui · bun |
 | Laboratorio | Docker Compose |
 | Escáner | OWASP ZAP (con Ajax Spider) |
 | Objetivo | OWASP Juice Shop |
@@ -185,7 +185,7 @@ curl "localhost:8000/findings?severidad=alta"
 | Endpoint | Qué hace |
 |---|---|
 | `POST /scans/import` | Importa un reporte de ZAP en una transacción. 403 si el host no es del laboratorio, 409 si el reporte ya se importó, 422 si no es un reporte de ZAP |
-| `GET /scans` | Lista los escaneos importados |
+| `GET /scans` | Lista los escaneos importados, del más reciente al más antiguo, con su objetivo |
 | `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP del modelo (`owasp`) o de la tabla CWE (`owasp_ref`), enriquecimiento, `revisar` y texto. Orden: severidad, después los marcados para revisar, después ocurrencias |
 | `GET /findings/resumen` | Total y conteos por severidad, por estado, para revisar y sin enriquecer, con los mismos filtros que `GET /findings` |
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
@@ -196,7 +196,38 @@ Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP s
 
 Documentación interactiva de la API: `http://localhost:8000/docs`
 
-<!-- TODO: agregar el levantamiento del frontend (S5) -->
+### Levantar el dashboard
+
+```bash
+docker compose up -d web
+```
+
+Queda en `http://localhost:3000` y lista los hallazgos de `GET /findings`. El
+servidor de Next lee la API en `http://api:8000` dentro de la red `lab_datos`;
+el navegador nunca habla con la API directo, por eso no hay CORS. El servicio
+`web` no está en `lab_interna`: no alcanza al objetivo.
+
+El código de `frontend/` está montado en vivo y Next recarga al guardar. Si
+cambian las dependencias (`package.json` o `bun.lock`), reconstruye y renueva
+el volumen de `node_modules`:
+
+```bash
+docker compose up -d --build -V web
+```
+
+Para trabajar fuera del contenedor hace falta [bun](https://bun.sh). bun solo
+instala y corre scripts; en el contenedor Next se ejecuta con Node:
+
+```bash
+cd frontend
+bun install
+bun --bun run lint        # --bun: usa el runtime de bun si no tienes Node
+bun --bun run typecheck   # tsc de TypeScript 7
+```
+
+Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
+compila y se ve igual sin internet.
+
 <!-- TODO: documentar las variables de entorno y el archivo .env.ejemplo -->
 
 ---
@@ -249,12 +280,13 @@ El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.m
 ## Integración continua
 
 Cada PR hacia `main` corre automáticamente en GitHub Actions
-(`.github/workflows/ci.yml`). Son dos jobs:
+(`.github/workflows/ci.yml`). Son tres jobs:
 
 | Job | Qué comprueba |
 |---|---|
 | **Tests** | Los tests del parser de ZAP, del módulo de IA (sin depender de Ollama) y que `ejemplo_hallazgo.json` cumpla `finding.schema.json` |
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
+| **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
 En total son 149 pruebas automatizadas, más las verificaciones de restricciones.
 

@@ -2,7 +2,7 @@
 SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
 
     POST /scans/import       importa un reporte JSON de ZAP
-    GET  /scans              escaneos importados, del más reciente al más antiguo
+    GET  /scans              escaneos importados (con su objetivo), del más reciente al más antiguo
     GET  /findings           hallazgos con filtros y paginación
     GET  /findings/resumen   conteos por severidad, estado, "revisar" y "sin enriquecer"
     GET  /findings/{id}      detalle: evidencia original, instancias, IA, validaciones
@@ -22,7 +22,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy import Integer, String, and_, case, cast, column, func, not_, or_, select, values
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.db import get_db
 from app.enriquecimiento import (
@@ -81,11 +81,15 @@ def importar(
 
 @router.get("/scans", tags=["consulta"])
 def listar_escaneos(db: Session = Depends(get_db)):
-    filas = db.scalars(select(Scan).order_by(Scan.started_at.desc())).all()
+    """Escaneos del más reciente al más antiguo. `objetivo` es la base_url del target."""
+    filas = db.scalars(
+        select(Scan).options(selectinload(Scan.target)).order_by(Scan.started_at.desc())
+    ).all()
     return [
         {
             "id": str(s.id),
             "target_id": str(s.target_id),
+            "objetivo": s.target.base_url,
             "herramienta": s.tool.value,
             "version": s.tool_version,
             "estado": s.status.value,

@@ -54,6 +54,27 @@ def _contar(tabla: str) -> int:
 
 # ── Ingesta ───────────────────────────────────────────────────────────────
 
+def test_listar_escaneos_trae_el_objetivo_del_mas_reciente_al_mas_antiguo():
+    a = cliente.post("/scans/import", json=_cargar("zap_juiceshop_ajax_v2.json")).json()
+    b = cliente.post("/scans/import", json=_cargar("zap_juiceshop_full_v1.json")).json()
+
+    r = cliente.get("/scans")
+    assert r.status_code == 200, r.text
+    escaneos = r.json()
+    assert [e["id"] for e in escaneos] == [b["scan_id"], a["scan_id"]]
+    # El mismo objetivo que devolvió la importación, que es la base_url del target.
+    assert {e["objetivo"] for e in escaneos} == {a["objetivo"]}
+    with engine.connect() as c:
+        base_url = c.scalar(text("SELECT base_url FROM targets"))
+    assert escaneos[0]["objetivo"] == base_url
+
+
+def test_listar_escaneos_vacio():
+    r = cliente.get("/scans")
+    assert r.status_code == 200
+    assert r.json() == []
+
+
 def test_importa_un_reporte_real():
     r = cliente.post("/scans/import", json=_cargar("zap_juiceshop_ajax_v2.json"))
     assert r.status_code == 201, r.text
