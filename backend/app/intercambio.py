@@ -74,6 +74,12 @@ CAMPOS_VALIDACION = (
     "ai_alucinacion", "ai_nota",
 )
 BANDERAS = ("ai_owasp_correcto", "ai_prioridad_correcta", "ai_remediacion_util", "ai_alucinacion")
+INT4 = 2**31 - 1
+
+
+def opina_de_la_ia(v) -> bool:
+    """Igual que NuevaValidacion.opina_de_la_ia de la API: banderas o nota."""
+    return any(getattr(v, b) is not None for b in BANDERAS) or v.ai_nota is not None
 # Lo que puede diferir entre bases sin que sea un conflicto.
 NO_COMPARAR = {"is_current"}
 
@@ -96,7 +102,7 @@ class ItemEnriquecimiento(_Estricto):
     uuid: uuid.UUID
     hallazgo: RefHallazgo
     state: EstadoIA
-    owasp_version: str | None
+    owasp_version: Annotated[str, StringConstraints(max_length=10)] | None
     owasp_category: CategoriaOwasp | None
     priority: Prioridad | None
     confidence: Annotated[float, Field(ge=0, le=1)] | None
@@ -108,8 +114,8 @@ class ItemEnriquecimiento(_Estricto):
     model: Annotated[str, StringConstraints(min_length=1, max_length=120)]
     prompt_version: Annotated[str, StringConstraints(min_length=1, max_length=30)]
     prompt_sha256: Annotated[str, StringConstraints(max_length=64)] | None
-    attempts: Annotated[int, Field(ge=1)]
-    latency_ms: int | None
+    attempts: Annotated[int, Field(ge=1, le=INT4)]
+    latency_ms: Annotated[int, Field(ge=0, le=INT4)] | None
     generated_at: AwareDatetime
     is_current: bool
 
@@ -145,8 +151,7 @@ class ItemValidacion(_Estricto):
     @model_validator(mode="after")
     def _banderas_con_sugerencia(self):
         # Igual que la API (T-057): opinar de la IA exige decir qué sugerencia.
-        opina = any(getattr(self, b) is not None for b in BANDERAS) or self.ai_nota is not None
-        if opina and self.enrichment_uuid is None:
+        if opina_de_la_ia(self) and self.enrichment_uuid is None:
             raise ValueError("banderas ai_* sin enrichment_uuid: no se sabe qué sugerencia juzgaron")
         return self
 
@@ -407,9 +412,9 @@ def _importar_validaciones(db: Session, items: list[ItemValidacion], r: Reporte)
                     f"validación {it.uuid}: el enriquecimiento {it.enrichment_uuid} es de otro hallazgo en esta base"
                 )
                 continue
-            if sugerencia.state != EstadoIA.ok and any(getattr(it, b) is not None for b in BANDERAS):
+            if sugerencia.state != EstadoIA.ok and opina_de_la_ia(it):
                 r.conflictos.append(
-                    f"validación {it.uuid}: trae banderas ai_* sobre un enriquecimiento fallido"
+                    f"validación {it.uuid}: opina de la IA (ai_*) sobre un enriquecimiento fallido"
                 )
                 continue
 
@@ -431,12 +436,27 @@ def _importar_validaciones(db: Session, items: list[ItemValidacion], r: Reporte)
             r.estados.append(f"{f.titulo}: {antes.value} → {despues.value}")
 
 
+def _avisar_futuro(db: Session, items: list, r: Reporte) -> None:
+    """Una fecha posterior a ahora (reloj desfasado en otra máquina) gana el
+    "más reciente": el estado del hallazgo no cambiaría con decisiones locales
+    hasta que el reloj la alcance. Se importa igual, pero se avisa."""
+    ahora = db.scalar(text("SELECT now()"))
+    for it in items:
+        fecha = getattr(it, "reviewed_at", None) or getattr(it, "generated_at", None)
+        if fecha is not None and fecha > ahora:
+            r.avisos.append(
+                f"{it.uuid} ({_legible(it.hallazgo)}): fecha {fecha.isoformat()} en el futuro; "
+                f"¿reloj desfasado en {r.base_origen}?"
+            )
+
+
 def importar(db: Session, d: Any) -> Reporte:
     """Importa un archivo de intercambio. No hace commit: lo decide el llamador
     (commit normal, rollback con --simular). Lanza ArchivoInvalido antes de
     tocar la base si el archivo no es válido."""
     archivo, items = validar_archivo(d)
     r = Reporte(tipo=archivo.tipo, base_origen=archivo.base_origen, total=len(items))
+    _avisar_futuro(db, items, r)
     if archivo.tipo == "enriquecimientos":
         _importar_enriquecimientos(db, items, r)
     else:

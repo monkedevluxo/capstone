@@ -14,7 +14,8 @@ Uso (dentro del contenedor api; el archivo va por stdin/stdout):
 Exportar y metricas abren una transacción de solo lectura. Importar hace todo
 en una transacción: --simular la deshace y muestra el mismo reporte.
 
-Códigos de salida: 0 bien, 2 archivo inválido (no se importó nada).
+Códigos de salida: 0 bien, 2 archivo inválido, 1 la base rechazó algo (en ambos
+casos no se importó nada).
 """
 
 import argparse
@@ -25,8 +26,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sqlalchemy import text  # noqa: E402
+from sqlalchemy.exc import SQLAlchemyError  # noqa: E402
 
-from app.db import SessionLocal  # noqa: E402
+from app.db import SessionLocal, engine  # noqa: E402
 from app.intercambio import (  # noqa: E402
     TIPOS, ArchivoInvalido, exportar, importar, metricas, metricas_texto,
 )
@@ -50,6 +52,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.comando == "exportar" and args.revisor and args.que != "validaciones":
         p.error("--revisor solo aplica a --que validaciones")
+
+    # stdout es el archivo exportado o el reporte: con SQL_ECHO=true los logs
+    # de SQLAlchemy lo ensuciarían y el JSON quedaría inválido.
+    engine.echo = False
 
     with SessionLocal() as db:
         if args.comando == "exportar":
@@ -77,6 +83,11 @@ def main(argv: list[str] | None = None) -> int:
             for x in err.errores:
                 print(f"  - {x}", file=sys.stderr)
             return 2
+        except SQLAlchemyError as err:
+            db.rollback()
+            print(f"La base rechazó la importación, no se importó nada: {err.__class__.__name__}: "
+                  f"{str(err).splitlines()[0]}", file=sys.stderr)
+            return 1
         if args.simular:
             db.rollback()
         else:

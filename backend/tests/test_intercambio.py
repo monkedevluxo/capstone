@@ -488,3 +488,50 @@ def test_metricas_por_revisor_total_y_acuerdo():
     assert salida.returncode == 0, salida.stderr
     assert "Felipe" in salida.stdout and "κ" in salida.stdout and "n = 2" in salida.stdout
     assert json.loads(_cli("metricas", "--json").stdout)["total"]["ai_owasp_correcto"]["n"] == 5
+
+
+# ── Revisión final ────────────────────────────────────────────────────────
+
+@pytest.mark.parametrize("dañar", [
+    lambda i: i.update(owasp_version="OWASP-2025-x"),   # String(10) en la base
+    lambda i: i.update(latency_ms=2**31),                 # int4 en la base
+    lambda i: i.update(attempts=2**31),
+], ids=["owasp_version_largo", "latencia_int4", "intentos_int4"])
+def test_valores_que_la_base_rechazaria_hacen_invalido_el_archivo(dañar):
+    _enriquecer(_id("SQL Injection"))
+    enr = _exportar("enriquecimientos")
+    dañar(enr["items"][0])
+    _otra_base()
+    r = _cli("importar", entrada=json.dumps(enr))
+    assert r.returncode == 2 and "no se importó nada" in r.stderr
+    assert "Traceback" not in r.stderr
+
+
+def test_ai_nota_sobre_un_enriquecimiento_fallido_es_conflicto():
+    f = _id("SQL Injection")
+    _enriquecer(f, respuesta="esto no es json")
+    fallido = _sugerencia(f)
+    _validar(f)
+    val = _exportar("validaciones")
+    val["items"][0].update(uuid=str(uuid.uuid4()), enrichment_uuid=fallido, ai_nota="Raro.")
+    r = _importar(val)
+    assert (r.importados, len(r.conflictos)) == (0, 1)
+
+
+def test_fechas_en_el_futuro_se_avisan():
+    _validar(_id("SQL Injection"))
+    val = _exportar("validaciones")
+    val["items"][0].update(uuid=str(uuid.uuid4()), reviewed_at="2099-01-01T00:00:00+00:00")
+    r = _importar(val)
+    assert r.importados == 1
+    assert any("futuro" in a for a in r.avisos)
+
+
+def test_exportar_deja_json_valido_aunque_sql_echo_este_activo():
+    _enriquecer(_id("SQL Injection"))
+    r = subprocess.run(
+        [sys.executable, "scripts/intercambio.py", "exportar", "--que", "enriquecimientos"],
+        capture_output=True, text=True, cwd=BACKEND, env={**os.environ, "SQL_ECHO": "true"},
+    )
+    assert r.returncode == 0, r.stderr
+    assert len(json.loads(r.stdout)["items"]) == 1
