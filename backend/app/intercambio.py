@@ -13,7 +13,7 @@ Flujo del golden set entre varios revisores:
     1. Joaquín enriquece con Ollama real y exporta los enriquecimientos.
     2. Cada uno los importa: todos juzgan las mismas sugerencias.
     3. Cada uno anota en su dashboard y exporta sus validaciones.
-    4. Luciano importa todas.
+    4. Luciano importa todas y calcula las métricas.
 
 Reglas al importar (todo en una transacción; el llamador hace commit):
 
@@ -37,8 +37,10 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from itertools import combinations
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -441,3 +443,118 @@ def importar(db: Session, d: Any) -> Reporte:
         _importar_validaciones(db, items, r)
     db.flush()
     return r
+
+
+# ── Métricas ──────────────────────────────────────────────────────────────
+
+def kappa(pares: list[tuple[bool, bool]]) -> float | None:
+    """κ de Cohen para dos revisores con respuestas sí/no.
+
+    None si no hay pares o si el acuerdo esperado por azar es 1 (los dos
+    respondieron siempre lo mismo): ahí κ no está definido.
+    """
+    n = len(pares)
+    if n == 0:
+        return None
+    po = sum(a == b for a, b in pares) / n
+    si_a = sum(a for a, _ in pares) / n
+    si_b = sum(b for _, b in pares) / n
+    pe = si_a * si_b + (1 - si_a) * (1 - si_b)
+    if pe == 1:
+        return None
+    return (po - pe) / (1 - pe)
+
+
+def _pct(valores: list[bool]) -> dict:
+    si = sum(valores)
+    n = len(valores)
+    return {"si": si, "no": n - si, "n": n, "pct": round(100 * si / n, 1) if n else None}
+
+
+def metricas(db: Session) -> dict:
+    """Métricas del golden set sobre las validaciones con banderas ai_*.
+
+    De cada revisor cuenta solo su ÚLTIMA validación por (hallazgo,
+    enriquecimiento): si cambió de opinión, vale la última. Los null ("no sé")
+    se excluyen de cada porcentaje y de cada par del acuerdo.
+    """
+    filas = db.scalars(select(Validation).order_by(Validation.reviewed_at, Validation.id)).all()
+    ultima: dict[tuple, Validation] = {}
+    for v in filas:
+        if any(getattr(v, b) is not None for b in BANDERAS):
+            ultima[(v.reviewer.strip(), v.finding_id, v.enrichment_id)] = v
+
+    por_revisor: dict[str, list[Validation]] = defaultdict(list)
+    for (revisor, _, _), v in ultima.items():
+        por_revisor[revisor].append(v)
+
+    def resumen(vs: list[Validation]) -> dict:
+        return {"validaciones": len(vs),
+                **{b: _pct([getattr(v, b) for v in vs if getattr(v, b) is not None]) for b in BANDERAS}}
+
+    revisores_por_hallazgo: dict[uuid.UUID, set[str]] = defaultdict(set)
+    for (revisor, finding_id, _) in ultima:
+        revisores_por_hallazgo[finding_id].add(revisor)
+
+    acuerdo = []
+    for a, b in combinations(sorted(por_revisor), 2):
+        pares = []
+        for (revisor, finding_id, enrichment_id), va in ultima.items():
+            if revisor != a or enrichment_id is None:
+                continue
+            vb = ultima.get((b, finding_id, enrichment_id))
+            if vb is None or va.ai_owasp_correcto is None or vb.ai_owasp_correcto is None:
+                continue
+            pares.append((va.ai_owasp_correcto, vb.ai_owasp_correcto))
+        if pares:
+            acuerdo.append({
+                "revisores": [a, b],
+                "n": len(pares),
+                "acuerdo_pct": round(100 * sum(x == y for x, y in pares) / len(pares), 1),
+                "kappa": kappa(pares),
+            })
+
+    return {
+        "validaciones_con_banderas": len(ultima),
+        "revisores": {r: resumen(vs) for r, vs in sorted(por_revisor.items())},
+        "total": resumen(list(ultima.values())),
+        "hallazgos_con_2_o_mas_revisores": sum(len(s) >= 2 for s in revisores_por_hallazgo.values()),
+        "acuerdo_ai_owasp_correcto": acuerdo,
+    }
+
+
+ETIQUETAS = {
+    "ai_owasp_correcto": "OWASP correcto",
+    "ai_prioridad_correcta": "prioridad correcta",
+    "ai_remediacion_util": "remediación útil",
+    "ai_alucinacion": "alucinación",
+}
+N_CHICO = 10
+
+
+def metricas_texto(m: dict) -> str:
+    def fila(nombre: str, r: dict) -> list[str]:
+        out = [f"{nombre} ({r['validaciones']} validaciones)"]
+        for b, etiqueta in ETIQUETAS.items():
+            p = r[b]
+            valor = "sin respuestas" if p["n"] == 0 else f"{p['pct']:5.1f} %  ({p['si']} de {p['n']})"
+            out.append(f"  {etiqueta:<20} {valor}")
+        return out
+
+    lineas = [f"Validaciones con banderas ai_* (última de cada revisor): {m['validaciones_con_banderas']}", ""]
+    for nombre, r in m["revisores"].items():
+        lineas += fila(nombre, r) + [""]
+    lineas += fila("TOTAL", m["total"]) + [""]
+    lineas.append(f"Hallazgos con 2 o más revisores: {m['hallazgos_con_2_o_mas_revisores']}")
+    lineas.append("")
+    lineas.append("Acuerdo en «OWASP correcto» (sin contar «no sé»):")
+    if not m["acuerdo_ai_owasp_correcto"]:
+        lineas.append("  ningún par de revisores respondió el mismo hallazgo y enriquecimiento")
+    for p in m["acuerdo_ai_owasp_correcto"]:
+        k = "no definido (respondieron siempre lo mismo)" if p["kappa"] is None else f"{p['kappa']:.2f}"
+        aviso = "  ← n chico: el κ engaña" if p["n"] < N_CHICO else ""
+        lineas.append(
+            f"  {p['revisores'][0]} / {p['revisores'][1]}: n = {p['n']}, "
+            f"acuerdo {p['acuerdo_pct']:.1f} %, κ = {k}{aviso}"
+        )
+    return "\n".join(lineas)

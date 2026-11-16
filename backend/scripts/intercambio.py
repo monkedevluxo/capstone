@@ -9,8 +9,9 @@ Uso (dentro del contenedor api; el archivo va por stdin/stdout):
     docker compose exec -T api python scripts/intercambio.py exportar --que validaciones --revisor "Felipe" > val.json
     docker compose exec -T api python scripts/intercambio.py importar --simular < enr.json
     docker compose exec -T api python scripts/intercambio.py importar < enr.json
+    docker compose exec -T api python scripts/intercambio.py metricas [--json]
 
-Exportar abre una transacción de solo lectura. Importar hace todo
+Exportar y metricas abren una transacción de solo lectura. Importar hace todo
 en una transacción: --simular la deshace y muestra el mismo reporte.
 
 Códigos de salida: 0 bien, 2 archivo inválido (no se importó nada).
@@ -27,7 +28,7 @@ from sqlalchemy import text  # noqa: E402
 
 from app.db import SessionLocal  # noqa: E402
 from app.intercambio import (  # noqa: E402
-    TIPOS, ArchivoInvalido, exportar, importar,
+    TIPOS, ArchivoInvalido, exportar, importar, metricas, metricas_texto,
 )
 
 
@@ -43,6 +44,8 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--revisor", help="solo las validaciones de este revisor")
     i = sub.add_parser("importar", help="lee el archivo de intercambio desde stdin")
     i.add_argument("--simular", action="store_true", help="muestra el reporte y deshace todo")
+    m = sub.add_parser("metricas", help="métricas del golden set y acuerdo entre revisores")
+    m.add_argument("--json", action="store_true")
     args = p.parse_args(argv)
 
     if args.comando == "exportar" and args.revisor and args.que != "validaciones":
@@ -53,6 +56,12 @@ def main(argv: list[str] | None = None) -> int:
             _solo_lectura(db)
             json.dump(exportar(db, args.que, revisor=args.revisor), sys.stdout, ensure_ascii=False, indent=2)
             sys.stdout.write("\n")
+            return 0
+
+        if args.comando == "metricas":
+            _solo_lectura(db)
+            m = metricas(db)
+            print(json.dumps(m, ensure_ascii=False, indent=2) if args.json else metricas_texto(m))
             return 0
 
         try:
