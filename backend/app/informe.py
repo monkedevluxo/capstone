@@ -184,3 +184,241 @@ def metricas_golden_set(validaciones: Iterable[Any]) -> dict:
         "remediacion_util": proporcion("ai_remediacion_util"),
         "alucinacion": proporcion("ai_alucinacion"),
     }
+
+
+# --- Render HTML ---------------------------------------------------------------
+#
+# Todo texto que viene de ZAP, de la IA o de una persona pasa por html.escape:
+# la evidencia trae payloads reales (<script>, comillas), y el informe no puede
+# ejecutarlos al abrirse. Las descripciones de ZAP vienen con <p>: se quitan las
+# etiquetas antes de escapar.
+
+import html
+import re
+
+ETIQUETA_SEVERIDAD = {"critica": "Crítica", "alta": "Alta", "media": "Media",
+                      "baja": "Baja", "informativa": "Informativa"}
+ETIQUETA_DECISION = {
+    "confirmado": "Confirmado", "falso_positivo": "Falso positivo",
+    "riesgo_aceptado": "Riesgo aceptado", "duplicado": "Duplicado",
+    "requiere_segunda_opinion": "Requiere segunda opinión",
+}
+ETIQUETA_ESTADO = ETIQUETA_DECISION | {"nuevo": "Nuevo", "en_triage": "En triage",
+                                       "remediado": "Remediado"}
+
+_CSS = """
+:root { --tinta:#1a2433; --suave:#5b6675; --borde:#d9dee5; --fondo:#f5f7fa;
+        --alta:#b42318; --media:#b54708; --baja:#1d4ed8; --info:#475467; }
+* { box-sizing: border-box; }
+body { font: 14px/1.5 system-ui, sans-serif; color: var(--tinta); margin: 0; background: #fff; }
+main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+h1 { font-size: 28px; margin: 0 0 4px; }
+h2 { font-size: 20px; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--tinta); }
+h3 { font-size: 16px; margin: 0; }
+.suave { color: var(--suave); }
+table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
+table.conteo { width: auto; min-width: 240px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+th { background: var(--fondo); font-weight: 600; }
+code, pre { font: 12px/1.4 ui-monospace, monospace; }
+pre { background: var(--fondo); padding: 8px; white-space: pre-wrap; word-break: break-all; margin: 4px 0; }
+.hallazgo { border: 1px solid var(--borde); border-radius: 6px; padding: 16px; margin: 0 0 16px;
+            break-inside: avoid; }
+.cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.etiqueta { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px;
+            font-weight: 600; color: #fff; background: var(--info); white-space: nowrap; }
+.sev-critica, .sev-alta { background: var(--alta); }
+.sev-media { background: var(--media); }
+.sev-baja { background: var(--baja); }
+.capa { margin-top: 12px; padding-left: 12px; border-left: 3px solid var(--borde); }
+.capa h4 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
+           color: var(--suave); }
+.ia { border-left-color: #7c3aed; }
+.persona { border-left-color: #059669; }
+.aviso { background: var(--fondo); padding: 8px 12px; border-radius: 4px; }
+@media print {
+  main { padding: 0; }
+  h2 { break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+"""
+
+
+def _e(valor: Any) -> str:
+    """Escapa para HTML. None se muestra como guion."""
+    return "—" if valor is None or valor == "" else html.escape(str(valor))
+
+
+def _texto_zap(valor: str | None) -> str:
+    """Descripción de ZAP sin etiquetas, escapada y con saltos de párrafo."""
+    if not valor:
+        return "—"
+    limpio = re.sub(r"<[^>]+>", "\n", valor)
+    parrafos = [p.strip() for p in limpio.split("\n") if p.strip()]
+    return "<br>".join(html.escape(p) for p in parrafos)
+
+
+def _proporcion(m: dict) -> str:
+    if not m["n"]:
+        return "sin respuestas"
+    return f"{m['si']}/{m['n']} ({m['si'] / m['n']:.0%})"
+
+
+def _tabla_conteo(conteo: dict, etiquetas: dict | None = None) -> str:
+    filas = "".join(
+        f"<tr><td>{_e((etiquetas or {}).get(k, k))}</td><td>{v}</td></tr>"
+        for k, v in conteo.items()
+    )
+    return f"<table class=\"conteo\"><tbody>{filas or '<tr><td>—</td></tr>'}</tbody></table>"
+
+
+def _seccion_hallazgo(h: dict, n: int) -> str:
+    ub = h["ubicacion"]
+    ev = h["evidencia"]
+    instancias = "".join(
+        f"<tr><td>{_e(i['metodo'])}</td><td><code>{_e(i['url'])}</code></td>"
+        f"<td>{_e(i['parametro'])}</td></tr>"
+        for i in ev["instancias"]
+    )
+    partes = [
+        f'<article class="hallazgo" id="h-{_e(h["dedupe_key"])}">',
+        '<div class="cabecera">',
+        f"<h3>{n}. {_e(h['titulo'])}</h3>",
+        f'<span><span class="etiqueta sev-{_e(h["severidad"])}">'
+        f"{_e(ETIQUETA_SEVERIDAD.get(h['severidad'], h['severidad']))}</span> "
+        f"<strong>{_e(h['prioridad'])}</strong></span>",
+        "</div>",
+        f'<p class="suave">CWE {_e(h["cwe"])} · OWASP de referencia {_e(h["owasp_referencia"])} · '
+        f"prioridad según {_e(h['prioridad_origen'])} · estado {_e(ETIQUETA_ESTADO.get(h['estado'], h['estado']))} · "
+        f"clave <code>{_e(h['dedupe_key'])}</code></p>",
+        '<div class="capa"><h4>Evidencia original (ZAP)</h4>',
+        f"<p><strong>Ubicación:</strong> <code>{_e(ub['metodo'])} {_e(ub['ruta'])}</code>"
+        f" · parámetro {_e(ub['parametro'])} · {_e(ub['ocurrencias'])} ocurrencias"
+        f" · confianza de ZAP {_e(h['confianza_zap'])}</p>",
+        f"<p><strong>Fragmento:</strong></p><pre>{_e(ev['fragmento'])}</pre>",
+        f"<p><strong>Descripción:</strong> {_texto_zap(ev['descripcion'])}</p>",
+        f"<p><strong>Solución propuesta por ZAP:</strong> {_texto_zap(ev['solucion'])}</p>",
+    ]
+    if instancias:
+        partes.append(
+            "<table><thead><tr><th>Método</th><th>URL</th><th>Parámetro</th></tr></thead>"
+            f"<tbody>{instancias}</tbody></table>"
+        )
+    partes.append("</div>")
+
+    ia = h["ia"]
+    if ia:
+        pasos = "".join(f"<li>{_e(p)}</li>" for p in ia["pasos"])
+        partes += [
+            '<div class="capa ia"><h4>Sugerencia de la IA</h4>',
+            f'<p class="suave">{_e(ia["modelo"])} · prompt {_e(ia["version_prompt"])} · '
+            f"{_e(ia['generado'])} · confianza declarada {_e(ia['confianza'])}</p>",
+            f"<p><strong>Explicación:</strong> {_e(ia['explicacion'])}</p>",
+            f"<p><strong>Impacto:</strong> {_e(ia['impacto'])}</p>",
+            f"<p><strong>Categoría sugerida:</strong> {_e(ia['owasp'])} · "
+            f"<strong>prioridad sugerida:</strong> {_e(ia['prioridad'])}</p>",
+            f"<p><strong>Remediación:</strong> {_e(ia['remediacion'])}</p>",
+            f"<ol>{pasos}</ol>" if pasos else "",
+            "</div>",
+        ]
+    else:
+        partes.append('<div class="capa ia"><h4>Sugerencia de la IA</h4><p>Sin enriquecer.</p></div>')
+
+    d = h["decision"]
+    if d:
+        partes += [
+            '<div class="capa persona"><h4>Decisión humana</h4>',
+            f"<p><strong>{_e(ETIQUETA_DECISION.get(d['decision'], d['decision']))}</strong>"
+            f" · {_e(d['revisor'])} · {_e(d['fecha'])}</p>",
+            f"<p>{_e(d['comentario'])}</p>" if d["comentario"] else "",
+            "</div>",
+        ]
+    else:
+        partes.append('<div class="capa persona"><h4>Decisión humana</h4><p>Pendiente de revisión.</p></div>')
+
+    partes.append("</article>")
+    return "".join(partes)
+
+
+def _seccion_metricas(m: dict) -> str:
+    if not m["revisores"]:
+        return ('<p class="aviso">Todavía no hay validaciones con las banderas del golden set. '
+                "Las métricas aparecen cuando una persona revisa la sugerencia de la IA desde el dashboard.</p>")
+    return (
+        f"<p>Revisores: {_e(', '.join(m['revisores']))}. Se cuenta la última respuesta de cada "
+        "revisor por hallazgo; las banderas sin responder no entran en el denominador.</p>"
+        "<table><thead><tr><th>Métrica</th><th>Resultado</th></tr></thead><tbody>"
+        f"<tr><td>Acierto de categoría OWASP</td><td>{_proporcion(m['acierto_owasp'])}</td></tr>"
+        f"<tr><td>Acierto de prioridad</td><td>{_proporcion(m['acierto_prioridad'])}</td></tr>"
+        f"<tr><td>Remediación útil</td><td>{_proporcion(m['remediacion_util'])}</td></tr>"
+        f"<tr><td>Tasa de alucinación</td><td>{_proporcion(m['alucinacion'])}</td></tr>"
+        "</tbody></table>"
+    )
+
+
+def renderizar_html(datos: dict) -> str:
+    """El informe completo como una página HTML autocontenida e imprimible."""
+    obj = datos["objetivo"]
+    res = datos["resumen"]
+    escaneos = "".join(
+        f"<tr><td>{_e(s['herramienta'])} {_e(s['version'])}</td><td>{_e(s['inicio'])}</td>"
+        f"<td><code>{_e(s['sha256'])}</code></td></tr>"
+        for s in datos["escaneos"]
+    )
+    vigentes = "".join(_seccion_hallazgo(h, i) for i, h in enumerate(datos["hallazgos"], 1))
+    descartados = "".join(
+        f"<tr><td>{_e(h['titulo'])}</td><td><code>{_e(h['ubicacion']['ruta'])}</code></td>"
+        f"<td>{_e(ETIQUETA_ESTADO.get(h['estado'], h['estado']))}</td>"
+        f"<td>{_e(h['decision']['revisor'] if h['decision'] else None)}</td></tr>"
+        for h in datos["descartados"]
+    )
+
+    return f"""<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Informe técnico · {_e(obj['nombre'])}</title>
+<style>{_CSS}</style>
+</head>
+<body>
+<main>
+<header>
+  <p class="suave">SentinelAI · Informe técnico de hallazgos</p>
+  <h1>{_e(obj['nombre'])}</h1>
+  <p class="suave"><code>{_e(obj['url'])}</code> · entorno {_e(obj['entorno'])} · generado {_e(datos['generado_en'])}</p>
+</header>
+
+<p class="aviso">La evidencia de cada hallazgo se muestra tal como la entregó la herramienta.
+La salida de la IA es una sugerencia; la decisión final la toma una persona.</p>
+
+<h2>1. Resumen</h2>
+<p><strong>{res['vigentes']}</strong> hallazgos vigentes y <strong>{res['descartados']}</strong>
+descartados (falsos positivos o duplicados), de {res['total']} en total.
+{res['con_ia']} tienen sugerencia de la IA y {res['con_decision']} tienen decisión humana.</p>
+<h3>Por severidad</h3>
+{_tabla_conteo(res['por_severidad'], ETIQUETA_SEVERIDAD)}
+<h3>Por prioridad</h3>
+{_tabla_conteo(res['por_prioridad'])}
+<h3>Por estado</h3>
+{_tabla_conteo(res['por_estado'], ETIQUETA_ESTADO)}
+
+<h2>2. Escaneos de origen</h2>
+<p>El hash SHA-256 de cada reporte permite verificar que la evidencia no se modificó después de importarla.</p>
+<table><thead><tr><th>Herramienta</th><th>Inicio</th><th>SHA-256 del reporte</th></tr></thead>
+<tbody>{escaneos or '<tr><td colspan="3">—</td></tr>'}</tbody></table>
+
+<h2>3. Hallazgos</h2>
+<p class="suave">Ordenados por prioridad y severidad.</p>
+{vigentes or '<p>No hay hallazgos vigentes.</p>'}
+
+<h2>4. Descartados</h2>
+<table><thead><tr><th>Hallazgo</th><th>Ruta</th><th>Motivo</th><th>Revisor</th></tr></thead>
+<tbody>{descartados or '<tr><td colspan="4">—</td></tr>'}</tbody></table>
+
+<h2>5. Calidad de la IA (golden set)</h2>
+{_seccion_metricas(datos['metricas'])}
+</main>
+</body>
+</html>
+"""
