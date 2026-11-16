@@ -17,7 +17,7 @@ import os
 import subprocess
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -334,8 +334,9 @@ def test_el_estado_lo_fija_la_validacion_mas_reciente_aunque_llegue_importada():
     antigua, nueva = copy.deepcopy(val), copy.deepcopy(val)
     antigua["items"][0].update(uuid=str(uuid.uuid4()), decision="falso_positivo",
                                reviewed_at="2020-01-01T00:00:00+00:00")
+    # Más nueva que la local, pero dentro de la tolerancia de reloj (10 min).
     nueva["items"][0].update(uuid=str(uuid.uuid4()), decision="riesgo_aceptado",
-                             reviewed_at="2099-01-01T00:00:00+00:00")
+                             reviewed_at=_en(minutos=5))
 
     _importar(antigua)
     assert _estado(f) == "confirmado"
@@ -518,12 +519,30 @@ def test_ai_nota_sobre_un_enriquecimiento_fallido_es_conflicto():
     assert (r.importados, len(r.conflictos)) == (0, 1)
 
 
-def test_fechas_en_el_futuro_se_avisan():
+def _en(minutos: float) -> str:
+    return (datetime.now(timezone.utc) + timedelta(minutes=minutos)).isoformat()
+
+
+def test_validacion_mas_de_10_minutos_en_el_futuro_se_omite_como_conflicto():
+    f = _id("SQL Injection")
+    _validar(f, decision="confirmado")
+    val = _exportar("validaciones")
+    futura = copy.deepcopy(val)
+    futura["items"][0].update(uuid=str(uuid.uuid4()), decision="falso_positivo", reviewed_at=_en(minutos=11))
+
+    r = _importar(futura)
+    assert (r.importados, len(r.conflictos)) == (0, 1)
+    assert f"fecha en el futuro: revisa el reloj de {val['base_origen']}" in r.conflictos[0]
+    assert _conteo("validations") == 1
+    assert _estado(f) == "confirmado"
+
+
+def test_validacion_poco_en_el_futuro_entra_con_aviso():
     _validar(_id("SQL Injection"))
     val = _exportar("validaciones")
-    val["items"][0].update(uuid=str(uuid.uuid4()), reviewed_at="2099-01-01T00:00:00+00:00")
+    val["items"][0].update(uuid=str(uuid.uuid4()), reviewed_at=_en(minutos=5))
     r = _importar(val)
-    assert r.importados == 1
+    assert (r.importados, r.conflictos) == (1, [])
     assert any("futuro" in a for a in r.avisos)
 
 
@@ -535,3 +554,24 @@ def test_exportar_deja_json_valido_aunque_sql_echo_este_activo():
     )
     assert r.returncode == 0, r.stderr
     assert len(json.loads(r.stdout)["items"]) == 1
+
+
+def test_metricas_agrupan_revisores_por_nombre_normalizado():
+    sqli, csp = _id("SQL Injection"), _id("Content Security Policy (CSP) Header Not Set")
+    for f in (sqli, csp):
+        _enriquecer(f)
+    _con_banderas(sqli, revisor="felipe  cayún")
+    _con_banderas(csp, revisor=" Felipe Cayún ")
+    # La más reciente: reemplaza su primera respuesta en sqli y su nombre es el que se muestra.
+    _con_banderas(sqli, revisor="FELIPE CAYÚN", ai_owasp_correcto=False)
+    _con_banderas(sqli, revisor="Joaquín")
+
+    with SessionLocal() as db:
+        m = metricas(db)
+
+    assert sorted(m["revisores"]) == ["FELIPE CAYÚN", "Joaquín"]
+    assert m["revisores"]["FELIPE CAYÚN"]["validaciones"] == 2
+    assert m["revisores"]["FELIPE CAYÚN"]["ai_owasp_correcto"] == {"si": 1, "no": 1, "n": 2, "pct": 50.0}
+    [par] = m["acuerdo_ai_owasp_correcto"]
+    assert par["revisores"] == ["FELIPE CAYÚN", "Joaquín"] and par["n"] == 1
+    assert m["hallazgos_con_2_o_mas_revisores"] == 1

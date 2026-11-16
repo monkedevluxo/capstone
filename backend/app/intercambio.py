@@ -39,7 +39,7 @@ import hashlib
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import combinations
 from typing import Annotated, Any, Literal
 
@@ -75,6 +75,9 @@ CAMPOS_VALIDACION = (
 )
 BANDERAS = ("ai_owasp_correcto", "ai_prioridad_correcta", "ai_remediacion_util", "ai_alucinacion")
 INT4 = 2**31 - 1
+# Desfase de reloj tolerado entre máquinas. Una validación más adelantada que
+# esto ganaría "la más reciente" y dejaría el estado del hallazgo fijo.
+TOLERANCIA_RELOJ = timedelta(minutes=10)
 
 
 def opina_de_la_ia(v) -> bool:
@@ -382,6 +385,7 @@ def _importar_enriquecimientos(db: Session, items: list[ItemEnriquecimiento], r:
 
 def _importar_validaciones(db: Session, items: list[ItemValidacion], r: Reporte) -> None:
     buscar = _Hallazgos(db)
+    ahora = db.scalar(text("SELECT now()"))
     tocados: dict[uuid.UUID, Finding] = {}
     for it in sorted(items, key=lambda i: (i.reviewed_at, str(i.uuid))):
         f = buscar(it.hallazgo)
@@ -396,6 +400,13 @@ def _importar_validaciones(db: Session, items: list[ItemValidacion], r: Reporte)
                 r.conflictos.append(f"validación {it.uuid} de {it.reviewer}: difiere en {', '.join(d)}")
             else:
                 r.ya_estaban += 1
+            continue
+
+        if it.reviewed_at > ahora + TOLERANCIA_RELOJ:
+            r.conflictos.append(
+                f"validación {it.uuid} de {it.reviewer} ({_legible(it.hallazgo)}): "
+                f"{it.reviewed_at.isoformat()}, fecha en el futuro: revisa el reloj de {r.base_origen}"
+            )
             continue
 
         if it.enrichment_uuid is not None:
@@ -438,11 +449,14 @@ def _importar_validaciones(db: Session, items: list[ItemValidacion], r: Reporte)
 
 def _avisar_futuro(db: Session, items: list, r: Reporte) -> None:
     """Una fecha posterior a ahora (reloj desfasado en otra máquina) gana el
-    "más reciente": el estado del hallazgo no cambiaría con decisiones locales
-    hasta que el reloj la alcance. Se importa igual, pero se avisa."""
+    "más reciente". Un enriquecimiento, o una validación adelantada hasta
+    TOLERANCIA_RELOJ, se importa igual, pero se avisa; una validación más
+    adelantada se omite como conflicto."""
     ahora = db.scalar(text("SELECT now()"))
     for it in items:
         fecha = getattr(it, "reviewed_at", None) or getattr(it, "generated_at", None)
+        if isinstance(it, ItemValidacion) and fecha > ahora + TOLERANCIA_RELOJ:
+            continue  # se omite como conflicto en _importar_validaciones
         if fecha is not None and fecha > ahora:
             r.avisos.append(
                 f"{it.uuid} ({_legible(it.hallazgo)}): fecha {fecha.isoformat()} en el futuro; "
@@ -491,18 +505,28 @@ def _pct(valores: list[bool]) -> dict:
     return {"si": si, "no": n - si, "n": n, "pct": round(100 * si / n, 1) if n else None}
 
 
+def normalizar_revisor(nombre: str) -> str:
+    """"  Felipe   Cayún " y "felipe cayún" son la misma persona."""
+    return " ".join(nombre.split()).casefold()
+
+
 def metricas(db: Session) -> dict:
     """Métricas del golden set sobre las validaciones con banderas ai_*.
 
+    Los revisores se agrupan por nombre normalizado (normalizar_revisor) y se
+    muestran con el nombre de su validación más reciente.
     De cada revisor cuenta solo su ÚLTIMA validación por (hallazgo,
     enriquecimiento): si cambió de opinión, vale la última. Los null ("no sé")
     se excluyen de cada porcentaje y de cada par del acuerdo.
     """
     filas = db.scalars(select(Validation).order_by(Validation.reviewed_at, Validation.id)).all()
     ultima: dict[tuple, Validation] = {}
+    nombre: dict[str, str] = {}  # clave normalizada -> nombre de su validación más reciente
     for v in filas:
+        clave = normalizar_revisor(v.reviewer)
+        nombre[clave] = v.reviewer.strip()
         if any(getattr(v, b) is not None for b in BANDERAS):
-            ultima[(v.reviewer.strip(), v.finding_id, v.enrichment_id)] = v
+            ultima[(clave, v.finding_id, v.enrichment_id)] = v
 
     por_revisor: dict[str, list[Validation]] = defaultdict(list)
     for (revisor, _, _), v in ultima.items():
@@ -517,7 +541,7 @@ def metricas(db: Session) -> dict:
         revisores_por_hallazgo[finding_id].add(revisor)
 
     acuerdo = []
-    for a, b in combinations(sorted(por_revisor), 2):
+    for a, b in combinations(sorted(por_revisor, key=lambda c: nombre[c]), 2):
         pares = []
         for (revisor, finding_id, enrichment_id), va in ultima.items():
             if revisor != a or enrichment_id is None:
@@ -528,7 +552,7 @@ def metricas(db: Session) -> dict:
             pares.append((va.ai_owasp_correcto, vb.ai_owasp_correcto))
         if pares:
             acuerdo.append({
-                "revisores": [a, b],
+                "revisores": [nombre[a], nombre[b]],
                 "n": len(pares),
                 "acuerdo_pct": round(100 * sum(x == y for x, y in pares) / len(pares), 1),
                 "kappa": kappa(pares),
@@ -536,7 +560,7 @@ def metricas(db: Session) -> dict:
 
     return {
         "validaciones_con_banderas": len(ultima),
-        "revisores": {r: resumen(vs) for r, vs in sorted(por_revisor.items())},
+        "revisores": {nombre[c]: resumen(vs) for c, vs in sorted(por_revisor.items(), key=lambda x: nombre[x[0]])},
         "total": resumen(list(ultima.values())),
         "hallazgos_con_2_o_mas_revisores": sum(len(s) >= 2 for s in revisores_por_hallazgo.values()),
         "acuerdo_ai_owasp_correcto": acuerdo,

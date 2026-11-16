@@ -262,9 +262,11 @@ docker compose exec -T api python scripts/intercambio.py metricas          # o -
   primero los enriquecimientos de …"). Al reimportarla después, entra.
 - El estado de cada hallazgo lo vuelve a fijar su validación más reciente.
 - Si el archivo no es válido no se importa nada (código de salida 2).
-- Una fecha en el futuro (reloj desfasado en otra máquina) se importa, pero se
-  avisa: mientras sea "la más reciente", las decisiones locales no cambian el estado.
-- Las métricas cuentan la última respuesta de cada revisor por hallazgo y
+- Una validación con fecha más de 10 minutos en el futuro (respecto de la base)
+  se omite como conflicto: revisa el reloj de la máquina que la exportó. Con
+  menos desfase, o en un enriquecimiento, se importa con un aviso.
+- Las métricas agrupan a cada revisor por su nombre sin importar mayúsculas ni
+  espacios ("felipe  cayún" = "Felipe Cayún"), y cuentan su última respuesta por hallazgo y
   sugerencia, sin los "no sé". El κ va con su n y el % de acuerdo simple: con
   n chico, el κ solo no dice nada.
 
