@@ -18,14 +18,14 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 | 6 | Dashboard funcional | Final | `frontend/` | 🟡 |
 | 7 | Módulo de análisis con IA local | Final | `backend/app/ia/`, `docs/diseno/IA_MODELO_Y_PROMPT.md`, `respuestas_modelo/` | ✅ |
 | 8 | Reporte técnico generado por la plataforma | Final | `backend/app/informe.py`, `backend/scripts/informe.py`, `docs/guias/INFORME_TECNICO.md` | 🟡 |
-| 9 | Plan de pruebas y resultados | Final | `backend/tests/`, `.github/workflows/ci.yml`, `lab/e2e.sh`, golden set (abajo) | 🟡 |
+| 9 | Plan de pruebas y resultados | Final | `plan_pruebas.md`, `backend/tests/`, `.github/workflows/ci.yml`, `lab/e2e.sh`, golden set (abajo) | 🟡 |
 | 10 | Documentación técnica y presentación final | Final | `README.md`, `docs/guias/`, `docs/diseno/` | ⏳ |
 
 ### Qué falta en cada una
 
 - **6 · Dashboard:** el listado con filtros y totales está en `main` (PR #21). La vista de detalle y el registro de la decisión humana están en revisión.
 - **8 · Reporte técnico:** implementado y probado (10 tests), en revisión. Falta conectarlo al botón "Informe" del dashboard.
-- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), pero falta el documento que las reúna como casos de prueba con resultado esperado, resultado obtenido e incidencias. Falta además la anotación completa del golden set (T-043).
+- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), y `plan_pruebas.md` las reúne como casos con resultado esperado y obtenido, más las incidencias y mejoras aplicadas. Falta la anotación completa del golden set (T-043).
 - **10 · Documentación y presentación final:** corresponde al sprint de cierre.
 
 ## Archivos de esta carpeta
