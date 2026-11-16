@@ -37,6 +37,7 @@ from app.enriquecimiento import (
 from app.ia.cliente import ClienteOllama
 from app.ia.owasp_por_cwe import TABLA
 from app.ingesta import ErrorIngesta, importar_reporte
+from app.validacion import recalcular_estado
 from app.models import (
     AiEnrichment,
     DecisionValidacion,
@@ -416,15 +417,8 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
 
 # ── Validación humana (T-057) ─────────────────────────────────────────────
 
-# Estado del hallazgo según la decisión. Lo fija la validación más reciente,
-# en la misma transacción que la guarda (ESQUEMA_HALLAZGO.md, sección 7).
-ESTADO_POR_DECISION: dict[DecisionValidacion, EstadoHallazgo] = {
-    DecisionValidacion.confirmado: EstadoHallazgo.confirmado,
-    DecisionValidacion.falso_positivo: EstadoHallazgo.falso_positivo,
-    DecisionValidacion.riesgo_aceptado: EstadoHallazgo.riesgo_aceptado,
-    DecisionValidacion.duplicado: EstadoHallazgo.duplicado,
-    DecisionValidacion.requiere_segunda_opinion: EstadoHallazgo.en_triage,
-}
+# El estado del hallazgo lo fija la validación más reciente, en la misma
+# transacción que la guarda (app/validacion.py, ESQUEMA_HALLAZGO.md §7).
 
 _Texto = Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=4000)]
 
@@ -547,7 +541,7 @@ def validar_hallazgo(
         ai_nota=cuerpo.ai_nota,
     )
     db.add(v)
-    f.status = ESTADO_POR_DECISION[cuerpo.decision]
+    recalcular_estado(db, f)
     db.commit()
     db.refresh(v)
     return {"validacion": _validacion(v), "estado": f.status.value}
