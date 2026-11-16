@@ -51,3 +51,16 @@ Contando así, los cuatro fixtures anteriores suman **alrededor de 34 hallazgos 
 5. Cada hallazgo lo anotan dos revisores por separado, con el mismo método usado en `acuerdo_alucinaciones.md`.
 
 **Pendiente de acordar con el equipo** antes del inicio del S6 (16-11-2026).
+
+## Decisión del equipo (16-11-2026)
+
+Se aprueba la propuesta anterior. Acordada por Felipe Cayún, Joaquín Herrera y Luciano Zambrano.
+
+| Punto | Decisión |
+|---|---|
+| Unidad del golden set | El hallazgo como lo guarda la base (regla + plantilla de ruta + parámetro), no el tipo de alerta |
+| Muestra | Todos los hallazgos de los fixtures acordados, anotados durante el triage en el dashboard (`ESQUEMA_HALLAZGO.md`, sección 8) |
+| Fixtures comunes | `zap_juiceshop_ajax_v2`, `zap_juiceshop_full_v1` y `zap_juiceshop_ajax_auth_v1`, importados por todos para que los hallazgos coincidan entre bases |
+| Revisores | Felipe Cayún y Joaquín Herrera, cada uno por separado y sin ver las respuestas del otro |
+| Enriquecimientos | Los genera Joaquín con Ollama y los exporta con `scripts/intercambio.py`; cada revisor los importa antes de anotar |
+| Acuerdo entre revisores | Lo calcula `scripts/intercambio.py metricas`, con el κ y su n junto al porcentaje de acuerdo simple |
