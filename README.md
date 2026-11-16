@@ -56,7 +56,8 @@ capstone/
 │   ├── scripts/
 │   │   ├── seed.py                 Datos de prueba sintéticos
 │   │   ├── verificar_bd.py         Verifica las restricciones de la base
-│   │   └── metricas_golden_set.py  Métricas del modelo contra el golden set
+│   │   ├── metricas_golden_set.py  Métricas del modelo contra el golden set
+│   │   └── intercambio.py          Intercambio entre equipos y acuerdo entre revisores
 │   └── tests/                Parser, esquema, módulo de IA e ingesta
 ├── frontend/             Dashboard en Next.js (desde el S5)
 ├── lab/
@@ -228,6 +229,42 @@ bun --bun run typecheck   # tsc de TypeScript 7
 
 Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
 compila y se ve igual sin internet.
+
+### Anotar el golden set entre varios equipos
+
+Cada integrante tiene su propia base y los ids no coinciden entre bases.
+`backend/scripts/intercambio.py` identifica cada hallazgo por el objetivo
+(`base_url`) y su `dedupe_key`, y conserva el uuid de cada enriquecimiento y
+validación. Importar es idempotente: lo que ya está se omite, un uuid con
+contenido distinto se reporta como conflicto y no se pisa, y nunca se crean
+hallazgos. Todos deben tener importados los mismos fixtures.
+
+```bash
+# 1. Joaquín enriquece con Ollama real y exporta
+docker compose exec -T api python scripts/intercambio.py exportar --que enriquecimientos > enriquecimientos_joaquin.json
+
+# 2. Cada uno los importa (primero --simular para ver el reporte sin guardar)
+docker compose exec -T api python scripts/intercambio.py importar --simular < enriquecimientos_joaquin.json
+docker compose exec -T api python scripts/intercambio.py importar < enriquecimientos_joaquin.json
+
+# 3. Cada uno anota en su dashboard y exporta sus validaciones
+docker compose exec -T api python scripts/intercambio.py exportar --que validaciones --revisor "Felipe" > validaciones_felipe.json
+
+# 4. Luciano importa todas y calcula las métricas
+docker compose exec -T api python scripts/intercambio.py importar < validaciones_felipe.json
+docker compose exec -T api python scripts/intercambio.py metricas          # o --json
+```
+
+- Si el enriquecimiento importado es vigente, el local pasa a histórico. La
+  excepción es la misma regla del enriquecimiento con Ollama: uno fallido no
+  desplaza a uno válido, entra como histórico y el reporte lo avisa.
+- Una validación cuyo enriquecimiento no está en tu base se omite ("importa
+  primero los enriquecimientos de …"). Al reimportarla después, entra.
+- El estado de cada hallazgo lo vuelve a fijar su validación más reciente.
+- Si el archivo no es válido no se importa nada (código de salida 2).
+- Las métricas cuentan la última respuesta de cada revisor por hallazgo y
+  sugerencia, sin los "no sé". El κ va con su n y el % de acuerdo simple: con
+  n chico, el κ solo no dice nada.
 
 <!-- TODO: documentar las variables de entorno y el archivo .env.ejemplo -->
 
