@@ -42,7 +42,7 @@ La Ley 21.459 sobre delitos informáticos delimita el alcance del proyecto y jus
 
 ```
 capstone/
-├── .github/workflows/    CI: tests, migraciones y restricciones
+├── .github/              CI (workflows/) y plantilla de PR
 ├── backend/
 │   ├── app/
 │   │   ├── main.py           API FastAPI
@@ -69,6 +69,7 @@ capstone/
 │   ├── guias/            Instalación, Docker, Ollama
 │   └── evidencias/       Logs, mediciones, golden set y planillas de validación
 ├── docker-compose.yml
+├── CONTRIBUTING.md
 └── README.md
 ```
 
@@ -367,15 +368,9 @@ contra una base con datos que quieras conservar.
 
 ## Convenciones de trabajo
 
-**Ramas:** `persona/tema`. Por ejemplo `luciano/backend-base`, `joaquin/parser-zap`,
-`felipe/lab-escaneos`.
-
-**Commits:** formato `tipo: descripción` — `feat`, `fix`, `docs`, `test`, `lab`, `chore`
-
-**Pull requests:** `main` está protegida. Todo cambio entra por PR, con los dos
-checks del CI en verde y una aprobación de otro integrante. Nadie aprueba su
-propio PR: la revisión también sirve para que los tres conozcan el código que
-van a defender.
+Ramas `persona/tema` desde `main`, commits `tipo: descripción` (`feat`, `fix`, `docs`, `test`, `lab`, `chore`).
+Todo entra por PR con los checks del CI en verde y la aprobación de otro integrante; nadie aprueba lo propio.
+El detalle (plantilla de PR, bases de datos, migraciones y secretos) está en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
