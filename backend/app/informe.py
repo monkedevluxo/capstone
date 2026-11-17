@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
-from app.ia.owasp_por_cwe import owasp_por_cwe, prioridad_por_severidad
+from app.ia.owasp_por_cwe import evaluar
 
 ORDEN_SEVERIDAD = ["critica", "alta", "media", "baja", "informativa"]
 ORDEN_PRIORIDAD = ["p1", "p2", "p3", "p4"]
@@ -53,7 +53,9 @@ def decision_vigente(validaciones: Iterable[Any]) -> Any | None:
 def _hallazgo(f: Any) -> dict:
     ia = enriquecimiento_vigente(f.enrichments)
     decision = decision_vigente(f.validations)
-    regla = prioridad_por_severidad(f.severity_tool_raw)
+    # Misma regla que el dashboard: compara la categoría del modelo con la tabla CWE → OWASP.
+    referencia = evaluar(f.cwe_id, f.severity_tool_raw, _valor(ia.owasp_category) if ia else None)
+    regla = referencia["prioridad_regla"]
     humana = _valor(decision.priority_override) if decision else None
     crudo = f.source_raw or {}
 
@@ -66,7 +68,9 @@ def _hallazgo(f: Any) -> dict:
         "severidad_zap": f.severity_tool_raw,
         "confianza_zap": f.tool_confidence,
         "cwe": f.cwe_id,
-        "owasp_referencia": owasp_por_cwe(f.cwe_id),
+        "owasp_referencia": referencia["owasp_referencia"],
+        "revisar": referencia["requiere_revision"],
+        "motivo_revision": referencia["motivo_revision"],
         "prioridad": humana or regla or "p4",
         "prioridad_origen": "persona" if humana else "regla",
         "ubicacion": {
@@ -154,6 +158,7 @@ def armar_datos(objetivo: Any, escaneos: Iterable[Any], hallazgos: Iterable[Any]
             "por_estado": _contar(todos, "estado"),
             "con_ia": sum(1 for h in todos if h["ia"]),
             "con_decision": sum(1 for h in todos if h["decision"]),
+            "por_revisar": sum(1 for h in vigentes if h["revisar"]),
         },
         "hallazgos": vigentes,
         "descartados": descartados,
@@ -205,6 +210,8 @@ ETIQUETA_DECISION = {
 }
 ETIQUETA_ESTADO = ETIQUETA_DECISION | {"nuevo": "Nuevo", "en_triage": "En triage",
                                        "remediado": "Remediado"}
+MOTIVO_REVISION = {"categoria_distinta": "categoría distinta",
+                   "cwe_fuera_de_tabla": "CWE fuera de la tabla"}
 
 _CSS = """
 :root { --tinta:#1a2433; --suave:#5b6675; --borde:#d9dee5; --fondo:#f5f7fa;
@@ -236,6 +243,8 @@ pre { background: var(--fondo); padding: 8px; white-space: pre-wrap; word-break:
 .ia { border-left-color: #7c3aed; }
 .persona { border-left-color: #059669; }
 .aviso { background: var(--fondo); padding: 8px 12px; border-radius: 4px; }
+.hallazgo.revisar { background: #fffbf7; border-color: #f2c48d; }
+.revisar-marca { color: #9a3412; font-weight: 600; font-size: 13px; margin: 2px 0 0; }
 @media print {
   main { padding: 0; }
   h2 { break-after: avoid; }
@@ -281,13 +290,15 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
         for i in ev["instancias"]
     )
     partes = [
-        f'<article class="hallazgo" id="h-{_e(h["dedupe_key"])}">',
+        f'<article class="hallazgo{" revisar" if h["revisar"] else ""}" id="h-{_e(h["dedupe_key"])}">',
         '<div class="cabecera">',
         f"<h3>{n}. {_e(h['titulo'])}</h3>",
         f'<span><span class="etiqueta sev-{_e(h["severidad"])}">'
         f"{_e(ETIQUETA_SEVERIDAD.get(h['severidad'], h['severidad']))}</span> "
         f"<strong>{_e(h['prioridad'])}</strong></span>",
         "</div>",
+        (f'<p class="revisar-marca">⚠ Revisar · {_e(MOTIVO_REVISION.get(h["motivo_revision"], h["motivo_revision"]))}</p>'
+         if h["revisar"] else ""),
         f'<p class="suave">CWE {_e(h["cwe"])} · OWASP de referencia {_e(h["owasp_referencia"])} · '
         f"prioridad según {_e(h['prioridad_origen'])} · estado {_e(ETIQUETA_ESTADO.get(h['estado'], h['estado']))} · "
         f"clave <code>{_e(h['dedupe_key'])}</code></p>",
@@ -315,7 +326,8 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
             f"{_e(ia['generado'])} · confianza declarada {_e(ia['confianza'])}</p>",
             f"<p><strong>Explicación:</strong> {_e(ia['explicacion'])}</p>",
             f"<p><strong>Impacto:</strong> {_e(ia['impacto'])}</p>",
-            f"<p><strong>Categoría sugerida:</strong> {_e(ia['owasp'])} · "
+            f"<p><strong>Categoría sugerida:</strong> {_e(ia['owasp'])} "
+            f"(referencia según CWE: {_e(h['owasp_referencia'])}) · "
             f"<strong>prioridad sugerida:</strong> {_e(ia['prioridad'])}</p>",
             f"<p><strong>Remediación:</strong> {_e(ia['remediacion'])}</p>",
             f"<ol>{pasos}</ol>" if pasos else "",
@@ -395,7 +407,9 @@ La salida de la IA es una sugerencia; la decisión final la toma una persona.</p
 <h2>1. Resumen</h2>
 <p><strong>{res['vigentes']}</strong> hallazgos vigentes y <strong>{res['descartados']}</strong>
 descartados (falsos positivos o duplicados), de {res['total']} en total.
-{res['con_ia']} tienen sugerencia de la IA y {res['con_decision']} tienen decisión humana.</p>
+{res['con_ia']} tienen sugerencia de la IA y {res['con_decision']} tienen decisión humana.
+{res['por_revisar']} están marcados para revisar primero, porque la categoría del modelo no
+coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
 <h3>Por severidad</h3>
 {_tabla_conteo(res['por_severidad'], ETIQUETA_SEVERIDAD)}
 <h3>Por prioridad</h3>

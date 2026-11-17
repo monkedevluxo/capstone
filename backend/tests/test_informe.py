@@ -117,3 +117,24 @@ def test_el_html_sin_validaciones_explica_que_faltan():
     assert "Todavía no hay validaciones" in pagina
     assert "Pendiente de revisión" in pagina
     assert "Sin enriquecer" in pagina
+
+
+def test_marca_revisar_cuando_el_modelo_no_coincide_con_la_tabla():
+    # CWE 89 (inyección SQL) es A05:2025 en la tabla; el modelo dice otra cosa.
+    f = hallazgo(1, cwe=89, enriquecimientos=[ia(owasp_category="A03:2025")])
+    datos = armar_datos(OBJETIVO, [], [f])
+    h = datos["hallazgos"][0]
+    assert h["revisar"] is True
+    assert h["motivo_revision"] == "categoria_distinta"
+    assert datos["resumen"]["por_revisar"] == 1
+    pagina = renderizar_html(datos)
+    assert "Revisar · categoría distinta" in pagina
+    assert 'class="hallazgo revisar"' in pagina
+
+
+def test_sin_marca_cuando_el_modelo_coincide_o_no_hay_ia():
+    coincide = hallazgo(1, cwe=89, enriquecimientos=[ia(owasp_category="A05:2025")])
+    sin_ia = hallazgo(2, cwe=89)
+    datos = armar_datos(OBJETIVO, [], [coincide, sin_ia])
+    assert [h["revisar"] for h in datos["hallazgos"]] == [False, False]
+    assert "Revisar ·" not in renderizar_html(datos)
