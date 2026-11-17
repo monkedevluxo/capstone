@@ -408,7 +408,7 @@ La salida de la IA es una sugerencia; la decisión final la toma una persona.</p
 <p><strong>{res['vigentes']}</strong> hallazgos vigentes y <strong>{res['descartados']}</strong>
 descartados (falsos positivos o duplicados), de {res['total']} en total.
 {res['con_ia']} tienen sugerencia de la IA y {res['con_decision']} tienen decisión humana.
-{res['por_revisar']} están marcados para revisar primero, porque la categoría del modelo no
+Hallazgos marcados para revisar primero: {res['por_revisar']}, porque la categoría del modelo no
 coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
 <h3>Por severidad</h3>
 {_tabla_conteo(res['por_severidad'], ETIQUETA_SEVERIDAD)}
