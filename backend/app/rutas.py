@@ -8,6 +8,7 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     GET  /findings/{id}      detalle: evidencia original, instancias, IA, validaciones
     POST /findings/{id}/enrich  enriquece un hallazgo con el modelo local (T-032)
     POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
+    POST /findings/{id}/validaciones  registra la decisión de una persona (T-057)
 
 Cada hallazgo trae además `referencia`: la categoría OWASP según la tabla
 CWE -> OWASP 2025, la prioridad por regla y la marca "revisar" de la opción
@@ -21,6 +22,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
 from sqlalchemy import Integer, String, and_, case, cast, column, func, not_, or_, select, values
 from sqlalchemy.orm import Session, aliased, selectinload
 
@@ -37,11 +39,13 @@ from app.ia.owasp_por_cwe import TABLA
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.models import (
     AiEnrichment,
+    DecisionValidacion,
     EstadoHallazgo,
     EstadoIA,
     Finding,
     FindingInstance,
     FindingObservation,
+    Prioridad,
     Scan,
     Severidad,
     Validation,
@@ -118,6 +122,9 @@ def _detalle_ia(e: AiEnrichment | None) -> dict | None:
     if e is None:
         return None
     return {
+        # El formulario de validación lo devuelve como enrichment_id: así se
+        # sabe qué sugerencia tenía la persona en pantalla al decidir.
+        "id": str(e.id),
         **_resumen_ia(e),
         "explicacion": e.explanation,
         "impacto": e.impact,
@@ -403,17 +410,147 @@ def detalle_hallazgo(finding_id: uuid.UUID, db: Session = Depends(get_db)):
         "origen": f.source_raw,
         "ia": _detalle_ia(ia_vigente),
         "referencia": referencia(f, ia_vigente),
-        "validaciones": [
-            {
-                "decision": v.decision.value,
-                "revisor": v.reviewer,
-                "fecha": v.reviewed_at,
-                "comentario": v.comment,
-                "prioridad_corregida": v.priority_override.value if v.priority_override else None,
-            }
-            for v in validaciones
-        ],
+        "validaciones": [_validacion(v) for v in validaciones],
     }
+
+
+# ── Validación humana (T-057) ─────────────────────────────────────────────
+
+# Estado del hallazgo según la decisión. Lo fija la validación más reciente,
+# en la misma transacción que la guarda (ESQUEMA_HALLAZGO.md, sección 7).
+ESTADO_POR_DECISION: dict[DecisionValidacion, EstadoHallazgo] = {
+    DecisionValidacion.confirmado: EstadoHallazgo.confirmado,
+    DecisionValidacion.falso_positivo: EstadoHallazgo.falso_positivo,
+    DecisionValidacion.riesgo_aceptado: EstadoHallazgo.riesgo_aceptado,
+    DecisionValidacion.duplicado: EstadoHallazgo.duplicado,
+    DecisionValidacion.requiere_segunda_opinion: EstadoHallazgo.en_triage,
+}
+
+_Texto = Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=4000)]
+
+
+class NuevaValidacion(BaseModel):
+    """Cuerpo de POST /findings/{id}/validaciones."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    decision: DecisionValidacion
+    revisor: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+    comentario: _Texto = None
+    prioridad_corregida: Prioridad | None = None
+    # La sugerencia del modelo que la persona tenía en pantalla al decidir.
+    enrichment_id: uuid.UUID | None = None
+    # Banderas del golden set: true, false o null ("no sé").
+    ai_owasp_correcto: bool | None = None
+    ai_prioridad_correcta: bool | None = None
+    ai_remediacion_util: bool | None = None
+    ai_alucinacion: bool | None = None
+    ai_nota: _Texto = None
+
+    @field_validator("comentario", "ai_nota")
+    @classmethod
+    def _vacio_es_null(cls, v: str | None) -> str | None:
+        return v or None
+
+    def opina_de_la_ia(self) -> bool:
+        return any(
+            v is not None
+            for v in (
+                self.ai_owasp_correcto,
+                self.ai_prioridad_correcta,
+                self.ai_remediacion_util,
+                self.ai_alucinacion,
+                self.ai_nota,
+            )
+        )
+
+
+def _validacion(v: Validation) -> dict:
+    return {
+        "id": str(v.id),
+        "decision": v.decision.value,
+        "revisor": v.reviewer,
+        "fecha": v.reviewed_at,
+        "comentario": v.comment,
+        "prioridad_corregida": v.priority_override.value if v.priority_override else None,
+        "enrichment_id": str(v.enrichment_id) if v.enrichment_id else None,
+        "ai_owasp_correcto": v.ai_owasp_correcto,
+        "ai_prioridad_correcta": v.ai_prioridad_correcta,
+        "ai_remediacion_util": v.ai_remediacion_util,
+        "ai_alucinacion": v.ai_alucinacion,
+        "ai_nota": v.ai_nota,
+    }
+
+
+def _rechazo(codigo: int, error: str, campo: str | None = None, **extra) -> HTTPException:
+    return HTTPException(status_code=codigo, detail={"error": error, "campo": campo, **extra})
+
+
+@router.post("/findings/{finding_id}/validaciones", tags=["validacion"], status_code=201)
+def validar_hallazgo(
+    finding_id: uuid.UUID,
+    cuerpo: NuevaValidacion,
+    db: Session = Depends(get_db),
+):
+    """
+    Registra la decisión de una persona sobre un hallazgo y actualiza su
+    estado en la misma transacción. Cada decisión es una fila nueva: el
+    historial no se reescribe.
+
+    - **201**: la validación creada y el estado nuevo del hallazgo
+    - **404**: el hallazgo no existe
+    - **409**: `enrichment_id` ya no es la sugerencia vigente (alguien volvió
+      a enriquecer mientras la persona decidía)
+    - **422**: revisor vacío, `enrichment_id` de otro hallazgo, o banderas
+      `ai_*` sin una sugerencia válida del modelo que juzgar
+    """
+    # Bloquea el hallazgo: dos decisiones (o una decisión y un reenriquecimiento)
+    # simultáneas se ordenan, y el estado queda el de la más reciente.
+    f = db.get(Finding, finding_id, with_for_update=True)
+    if f is None:
+        raise HTTPException(status_code=404, detail="hallazgo no encontrado")
+
+    sugerencia: AiEnrichment | None = None
+    if cuerpo.enrichment_id is not None:
+        sugerencia = db.get(AiEnrichment, cuerpo.enrichment_id)
+        if sugerencia is None or sugerencia.finding_id != f.id:
+            raise _rechazo(422, "esa sugerencia no es de este hallazgo", "enrichment_id")
+        if not sugerencia.is_current:
+            vigente_ahora = vigente(db, f.id)
+            raise _rechazo(
+                409,
+                "la sugerencia cambió, recarga antes de decidir",
+                "enrichment_id",
+                enrichment_vigente=str(vigente_ahora.id) if vigente_ahora else None,
+            )
+
+    if cuerpo.opina_de_la_ia():
+        if sugerencia is None or sugerencia.state != EstadoIA.ok:
+            raise _rechazo(
+                422,
+                "las banderas ai_* solo aplican a una sugerencia válida del modelo: "
+                "manda su enrichment_id, o deja las banderas en null",
+                "ai_owasp_correcto",
+            )
+
+    v = Validation(
+        finding_id=f.id,
+        enrichment_id=sugerencia.id if sugerencia else None,
+        decision=cuerpo.decision,
+        reviewer=cuerpo.revisor,
+        priority_override=cuerpo.prioridad_corregida,
+        comment=cuerpo.comentario,
+        ai_owasp_correcto=cuerpo.ai_owasp_correcto,
+        ai_prioridad_correcta=cuerpo.ai_prioridad_correcta,
+        ai_remediacion_util=cuerpo.ai_remediacion_util,
+        ai_alucinacion=cuerpo.ai_alucinacion,
+        ai_nota=cuerpo.ai_nota,
+    )
+    db.add(v)
+    f.status = ESTADO_POR_DECISION[cuerpo.decision]
+    db.commit()
+    db.refresh(v)
+    return {"validacion": _validacion(v), "estado": f.status.value}
 
 
 # ── Enriquecimiento con IA ────────────────────────────────────────────────

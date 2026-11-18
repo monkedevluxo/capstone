@@ -243,6 +243,7 @@ curl "localhost:8000/findings?severidad=alta"
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
 | `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
 | `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
+| `POST /findings/{id}/validaciones` | Registra la decisión de una persona (confirmado, falso positivo, riesgo aceptado, duplicado o requiere segunda opinión) y actualiza el estado del hallazgo en la misma transacción: cada decisión deja su estado homónimo, `duplicado` incluido (estado propio desde la migración `7c2e9d41b3a5`), y "requiere segunda opinión" lo deja `en_triage` (ciclo de vida en `docs/diseno/ESQUEMA_HALLAZGO.md`, sección 7). Guarda qué sugerencia del modelo se juzgó y las banderas del golden set. 409 si la sugerencia cambió mientras se decidía |
 
 Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP según la tabla CWE → OWASP 2025, la prioridad por regla y la marca `requiere_revision` de la opción mixta. Se calcula al consultar; no se guarda.
 
@@ -366,7 +367,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 | **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
-En total son 149 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 216 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 
@@ -395,7 +396,7 @@ docker compose exec api python scripts/verificar_bd.py
 `verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
 datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
 
-Los tests de ingesta, enriquecimiento y resumen (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`) se saltan si no hay una base
+Los tests de ingesta, enriquecimiento, resumen y validaciones (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`, `tests/test_validaciones_api.py`) se saltan si no hay una base
 PostgreSQL disponible, y vacían las tablas antes de cada prueba: no los corras
 contra una base con datos que quieras conservar.
 
