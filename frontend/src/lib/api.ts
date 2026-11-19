@@ -75,7 +75,7 @@ export class ErrorApi extends Error {
   }
 }
 
-const API_URL = process.env.API_URL ?? "http://localhost:8000";
+export const API_URL = process.env.API_URL ?? "http://localhost:8000";
 
 /**
  * Lo que ve el navegador cuando la API no responde. La dirección interna
