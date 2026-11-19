@@ -38,6 +38,58 @@ La Ley 21.459 sobre delitos informáticos delimita el alcance del proyecto y jus
 
 ---
 
+## Arquitectura de la solución
+
+SentinelAI son cinco servicios en Docker Compose, repartidos en dos redes que no se comunican entre sí, más el modelo de lenguaje, que corre fuera de Docker.
+
+```mermaid
+flowchart LR
+    persona(["Persona<br/>navegador"])
+
+    subgraph interna["Red lab_interna · sin salida a internet"]
+        zap["OWASP ZAP<br/>escáner"]
+        juice["OWASP Juice Shop<br/>objetivo vulnerable"]
+        zap -->|escanea| juice
+    end
+
+    archivos[("lab/salidas<br/>reportes JSON")]
+
+    subgraph datos["Red lab_datos"]
+        web["Dashboard<br/>Next.js"]
+        api["API<br/>FastAPI"]
+        db[("PostgreSQL 16")]
+        web -->|"HTTP interno"| api
+        api -->|SQL| db
+    end
+
+    ollama["Ollama · Llama 3.1 8B<br/>equipo local con GPU"]
+
+    zap -->|"escribe el reporte"| archivos
+    persona -->|"sube el reporte<br/>127.0.0.1:3000"| web
+    archivos -.->|"la persona lo elige"| persona
+    api -->|"pide la sugerencia"| ollama
+```
+
+| Componente | Responsabilidad | Red |
+|---|---|---|
+| **Juice Shop** | Aplicación deliberadamente vulnerable: es el único objetivo de los escaneos | `lab_interna` |
+| **OWASP ZAP** | Escanea el objetivo y escribe el reporte JSON en `lab/salidas/` | `lab_interna` |
+| **API (FastAPI)** | Importa y normaliza los reportes, deduplica, consulta al modelo, registra las decisiones y genera el informe | `lab_datos` |
+| **PostgreSQL** | Guarda objetivos, escaneos, hallazgos con su evidencia original, sugerencias de la IA y validaciones | `lab_datos` |
+| **Dashboard (Next.js)** | Muestra los hallazgos y recibe las decisiones. Es lo único que usa la persona | `lab_datos` |
+| **Ollama** | Ejecuta el modelo de lenguaje en un equipo propio. La API lo alcanza por la dirección configurada en `OLLAMA_URL` | Fuera de Docker |
+
+**Cómo se comunican:**
+
+- **El escáner y la plataforma no comparten red.** Lo único que pasa de un lado al otro es un archivo: ZAP escribe el reporte y una persona lo sube desde el dashboard. La red del objetivo es `internal: true`, sin ruta de salida.
+- **El navegador solo habla con el dashboard.** El servidor de Next llama a la API dentro de `lab_datos`; la API no queda expuesta al navegador y no necesita CORS.
+- **Todos los puertos se publican en `127.0.0.1`.** Nada queda accesible desde otros equipos de la red.
+- **El modelo es opcional para operar.** Si Ollama no responde, la API contesta 503 y los hallazgos quedan "sin enriquecer"; el resto del flujo sigue funcionando.
+
+El detalle del modelo de datos está en `docs/diseno/MODELO_DATOS.md` y el del hallazgo normalizado en `docs/diseno/ESQUEMA_HALLAZGO.md`.
+
+---
+
 ## Estructura del repositorio
 
 ```
@@ -324,6 +376,8 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 |---|---|
 | **Instalación del entorno** | `docs/guias/GUIA_INSTALACION.md` |
 | Introducción a Docker | `docs/guias/DOCKER_BASICO.md` |
+| Visión del producto | `docs/producto/PRODUCT_VISION.md` |
+| Definición de terminado | `docs/producto/DEFINITION_OF_DONE.md` |
 | Esquema del hallazgo normalizado | `docs/diseno/ESQUEMA_HALLAZGO.md` |
 | Modelo de datos (DER y tablas) | `docs/diseno/MODELO_DATOS.md` |
 | Modelo de IA, prompt y alternativas | `docs/diseno/IA_MODELO_Y_PROMPT.md` |
@@ -351,6 +405,30 @@ El detalle de cada rol está en `docs/README_FELIPE.md` y `docs/README_JOAQUIN.m
 
 ---
 
+## Metodología de trabajo
+
+El equipo trabaja con una **metodología ágil e incremental basada en Scrum**, adaptada a un equipo de tres personas con horarios distintos.
+
+| Elemento | Cómo lo aplicamos |
+|---|---|
+| **Sprints** | 7 sprints de 2 semanas, del 7 de septiembre al 13 de diciembre de 2026. Cada uno tiene un objetivo y un hito verificable |
+| **Backlog** | 71 tareas en `docs/SentinelAI_Plan_Sprints.xlsx`, cada una con criterio de aceptación, responsable, estimación, dependencias y estado |
+| **Definición de terminado** | `docs/producto/DEFINITION_OF_DONE.md`. Una tarea está terminada cuando su cambio está integrado en `main` |
+| **Revisión** | Todo cambio entra por pull request, con la integración continua en verde y la aprobación de otro integrante |
+| **Coordinación** | Asíncrona, por mensajería y en los propios pull requests, más la clase presencial de los viernes |
+| **Riesgos** | Registro con probabilidad, impacto, mitigación y señal de alerta temprana, en la misma planilla |
+
+Sobre esa base aplicamos cuatro prácticas de ingeniería:
+
+- **Contrato de datos primero.** El esquema del hallazgo normalizado se definió antes de programar, para que cada integrante avanzara en paralelo.
+- **Pruebas como especificación.** El comportamiento esperado se escribe como pruebas automáticas, que corren en cada pull request.
+- **Fixtures versionados.** Los resultados reales de los escaneos se guardan en el repositorio, para desarrollar sin repetir escaneos de hasta 40 minutos.
+- **Decisiones con datos.** Las decisiones sobre la IA se toman a partir de mediciones contra el golden set y quedan documentadas.
+
+El plan original era de 9 sprints. El 15 de octubre se replanificó a 7, porque terminaba después del cierre del semestre. La visión del producto está en `docs/producto/PRODUCT_VISION.md`.
+
+---
+
 ## Integración continua
 
 Cada PR hacia `main` corre automáticamente en GitHub Actions
@@ -362,7 +440,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 | **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
-En total son 229 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 253 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 

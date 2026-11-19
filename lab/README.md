@@ -61,3 +61,26 @@ Copia un resultado de `lab/salidas/` a `lab/fixtures/` para versionarlo. Verific
 |---|---|---|
 | `salidas/` | Resultados de cada ejecución | No |
 | `fixtures/` | Escaneos congelados que usan los tests y las métricas | Sí |
+
+## `e2e.sh` · prueba de extremo a extremo (T-061)
+
+```bash
+./lab/e2e.sh                # con el fixture zap_juiceshop_ajax_v2
+./lab/e2e.sh --escanear     # escanea Juice Shop primero y usa ese resultado
+```
+
+Recorre el flujo completo y verifica cada paso:
+
+| Paso | Qué comprueba |
+|---|---|
+| 1 | Crea (si falta), migra y vacía la base de pruebas `sentinelai_test` |
+| 2 | Levanta una API de pruebas en `127.0.0.1:8001` y espera a que responda `/health` |
+| 3 | Importa el reporte: 201 y al menos un hallazgo nuevo |
+| 4 | Importa el mismo reporte otra vez: 409 |
+| 5 | El resumen de la API cuenta los mismos hallazgos que se importaron |
+| 6 | Enriquece el escaneo con la IA. Si Ollama no responde, avisa y sigue: el sistema está diseñado para funcionar con hallazgos "sin enriquecer" |
+| 7 | Genera el informe técnico en `lab/salidas/e2e_informe.html` y verifica sus 5 secciones y una ficha por hallazgo |
+
+Termina con `E2E OK` o con la lista de pasos que fallaron, y sale con código 1 si hubo fallas.
+
+**Nunca toca la base de la demo** (`sentinelai`): todo ocurre en `sentinelai_test`, como exige `CONTRIBUTING.md`. La API de pruebas se detiene al terminar, aunque el script falle a la mitad.
