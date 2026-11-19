@@ -1,6 +1,6 @@
 # Evidencias del proyecto
 
-**Tarea:** T-067 · **Responsable:** Felipe Cayún · **Actualizado:** 16-11-2026
+**Tarea:** T-067 · **Responsable:** Felipe Cayún · **Actualizado:** 19-11-2026
 
 Índice de las diez evidencias comprometidas con el docente en la definición del proyecto (`docs/institucional/fase1/Encargo1_Definición_Proyecto_SentinelAI.docx`, sección 6), con dónde está cada una en el repositorio y su estado.
 
@@ -23,9 +23,9 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 
 ### Qué falta en cada una
 
-- **6 · Dashboard:** el listado con filtros y totales está en `main` (PR #21). La vista de detalle y el registro de la decisión humana están en revisión.
-- **8 · Reporte técnico:** implementado y probado (10 tests), en revisión. Falta conectarlo al botón "Informe" del dashboard.
-- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), y `plan_pruebas.md` las reúne como casos con resultado esperado y obtenido, más las incidencias y mejoras aplicadas. Falta la anotación completa del golden set (T-043).
+- **6 · Dashboard:** el listado con filtros y totales (PR #21), la vista de detalle y el registro de la decisión humana (PR #28) están en `main`. Falta conectar el botón "Informe".
+- **8 · Reporte técnico:** en `main` (PR #22), con 13 tests y la marca "Revisar" igual que el dashboard. Se genera desde la línea de comandos; falta conectarlo al botón "Informe" del dashboard.
+- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), y `plan_pruebas.md` las reúne como casos con resultado esperado y obtenido, más las incidencias y mejoras aplicadas. El golden set de 17 hallazgos ya tiene la anotación del primer revisor (CP-21); falta la del segundo y el acuerdo entre ambos (T-043).
 - **10 · Documentación y presentación final:** corresponde al sprint de cierre.
 
 ## Archivos de esta carpeta
@@ -35,7 +35,7 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 | Archivo | Qué demuestra |
 |---|---|
 | `T006_aislamiento.txt` | La red del laboratorio no tiene salida a internet: el ping desde `lab_interna` falla y fuera de ella responde. Respaldo técnico del marco ético (Ley 21.459) |
-| `escaneo_autenticado.md` | Escaneo con sesión iniciada (15 tipos de alerta contra 13 sin sesión), la propuesta de muestra para el golden set y la decisión del equipo |
+| `escaneo_autenticado.md` | Escaneo con sesión iniciada (15 tipos de alerta contra 13 sin sesión), la propuesta de muestra para el golden set, la decisión del equipo y la corrección a 17 hallazgos reales |
 
 ### Inteligencia artificial
 
@@ -44,7 +44,7 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 | `latencia_ollama.md` | Latencia del modelo local por hallazgo, medida en GPU |
 | `contenedor_ollama.md` | El backend alcanza a Ollama desde su contenedor |
 | `enriquecimiento_ajax_v2.md` | Primera prueba del pipeline completo sobre hallazgos que el prompt no conocía |
-| `respuestas_modelo/` | Respuestas crudas del modelo en cada prueba, guardadas sin modificar |
+| `respuestas_modelo/` | Respuestas crudas del modelo en cada prueba, guardadas sin modificar, y los 17 enriquecimientos que comparten los revisores del golden set (`enriquecimientos_20261118.json`) |
 
 ### Golden set y calidad de la IA
 
@@ -69,7 +69,7 @@ docker run --rm alpine ping -c 2 8.8.8.8
 # 5 · Escaneo e importación
 ./lab/escanear.sh ajax
 
-# 8 y 9 · Flujo completo, de reporte a informe, sobre la base de pruebas
+# 8 y 9 · Flujo completo, de reporte a decisión humana e informe, sobre la base de pruebas
 ./lab/e2e.sh
 
 # 8 · Informe técnico de la base de la demo
