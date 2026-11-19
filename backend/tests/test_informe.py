@@ -146,3 +146,12 @@ def test_resumen_no_depende_del_plural():
     pagina = renderizar_html(armar_datos(OBJETIVO, [], [f]))
     assert "Con sugerencia de la IA: 0. Con decisión humana: 1." in pagina
     assert "1 tienen" not in pagina
+
+
+def test_el_indice_enlaza_cada_ficha_y_las_fechas_se_leen_facil():
+    datos = armar_datos(OBJETIVO, [ESCANEO], [hallazgo(1), hallazgo(2, titulo="XSS")])
+    pagina = renderizar_html(datos)
+    for h in datos["hallazgos"]:
+        assert f'href="#h-{h["dedupe_key"]}"' in pagina
+        assert f'id="h-{h["dedupe_key"]}"' in pagina
+    assert "16-11-2026 12:00 UTC" in pagina  # inicio del escaneo, no el ISO crudo

@@ -26,20 +26,22 @@ interface Modulo {
   icono: LucideIcon;
   /** Sin href: el módulo existe en el plan pero todavía no se puede abrir. */
   href?: string;
+  /** Se abre en otra pestaña, fuera del dashboard (el informe es una página aparte). */
+  pestanaNueva?: boolean;
 }
 
 export const MODULOS: Modulo[] = [
   { etiqueta: "Inicio", icono: House, href: "/" },
   { etiqueta: "Hallazgos", icono: ListChecks, href: "/hallazgos" },
   { etiqueta: "Escaneos", icono: Radar, href: "/escaneos" },
-  // T-058 / T-059
-  { etiqueta: "Informe", icono: FileText },
+  // T-058 / T-059: página HTML que arma la API, para guardar o imprimir.
+  { etiqueta: "Informe", icono: FileText, href: "/informe", pestanaNueva: true },
 ];
 
 /** Módulo al que pertenece una ruta: /hallazgos/<id> es parte de Hallazgos. */
 export function moduloActivo(ruta: string): Modulo | undefined {
   return MODULOS.find(
-    (m) => m.href && (m.href === "/" ? ruta === "/" : ruta === m.href || ruta.startsWith(`${m.href}/`)),
+    (m) => m.href && !m.pestanaNueva && (m.href === "/" ? ruta === "/" : ruta === m.href || ruta.startsWith(`${m.href}/`)),
   );
 }
 
@@ -81,7 +83,21 @@ export function BarraLateral() {
               <SidebarMenu className="gap-1">
                 {MODULOS.map((m) => (
                   <SidebarMenuItem key={m.etiqueta}>
-                    {m.href ? (
+                    {m.href && m.pestanaNueva ? (
+                      <SidebarMenuButton
+                        tooltip={`${m.etiqueta} · se abre en otra pestaña`}
+                        render={
+                          // <a> y no <Link>: /informe es un route handler, no una página de Next.
+                          <a href={m.href} target="_blank" rel="noopener" onClick={cerrarEnMovil} />
+                        }
+                      >
+                        <m.icono aria-hidden />
+                        <span>
+                          {m.etiqueta}
+                          <span className="sr-only"> (se abre en otra pestaña)</span>
+                        </span>
+                      </SidebarMenuButton>
+                    ) : m.href ? (
                       <SidebarMenuButton
                         isActive={m === activo}
                         tooltip={m.etiqueta}
