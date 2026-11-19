@@ -138,3 +138,11 @@ def test_sin_marca_cuando_el_modelo_coincide_o_no_hay_ia():
     datos = armar_datos(OBJETIVO, [], [coincide, sin_ia])
     assert [h["revisar"] for h in datos["hallazgos"]] == [False, False]
     assert "Revisar ·" not in renderizar_html(datos)
+
+
+def test_resumen_no_depende_del_plural():
+    # Antes decía "1 tienen decisión humana"; la frase no debe cambiar con el número.
+    f = hallazgo(1, validaciones=[validacion(1, revisor="Prueba")])
+    pagina = renderizar_html(armar_datos(OBJETIVO, [], [f]))
+    assert "Con sugerencia de la IA: 0. Con decisión humana: 1." in pagina
+    assert "1 tienen" not in pagina
