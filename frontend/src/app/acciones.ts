@@ -1,6 +1,6 @@
 "use server";
 
-// Server Actions de la pantalla Inicio. El navegador nunca habla con la API:
+// Server Actions del dashboard. El navegador nunca habla con la API:
 // le manda el archivo al servidor de Next y este lo reenvía a API_URL. Así la
 // API no necesita CORS y su dirección no llega al navegador.
 
@@ -152,6 +152,8 @@ export async function enriquecerEscaneo(scanId: string): Promise<ResultadoEnriqu
 
   switch (respuesta.status) {
     case 200:
+      // Los "sin enriquecer" de la lista de escaneos cambian.
+      revalidatePath("/escaneos");
       return { tipo: "ok", lote: respuesta.datos as ResumenLote };
     case 503:
       return { tipo: "ollama_apagado" };

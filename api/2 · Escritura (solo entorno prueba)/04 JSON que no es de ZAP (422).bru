@@ -1,0 +1,22 @@
+meta {
+  name: JSON que no es de ZAP (422)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/scans/import
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "hola": "esto no es un reporte de ZAP"
+  }
+}
+
+assert {
+  res.status: eq 422
+  res.body.detail.error: isString
+}

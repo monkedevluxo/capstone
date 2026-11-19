@@ -1,0 +1,20 @@
+meta {
+  name: Elegir un hallazgo del escaneo
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/findings?scan_id={{scanId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.total: gt 0
+}
+
+script:post-response {
+  bru.setVar("findingId", res.getBody().items[0].id);
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Detalle de un hallazgo
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/findings/{{findingId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{findingId}}
+  res.body.validaciones: isArray
+}
+
+tests {
+  test("trae las capas escáner, IA y persona por separado", () => {
+    expect(res.getBody()).to.include.keys("origen", "ia", "referencia", "validaciones", "instancias");
+  });
+}
+
+docs {
+  Usa el id del primer hallazgo de la request 03.
+}

@@ -52,7 +52,7 @@ export default async function Inicio() {
 function UltimoEscaneo({ escaneo }: { escaneo: Escaneo | undefined }) {
   return (
     <section aria-labelledby="titulo-ultimo">
-      <TituloUltimo />
+      <TituloUltimo conEnlace={escaneo !== undefined} />
       {!escaneo ? (
         <Aviso titulo="Todavía no hay escaneos">
           Cuando importes el primer reporte de ZAP, acá vas a ver cuándo fue y cuántos hallazgos
@@ -100,11 +100,18 @@ function UltimoEscaneo({ escaneo }: { escaneo: Escaneo | undefined }) {
   );
 }
 
-function TituloUltimo() {
+function TituloUltimo({ conEnlace = false }: { conEnlace?: boolean }) {
   return (
-    <h2 id="titulo-ultimo" className="mb-3 flex items-center gap-2 font-semibold text-navy">
-      <History aria-hidden className="size-4 text-escaner" />
-      Último escaneo
-    </h2>
+    <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <h2 id="titulo-ultimo" className="flex items-center gap-2 font-semibold text-navy">
+        <History aria-hidden className="size-4 text-escaner" />
+        Último escaneo
+      </h2>
+      {conEnlace && (
+        <Link href="/escaneos" className={claseEnlace}>
+          Ver todos los escaneos
+        </Link>
+      )}
+    </div>
   );
 }

@@ -1,0 +1,13 @@
+# Unifica las identidades de cada integrante en git log y git shortlog.
+# Formato: Nombre canónico <correo canónico> [Nombre en el commit] <correo en el commit>
+# Solo correos que ya aparecen en el historial.
+
+Felipe Cayún <felipecayun1583@gmail.com>
+Felipe Cayún <felipecayun1583@gmail.com> <151699676+Vanzyuwu@users.noreply.github.com>
+
+Joaquín Herrera <jo.herrerarojas@duocuc.cl>
+Joaquín Herrera <jo.herrerarojas@duocuc.cl> <136379917+bjoaquin19@users.noreply.github.com>
+Joaquín Herrera <jo.herrerarojas@duocuc.cl> <136379917+joaquinhr22@users.noreply.github.com>
+
+Luciano Zambrano <luciano.zambrano1999@gmail.com>
+Luciano Zambrano <luciano.zambrano1999@gmail.com> <153768746+monkedevluxo@users.noreply.github.com>

@@ -1,0 +1,26 @@
+meta {
+  name: Validar con la sugerencia vieja (409)
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/findings/{{findingId}}/validaciones
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "decision": "confirmado",
+    "revisor": "Bruno",
+    "enrichment_id": "{{sugerenciaVieja}}",
+    "ai_owasp_correcto": true
+  }
+}
+
+assert {
+  res.status: eq 409
+  res.body.detail.campo: eq enrichment_id
+  res.body.detail.enrichment_vigente: eq {{sugerenciaVigente}}
+}

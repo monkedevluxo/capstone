@@ -1,0 +1,27 @@
+meta {
+  name: Hallazgos por severidad
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/findings?severidad=alta
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+  test("todos son de severidad alta", () => {
+    for (const f of res.getBody().items) expect(f.severidad).to.equal("alta");
+  });
+}

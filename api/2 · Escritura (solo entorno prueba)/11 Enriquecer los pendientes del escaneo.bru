@@ -1,0 +1,26 @@
+meta {
+  name: Enriquecer los pendientes del escaneo
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/scans/{{scanId}}/enrich?solo_pendientes=true
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.scan_id: eq {{scanId}}
+  res.body.omitidos: gte 1
+  res.body.detenido_por: isNull
+}
+
+tests {
+  test("procesa los que faltaban y se salta el ya enriquecido", () => {
+    const b = res.getBody();
+    expect(b.procesados).to.equal(b.enriquecidos + b.fallidos);
+    expect(b.hallazgos).to.be.an("array").with.lengthOf(b.procesados);
+  });
+}

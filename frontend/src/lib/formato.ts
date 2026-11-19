@@ -19,6 +19,16 @@ export const fechaHora = (iso: string) => fechaLarga.format(new Date(iso));
 /** "11 nov 2026" */
 export const fecha = (iso: string) => fechaCorta.format(new Date(iso));
 
+const horaCorta = new Intl.DateTimeFormat("es-CL", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "America/Santiago",
+});
+
+/** "23:25" */
+export const hora = (iso: string) => horaCorta.format(new Date(iso));
+
 /** 0.9 -> "0,90" */
 export const confianza = (valor: number) => valor.toFixed(2).replace(".", ",");
 

@@ -1,0 +1,21 @@
+meta {
+  name: Health
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/health
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.estado: eq ok
+  res.body.base_datos: eq ok
+}
+
+tests {
+  test("trae la versión del esquema", () => expect(res.getBody().schema_version).to.be.a("string"));
+}

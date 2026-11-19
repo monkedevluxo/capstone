@@ -94,7 +94,7 @@ El detalle del modelo de datos está en `docs/diseno/MODELO_DATOS.md` y el del h
 
 ```
 capstone/
-├── .github/workflows/    CI: tests, migraciones y restricciones
+├── .github/              CI (workflows/) y plantilla de PR
 ├── backend/
 │   ├── app/
 │   │   ├── main.py           API FastAPI
@@ -112,6 +112,7 @@ capstone/
 │   │   └── intercambio.py          Intercambio entre equipos y acuerdo entre revisores
 │   └── tests/                Parser, esquema, módulo de IA e ingesta
 ├── frontend/             Dashboard en Next.js (desde el S5)
+├── api/                  Colección de Bruno para probar la API
 ├── lab/
 │   ├── fixtures/         Escaneos congelados y versionados (insumo de desarrollo)
 │   └── salidas/          Resultados de escaneos en curso (no se versiona)
@@ -121,6 +122,7 @@ capstone/
 │   ├── guias/            Instalación, Docker, Ollama
 │   └── evidencias/       Logs, mediciones, golden set y planillas de validación
 ├── docker-compose.yml
+├── CONTRIBUTING.md
 └── README.md
 ```
 
@@ -281,6 +283,36 @@ bun --bun run typecheck   # tsc de TypeScript 7
 
 Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
 compila y se ve igual sin internet.
+
+### Probar la API con Bruno
+
+`api/` es una colección de [Bruno](https://www.usebruno.com) en texto plano (`.bru`):
+cada request trae asserts sobre el código HTTP y la forma del cuerpo. Se abre con la
+app de Bruno (*Open Collection* → `api/`) o se corre por consola, sin instalar nada:
+
+```bash
+cd api
+bunx @usebruno/cli@4.3.0 run "1 · Consulta" --env local     # solo GET: segura contra la demo
+```
+
+| Carpeta | Qué hace | Contra qué |
+|---|---|---|
+| `1 · Consulta` | health, escaneos, listado con filtros, resumen, detalle, 404 y 422 | cualquier API, incluida la demo (`local`, :8000) |
+| `2 · Escritura (solo entorno prueba)` | importa un fixture (201, 409, 403, 422), enriquece, valida (201, 409, 422) y enriquece un lote | **solo** el entorno `prueba` (:8001), con `sentinelai_test` vacía |
+
+La carpeta de escritura se niega a correr (falla en el *pre-request*, sin enviar
+nada) si el entorno no es `prueba` o si la URL es la de la demo. Para usarla,
+levanta una API apuntada a la base de pruebas y, para los enrich, un Ollama
+(`OLLAMA_URL`, real o uno falso):
+
+```bash
+docker compose exec -T db psql -U sentinel -d sentinelai_test -c \
+  "TRUNCATE validations, ai_enrichments, finding_observations, finding_instances, findings, scans, targets CASCADE"
+docker compose run -d --rm --name sentinel-api-prueba -p 127.0.0.1:8001:8000 \
+  -e DATABASE_URL=postgresql+psycopg://sentinel:sentinel_local@db:5432/sentinelai_test api
+cd api && bunx @usebruno/cli@4.3.0 run "2 · Escritura (solo entorno prueba)" "1 · Consulta" --env prueba
+docker stop sentinel-api-prueba
+```
 
 ### Anotar el golden set entre varios equipos
 
@@ -457,7 +489,7 @@ docker compose exec api python scripts/verificar_bd.py
 `verificar_bd.py` espera los 40 hallazgos del seed. Si tu base tiene otros
 datos, recárgala antes con `docker compose exec api python scripts/seed.py --reset`.
 
-Los tests de ingesta, enriquecimiento, resumen y validaciones (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`, `tests/test_validaciones_api.py`) se saltan si no hay una base
+Los tests de ingesta, enriquecimiento, resumen y validaciones (`tests/test_ingesta.py`, `tests/test_enriquecimiento_api.py`, `tests/test_resumen_filtros_api.py`, `tests/test_validaciones_api.py`, `tests/test_intercambio.py`) se saltan si no hay una base
 PostgreSQL disponible, y vacían las tablas antes de cada prueba: no los corras
 contra una base con datos que quieras conservar.
 
@@ -465,15 +497,9 @@ contra una base con datos que quieras conservar.
 
 ## Convenciones de trabajo
 
-**Ramas:** `persona/tema`. Por ejemplo `luciano/backend-base`, `joaquin/parser-zap`,
-`felipe/lab-escaneos`.
-
-**Commits:** formato `tipo: descripción` — `feat`, `fix`, `docs`, `test`, `lab`, `chore`
-
-**Pull requests:** `main` está protegida. Todo cambio entra por PR, con los dos
-checks del CI en verde y una aprobación de otro integrante. Nadie aprueba su
-propio PR: la revisión también sirve para que los tres conozcan el código que
-van a defender.
+Ramas `persona/tema` desde `main`, commits `tipo: descripción` (`feat`, `fix`, `docs`, `test`, `lab`, `chore`).
+Todo entra por PR con los checks del CI en verde y la aprobación de otro integrante; nadie aprueba lo propio.
+El detalle (plantilla de PR, bases de datos, migraciones y secretos) está en [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -484,9 +510,9 @@ El plan parte el 7 de septiembre de 2026 y termina el 13 de diciembre, dentro de
 - [x] **S1 · 7 sep – 20 sep** — Laboratorio, aislamiento de red, primer escaneo
 - [x] **S2 · 21 sep – 4 oct** — Modelo de datos y migraciones
 - [x] **S3 · 5 oct – 18 oct** — Parser, normalización y API de ingesta
-- [ ] **S4 · 19 oct – 1 nov** — IA integrada a la API y enriquecimiento por lote *(módulo de IA ya adelantado)*
-- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(golden set inicial ya adelantado)*
-- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega)
+- [x] **S4 · 19 oct – 1 nov** — IA integrada a la API y enriquecimiento por lote
+- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(dashboard hecho: inicio, lista con filtros y detalle, PR #21 en revisión; golden set: la herramienta para anotarlo entre varios revisores está lista, falta la anotación)*
+- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega) *(validación humana hecha: decisión desde el detalle y estado `duplicado`; falta el informe técnico)*
 - [ ] **S7 · 30 nov – 13 dic** — Documentación, evidencias y defensa
 
 El detalle de las 71 tareas, con su estado y responsable, está en la planilla de sprints.

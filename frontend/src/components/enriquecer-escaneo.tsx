@@ -11,11 +11,11 @@ import { cn } from "@/lib/utils";
 const claseBotonIA = "border-ia/40 bg-card text-ia hover:bg-ia-suave hover:text-ia";
 
 /**
- * "Enriquecer pendientes" de un escaneo recién importado. El lote es síncrono
- * y sin porcentaje: la API responde al final, así que el progreso es
- * indeterminado y el texto dice cuánto lleva, no cuánto falta.
+ * Estado del "Enriquecer pendientes" de un escaneo. Lo usan Inicio (escaneo
+ * recién importado) y la lista de /escaneos: cada uno decide dónde va el
+ * botón y dónde el progreso o el resultado.
  */
-export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
+export function useEnriquecerEscaneo(scanId: string) {
   const [resultado, setResultado] = useState<ResultadoEnriquecimiento | null>(null);
   const [enCurso, iniciar] = useTransition();
 
@@ -30,22 +30,57 @@ export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
     });
   }
 
-  if (enCurso) return <EnCurso />;
+  return { enCurso, resultado, enriquecer };
+}
 
-  if (!resultado) {
-    return (
-      <Button
-        type="button"
-        size="lg"
-        variant="outline"
-        onClick={enriquecer}
-        className={cn("self-start px-4", claseBotonIA)}
-      >
-        <Sparkles aria-hidden />
-        Enriquecer pendientes
-      </Button>
-    );
+/**
+ * "Enriquecer pendientes" de un escaneo recién importado. El lote es síncrono
+ * y sin porcentaje: la API responde al final, así que el progreso es
+ * indeterminado y el texto dice cuánto lleva, no cuánto falta.
+ */
+export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
+  const { enCurso, resultado, enriquecer } = useEnriquecerEscaneo(scanId);
+  if (!enCurso && !resultado) {
+    return <BotonEnriquecer onClick={enriquecer} className="self-start px-4" size="lg" />;
   }
+  return <EstadoEnriquecimiento enCurso={enCurso} resultado={resultado} enriquecer={enriquecer} />;
+}
+
+export function BotonEnriquecer({
+  onClick,
+  className,
+  size = "default",
+}: {
+  onClick: () => void;
+  className?: string;
+  size?: "default" | "lg";
+}) {
+  return (
+    <Button
+      type="button"
+      size={size}
+      variant="outline"
+      onClick={onClick}
+      className={cn(claseBotonIA, className)}
+    >
+      <Sparkles aria-hidden />
+      Enriquecer pendientes
+    </Button>
+  );
+}
+
+/** Progreso mientras corre el lote, o su resultado con "Reintentar" si hace falta. */
+export function EstadoEnriquecimiento({
+  enCurso,
+  resultado,
+  enriquecer,
+}: {
+  enCurso: boolean;
+  resultado: ResultadoEnriquecimiento | null;
+  enriquecer: () => void;
+}) {
+  if (enCurso) return <EnCurso />;
+  if (!resultado) return null;
 
   const reintentar = (
     <Button type="button" variant="outline" onClick={enriquecer} className={claseBotonIA}>

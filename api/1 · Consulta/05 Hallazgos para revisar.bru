@@ -1,0 +1,27 @@
+meta {
+  name: Hallazgos para revisar
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/findings?revisar=true
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+  test("todos están marcados para revisar", () => {
+    for (const f of res.getBody().items) expect(f.referencia.requiere_revision).to.equal(true);
+  });
+}

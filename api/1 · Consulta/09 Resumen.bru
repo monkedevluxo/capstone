@@ -1,0 +1,26 @@
+meta {
+  name: Resumen
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/findings/resumen
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.total: isNumber
+  res.body.revisar: isNumber
+  res.body.sin_enriquecer: isNumber
+}
+
+tests {
+  test("conteos por severidad y estado con todas las claves", () => {
+    const b = res.getBody();
+    expect(b.por_severidad).to.include.keys("critica", "alta", "media", "baja", "informativa");
+    expect(b.por_estado).to.include.keys("nuevo", "en_triage", "confirmado", "falso_positivo", "duplicado");
+  });
+}

@@ -1,0 +1,34 @@
+meta {
+  name: Hallazgos sin filtros
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/findings
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.items: isArray
+  res.body.total: isNumber
+}
+
+script:post-response {
+  const i = res.getBody().items; if (i.length) bru.setVar("findingId", i[0].id);
+}
+
+tests {
+  test("forma del listado", () => {
+    const b = res.getBody();
+    expect(b).to.include.keys("total", "limit", "offset", "items");
+    expect(b.items.length).to.be.at.most(b.limit);
+  });
+  test("cada ítem trae severidad, estado y referencia", () => {
+    for (const f of res.getBody().items) {
+      expect(f).to.include.keys("id", "titulo", "severidad", "estado", "ia", "referencia");
+    }
+  });
+}
