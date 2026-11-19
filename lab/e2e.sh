@@ -111,7 +111,24 @@ case "${CODIGO}" in
   *)   falla "se esperaba 200 o 503 y llegó ${CODIGO}: ${CUERPO}" ;;
 esac
 
-paso "7. Generar el informe técnico"
+paso "7. Registrar una decisión humana"
+REVISOR="Prueba E2E"
+HALLAZGO="$(curl -sf "${API}/findings?limit=1" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["items"][0]["id"])')"
+RESPUESTA="$(curl -s -w '\n%{http_code}' -X POST "${API}/findings/${HALLAZGO}/validaciones" \
+  -H 'Content-Type: application/json' \
+  -d "{\"decision\": \"confirmado\", \"revisor\": \"${REVISOR}\", \"comentario\": \"Registrada por lab/e2e.sh\"}")"
+CODIGO="$(tail -1 <<<"${RESPUESTA}")"
+CUERPO="$(sed '$d' <<<"${RESPUESTA}")"
+if [[ "${CODIGO}" == "201" ]]; then
+  ESTADO="$(campo "${CUERPO}" estado)"
+  [[ "${ESTADO}" == "confirmado" ]] && ok "201 · el hallazgo pasó a 'confirmado'" \
+    || falla "la decisión se guardó, pero el hallazgo quedó en '${ESTADO}'"
+else
+  falla "se esperaba 201 y llegó ${CODIGO}: ${CUERPO}"
+fi
+
+paso "8. Generar el informe técnico"
 mkdir -p lab/salidas
 docker exec "${CONTENEDOR}" python scripts/informe.py > "${INFORME}" 2>/dev/null \
   || falla "scripts/informe.py terminó con error"
@@ -124,6 +141,9 @@ FICHAS="$(grep -o '<article class="hallazgo' "${INFORME}" | wc -l)"
 [[ "${FALTAN}" -eq 0 ]] && ok "${INFORME} · 5 secciones · ${FICHAS} fichas de hallazgo"
 [[ "${FICHAS}" == "${TOTAL}" ]] && ok "una ficha por hallazgo" \
   || falla "el informe trae ${FICHAS} fichas y la base tiene ${TOTAL} hallazgos"
+grep -q "${REVISOR}" "${INFORME}" && grep -q "Con decisión humana: 1\." "${INFORME}" \
+  && ok "el informe muestra la decisión humana registrada en el paso 7" \
+  || falla "el informe no muestra la decisión humana del paso 7"
 
 # --- Resultado ----------------------------------------------------------------
 
