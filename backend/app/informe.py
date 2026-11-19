@@ -214,48 +214,135 @@ MOTIVO_REVISION = {"categoria_distinta": "categoría distinta",
                    "cwe_fuera_de_tabla": "CWE fuera de la tabla"}
 
 _CSS = """
-:root { --tinta:#1a2433; --suave:#5b6675; --borde:#d9dee5; --fondo:#f5f7fa;
-        --alta:#b42318; --media:#b54708; --baja:#1d4ed8; --info:#475467; }
+:root {
+  --navy:#14263d; --tinta:#14263d; --suave:#556474; --borde:#d9e0e7; --fondo:#f5f7f9; --tarjeta:#fff;
+  --escaner:#4a5868; --escaner-suave:#eef1f4; --ia:#1f4e79; --ia-suave:#e7eef6;
+  --persona:#e8833a; --persona-suave:#fdf0e6; --persona-texto:#8a3b0b; --revisar-fondo:#fffbf7;
+  --critica:#8a1c1c; --alta:#9b1c1c; --alta-fondo:#fce4e4; --media:#6b4e00; --media-fondo:#fff1c7;
+  --baja:#3e4c5b; --baja-fondo:#e6ebf0; --info:#556474;
+}
 * { box-sizing: border-box; }
-body { font: 14px/1.5 system-ui, sans-serif; color: var(--tinta); margin: 0; background: #fff; }
-main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
-h1 { font-size: 28px; margin: 0 0 4px; }
-h2 { font-size: 20px; margin: 32px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--tinta); }
-h3 { font-size: 16px; margin: 0; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; background: var(--fondo); color: var(--tinta);
+       font: 14px/1.55 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
+code, pre, .mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+a { color: var(--ia); }
+.portada { background: var(--navy); color: #fff; }
+.portada .contenido { max-width: 1000px; margin: 0 auto; padding: 32px 24px 28px; }
+.marca { margin: 0; color: #c5d0dc; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
+.portada h1 { margin: 6px 0 10px; font-size: 30px; line-height: 1.2; }
+.portada .meta { margin: 0; color: #c5d0dc; font-size: 13px; }
+.portada .meta code { color: #fff; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px; }
+h2 { font-size: 20px; margin: 40px 0 14px; display: flex; align-items: baseline; gap: 10px; }
+h2 .num { color: var(--suave); font-weight: 500; }
+h3 { font-size: 14px; margin: 0 0 10px; color: var(--suave); font-weight: 600; }
+p { margin: 0 0 8px; }
 .suave { color: var(--suave); }
-table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; }
-table.conteo { width: auto; min-width: 240px; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--borde); vertical-align: top; }
-th { background: var(--fondo); font-weight: 600; }
-code, pre { font: 12px/1.4 ui-monospace, monospace; }
-pre { background: var(--fondo); padding: 8px; white-space: pre-wrap; word-break: break-all; margin: 4px 0; }
-.hallazgo { border: 1px solid var(--borde); border-radius: 6px; padding: 16px; margin: 0 0 16px;
-            break-inside: avoid; }
-.cabecera { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.etiqueta { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px;
-            font-weight: 600; color: #fff; background: var(--info); white-space: nowrap; }
-.sev-critica, .sev-alta { background: var(--alta); }
-.sev-media { background: var(--media); }
-.sev-baja { background: var(--baja); }
-.capa { margin-top: 12px; padding-left: 12px; border-left: 3px solid var(--borde); }
-.capa h4 { margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em;
-           color: var(--suave); }
-.ia { border-left-color: #7c3aed; }
-.persona { border-left-color: #059669; }
-.aviso { background: var(--fondo); padding: 8px 12px; border-radius: 4px; }
-.hallazgo.revisar { background: #fffbf7; border-color: #f2c48d; }
-.revisar-marca { color: #9a3412; font-weight: 600; font-size: 13px; margin: 2px 0 0; }
+.aviso { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 4px solid var(--ia);
+         border-radius: 8px; padding: 12px 16px; margin: 0; }
+.tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 16px 18px; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0 0 14px; }
+.kpi { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 14px 16px; }
+.kpi .valor { font-size: 28px; font-weight: 700; line-height: 1.1; }
+.kpi .rotulo { color: var(--suave); font-size: 12.5px; }
+.kpi.alerta { border-top: 3px solid var(--alta); }
+.kpi.revisar { border-top: 3px solid var(--persona); }
+.kpi.persona { border-top: 3px solid var(--persona); }
+.kpi.base { border-top: 3px solid var(--ia); }
+.tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
+.barra { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.barra .pista { background: var(--fondo); border-radius: 4px; height: 10px; overflow: hidden; }
+.barra .relleno { display: block; height: 100%; border-radius: 4px; background: var(--ia); }
+.barra .n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.r-critica { background: var(--critica) !important; } .r-alta { background: var(--alta) !important; }
+.r-media { background: #c79100 !important; } .r-baja { background: #6b7c8f !important; } .r-informativa { background: #a7b3c0 !important; }
+table { width: 100%; border-collapse: collapse; background: var(--tarjeta); }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); background: var(--escaner-suave); }
+.tabla { border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; }
+.tabla table td:first-child, .tabla table th:first-child { padding-left: 14px; }
+.tabla tr:last-child td { border-bottom: 0; }
+.hash { word-break: break-all; color: var(--suave); }
+.etiqueta { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            white-space: nowrap; border: 1px solid transparent; }
+.sev-critica { background: var(--critica); color: #fff; }
+.sev-alta { background: var(--alta-fondo); color: var(--alta); border-color: #f5c2c2; }
+.sev-media { background: var(--media-fondo); color: var(--media); border-color: #f0d98a; }
+.sev-baja { background: var(--baja-fondo); color: var(--baja); border-color: #cfd8e1; }
+.sev-informativa { background: #fff; color: var(--info); border-color: var(--borde); }
+.prio { display: inline-block; min-width: 28px; text-align: center; padding: 1px 7px; border-radius: 6px;
+        font: 600 12px "IBM Plex Mono", ui-monospace, monospace; background: var(--navy); color: #fff; }
+.prio-p2 { background: #33506f; } .prio-p3 { background: #6b7c8f; } .prio-p4 { background: #a7b3c0; color: var(--navy); }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 6px; background: var(--escaner-suave);
+        color: var(--escaner); font-size: 12px; margin: 0 4px 4px 0; }
+.chip-ok { background: #e6f4ea; color: #1e6b34; } .chip-dif { background: var(--persona-suave); color: var(--persona-texto); }
+.indice td { font-size: 13px; } .indice a { color: var(--tinta); text-decoration: none; font-weight: 600; }
+.indice tr.revisar td { background: var(--revisar-fondo); }
+.hallazgo { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; margin: 0 0 18px;
+            overflow: hidden; break-inside: avoid-page; }
+.hallazgo.revisar { border-color: #f2c48d; }
+.hallazgo .cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+                      padding: 16px 18px 12px; border-bottom: 1px solid var(--borde); }
+.hallazgo.revisar .cabecera { background: var(--revisar-fondo); }
+.hallazgo h3 { margin: 0 0 6px; font-size: 17px; color: var(--tinta); }
+.hallazgo h3 .n { color: var(--suave); font-weight: 500; margin-right: 4px; }
+.insignias { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.revisar-marca { color: #9a3412; font-weight: 600; font-size: 13px; margin: 6px 0 0; }
+.capas { padding: 4px 18px 16px; }
+.capa { margin-top: 12px; padding: 10px 14px; border-radius: 8px; border-left: 4px solid var(--escaner);
+        background: var(--escaner-suave); }
+.capa.ia { border-left-color: var(--ia); background: var(--ia-suave); }
+.capa.persona { border-left-color: var(--persona); background: var(--persona-suave); }
+.capa h4 { margin: 0 0 6px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--escaner); }
+.capa.ia h4 { color: var(--ia); } .capa.persona h4 { color: var(--persona-texto); }
+dl { display: grid; grid-template-columns: 120px 1fr; gap: 4px 12px; margin: 0; }
+dt { color: var(--suave); font-size: 13px; } dd { margin: 0; }
+pre { background: #fff; border: 1px solid var(--borde); border-radius: 6px; padding: 8px 10px;
+      white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 160px; overflow: auto; }
+.capa table { margin-top: 8px; border: 1px solid var(--borde); border-radius: 6px; font-size: 12.5px; }
+.capa table td code { word-break: break-all; }
+details { margin-top: 8px; } summary { cursor: pointer; color: var(--ia); font-size: 13px; }
+details .texto-zap { margin-top: 6px; font-size: 13px; color: #33404f; }
+.metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.metrica .valor { font-size: 24px; font-weight: 700; } .metrica .rotulo { font-size: 12.5px; color: var(--suave); }
+.metrica .pista { background: var(--fondo); border-radius: 4px; height: 8px; margin-top: 8px; overflow: hidden; }
+.metrica .relleno { display: block; height: 100%; background: var(--ia); }
+footer { max-width: 1000px; margin: 32px auto 0; padding: 16px 24px 40px; color: var(--suave); font-size: 12px;
+         border-top: 1px solid var(--borde); }
+@media (max-width: 760px) {
+  .kpis, .metricas { grid-template-columns: repeat(2, 1fr); } .tres { grid-template-columns: 1fr; }
+  .hallazgo .cabecera { flex-direction: column; } dl { grid-template-columns: 1fr; }
+  .indice .opcional { display: none; }
+}
 @media print {
-  main { padding: 0; }
-  h2 { break-after: avoid; }
-  a { color: inherit; text-decoration: none; }
+  body { background: #fff; font-size: 12px; } main { padding: 0 8px; }
+  .portada .contenido { padding: 20px 8px; }
+  h2 { break-after: avoid; } details summary { display: none; }
+  pre { max-height: none; } a { text-decoration: none; }
+  .tabla, .hallazgo, .kpi, .tarjeta { break-inside: avoid; }
 }
 """
+
+# Al imprimir se abren las descripciones de ZAP, para que el PDF las incluya.
+_SCRIPT = ("window.addEventListener('beforeprint',function(){"
+           "document.querySelectorAll('details').forEach(function(d){d.open=true;});});")
 
 
 def _e(valor: Any) -> str:
     """Escapa para HTML. None se muestra como guion."""
     return "—" if valor is None or valor == "" else html.escape(str(valor))
+
+
+def _fecha(iso: str | None) -> str:
+    """'2026-11-18T22:00:00+00:00' -> '18-11-2026 22:00 UTC'. Lo que no se entiende queda igual."""
+    if not iso:
+        return "—"
+    try:
+        f = datetime.fromisoformat(iso).astimezone(timezone.utc)
+    except ValueError:
+        return _e(iso)
+    return f.strftime("%d-%m-%Y %H:%M UTC")
 
 
 def _texto_zap(valor: str | None) -> str:
@@ -273,17 +360,52 @@ def _proporcion(m: dict) -> str:
     return f"{m['si']}/{m['n']} ({m['si'] / m['n']:.0%})"
 
 
-def _tabla_conteo(conteo: dict, etiquetas: dict | None = None) -> str:
-    filas = "".join(
-        f"<tr><td>{_e((etiquetas or {}).get(k, k))}</td><td>{v}</td></tr>"
+def _sev(clave: str | None) -> str:
+    return (f'<span class="etiqueta sev-{_e(clave)}">'
+            f"{_e(ETIQUETA_SEVERIDAD.get(clave, clave))}</span>")
+
+
+def _prio(clave: str | None) -> str:
+    return f'<span class="prio prio-{_e(clave)}">{_e(clave)}</span>'
+
+
+def _barras(conteo: dict, etiquetas: dict | None = None, clase: bool = False) -> str:
+    if not conteo:
+        return '<p class="suave">—</p>'
+    maximo = max(conteo.values()) or 1
+    return "".join(
+        f'<div class="barra"><span>{_e((etiquetas or {}).get(k, k))}</span>'
+        f'<span class="pista"><span class="relleno{f" r-{_e(k)}" if clase else ""}" '
+        f'style="width:{v / maximo * 100:.0f}%"></span></span><span class="n">{v}</span></div>'
         for k, v in conteo.items()
     )
-    return f"<table class=\"conteo\"><tbody>{filas or '<tr><td>—</td></tr>'}</tbody></table>"
+
+
+def _indice(hallazgos: list[dict]) -> str:
+    if not hallazgos:
+        return ""
+    filas = "".join(
+        f'<tr{" class=\"revisar\"" if h["revisar"] else ""}><td class="suave">{n}</td>'
+        f'<td><a href="#h-{_e(h["dedupe_key"])}">{_e(h["titulo"])}</a>'
+        f'{" ⚠" if h["revisar"] else ""}<br><code class="suave">{_e(h["ubicacion"]["ruta"])}</code></td>'
+        f"<td>{_sev(h['severidad'])}</td><td>{_prio(h['prioridad'])}</td>"
+        f'<td class="opcional">{_e(h["owasp_referencia"] or (h["ia"] or {}).get("owasp"))}</td>'
+        f'<td class="opcional">{_e(ETIQUETA_ESTADO.get(h["estado"], h["estado"]))}</td></tr>'
+        for n, h in enumerate(hallazgos, 1)
+    )
+    return (
+        '<div class="tabla indice"><table><thead><tr><th>#</th><th>Hallazgo</th><th>Severidad</th>'
+        '<th>Prioridad</th><th class="opcional">OWASP</th><th class="opcional">Estado</th></tr></thead>'
+        f"<tbody>{filas}</tbody></table></div>"
+    )
 
 
 def _seccion_hallazgo(h: dict, n: int) -> str:
     ub = h["ubicacion"]
     ev = h["evidencia"]
+    origen = {"persona": "decidida por una persona", "regla": "según la regla",
+              "ia": "sugerida por la IA"}.get(h["prioridad_origen"], h["prioridad_origen"])
+    fragmento = f"<pre>{_e(ev['fragmento'])}</pre>" if ev["fragmento"] else "—"
     instancias = "".join(
         f"<tr><td>{_e(i['metodo'])}</td><td><code>{_e(i['url'])}</code></td>"
         f"<td>{_e(i['parametro'])}</td></tr>"
@@ -291,47 +413,56 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
     )
     partes = [
         f'<article class="hallazgo{" revisar" if h["revisar"] else ""}" id="h-{_e(h["dedupe_key"])}">',
-        '<div class="cabecera">',
-        f"<h3>{n}. {_e(h['titulo'])}</h3>",
-        f'<span><span class="etiqueta sev-{_e(h["severidad"])}">'
-        f"{_e(ETIQUETA_SEVERIDAD.get(h['severidad'], h['severidad']))}</span> "
-        f"<strong>{_e(h['prioridad'])}</strong></span>",
-        "</div>",
+        '<div class="cabecera"><div>',
+        f'<h3><span class="n">{n}.</span>{_e(h["titulo"])}</h3>',
+        f'<span class="chip">CWE {_e(h["cwe"])}</span>'
+        f'<span class="chip">OWASP de referencia {_e(h["owasp_referencia"])}</span>'
+        f'<span class="chip">Estado: {_e(ETIQUETA_ESTADO.get(h["estado"], h["estado"]))}</span>'
+        f'<span class="chip">Prioridad {_e(origen)}</span>',
         (f'<p class="revisar-marca">⚠ Revisar · {_e(MOTIVO_REVISION.get(h["motivo_revision"], h["motivo_revision"]))}</p>'
          if h["revisar"] else ""),
-        f'<p class="suave">CWE {_e(h["cwe"])} · OWASP de referencia {_e(h["owasp_referencia"])} · '
-        f"prioridad según {_e(h['prioridad_origen'])} · estado {_e(ETIQUETA_ESTADO.get(h['estado'], h['estado']))} · "
-        f"clave <code>{_e(h['dedupe_key'])}</code></p>",
-        '<div class="capa"><h4>Evidencia original (ZAP)</h4>',
-        f"<p><strong>Ubicación:</strong> <code>{_e(ub['metodo'])} {_e(ub['ruta'])}</code>"
-        f" · parámetro {_e(ub['parametro'])} · {_e(ub['ocurrencias'])} ocurrencias"
-        f" · confianza de ZAP {_e(h['confianza_zap'])}</p>",
-        f"<p><strong>Fragmento:</strong></p><pre>{_e(ev['fragmento'])}</pre>",
-        f"<p><strong>Descripción:</strong> {_texto_zap(ev['descripcion'])}</p>",
-        f"<p><strong>Solución propuesta por ZAP:</strong> {_texto_zap(ev['solucion'])}</p>",
+        f'</div><div class="insignias">{_sev(h["severidad"])} {_prio(h["prioridad"])}</div></div>',
+        '<div class="capas">',
+        '<div class="capa"><h4>Evidencia original (ZAP)</h4><dl>',
+        f"<dt>Ubicación</dt><dd><code>{_e(ub['metodo'])} {_e(ub['ruta'])}</code></dd>",
+        f"<dt>Parámetro</dt><dd>{_e(ub['parametro'])}</dd>",
+        f"<dt>Ocurrencias</dt><dd>{_e(ub['ocurrencias'])} · confianza de ZAP {_e(h['confianza_zap'])}</dd>",
+        f"<dt>Fragmento</dt><dd>{fragmento}</dd>",
+        f"<dt>Clave</dt><dd><code class=\"suave\">{_e(h['dedupe_key'])}</code></dd>",
+        "</dl>",
     ]
     if instancias:
         partes.append(
             "<table><thead><tr><th>Método</th><th>URL</th><th>Parámetro</th></tr></thead>"
             f"<tbody>{instancias}</tbody></table>"
         )
-    partes.append("</div>")
+    partes.append(
+        "<details><summary>Descripción y solución que entrega ZAP (en inglés)</summary>"
+        f'<div class="texto-zap"><p><strong>Descripción:</strong> {_texto_zap(ev["descripcion"])}</p>'
+        f'<p><strong>Solución propuesta por ZAP:</strong> {_texto_zap(ev["solucion"])}</p></div></details>'
+        "</div>"
+    )
 
     ia = h["ia"]
     if ia:
         pasos = "".join(f"<li>{_e(p)}</li>" for p in ia["pasos"])
+        coincide = ia["owasp"] and h["owasp_referencia"] and ia["owasp"] == h["owasp_referencia"]
+        comparacion = (
+            '<span class="chip chip-ok">coincide con la tabla CWE</span>' if coincide
+            else f'<span class="chip chip-dif">la tabla CWE dice {_e(h["owasp_referencia"])}</span>'
+            if h["owasp_referencia"] else '<span class="chip">sin referencia en la tabla</span>'
+        )
         partes += [
-            '<div class="capa ia"><h4>Sugerencia de la IA</h4>',
-            f'<p class="suave">{_e(ia["modelo"])} · prompt {_e(ia["version_prompt"])} · '
-            f"{_e(ia['generado'])} · confianza declarada {_e(ia['confianza'])}</p>",
-            f"<p><strong>Explicación:</strong> {_e(ia['explicacion'])}</p>",
-            f"<p><strong>Impacto:</strong> {_e(ia['impacto'])}</p>",
-            f"<p><strong>Categoría sugerida:</strong> {_e(ia['owasp'])} "
-            f"(referencia según CWE: {_e(h['owasp_referencia'])}) · "
-            f"<strong>prioridad sugerida:</strong> {_e(ia['prioridad'])}</p>",
-            f"<p><strong>Remediación:</strong> {_e(ia['remediacion'])}</p>",
-            f"<ol>{pasos}</ol>" if pasos else "",
-            "</div>",
+            '<div class="capa ia"><h4>Sugerencia de la IA</h4><dl>',
+            f"<dt>Explicación</dt><dd>{_e(ia['explicacion'])}</dd>",
+            f"<dt>Impacto</dt><dd>{_e(ia['impacto'])}</dd>",
+            f"<dt>Categoría</dt><dd>{_e(ia['owasp'])} {comparacion}</dd>",
+            f"<dt>Prioridad</dt><dd>{_prio(ia['prioridad'])} · confianza declarada {_e(ia['confianza'])}</dd>",
+            f"<dt>Remediación</dt><dd>{_e(ia['remediacion'])}"
+            f"{f'<ol>{pasos}</ol>' if pasos else ''}</dd>",
+            f'<dt>Modelo</dt><dd class="suave">{_e(ia["modelo"])} · prompt {_e(ia["version_prompt"])}'
+            f" · {_fecha(ia['generado'])}</dd>",
+            "</dl></div>",
         ]
     else:
         partes.append('<div class="capa ia"><h4>Sugerencia de la IA</h4><p>Sin enriquecer.</p></div>')
@@ -341,14 +472,14 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
         partes += [
             '<div class="capa persona"><h4>Decisión humana</h4>',
             f"<p><strong>{_e(ETIQUETA_DECISION.get(d['decision'], d['decision']))}</strong>"
-            f" · {_e(d['revisor'])} · {_e(d['fecha'])}</p>",
+            f" · {_e(d['revisor'])} · {_fecha(d['fecha'])}</p>",
             f"<p>{_e(d['comentario'])}</p>" if d["comentario"] else "",
             "</div>",
         ]
     else:
         partes.append('<div class="capa persona"><h4>Decisión humana</h4><p>Pendiente de revisión.</p></div>')
 
-    partes.append("</article>")
+    partes.append("</div></article>")
     return "".join(partes)
 
 
@@ -356,15 +487,22 @@ def _seccion_metricas(m: dict) -> str:
     if not m["revisores"]:
         return ('<p class="aviso">Todavía no hay validaciones con las banderas del golden set. '
                 "Las métricas aparecen cuando una persona revisa la sugerencia de la IA desde el dashboard.</p>")
+
+    def tarjeta(rotulo: str, valor: dict) -> str:
+        pct = valor["si"] / valor["n"] * 100 if valor["n"] else 0
+        return (f'<div class="tarjeta metrica"><div class="valor">{_proporcion(valor)}</div>'
+                f'<div class="rotulo">{rotulo}</div>'
+                f'<div class="pista"><span class="relleno" style="width:{pct:.0f}%"></span></div></div>')
+
     return (
-        f"<p>Revisores: {_e(', '.join(m['revisores']))}. Se cuenta la última respuesta de cada "
+        f"<p>Revisores: {_e(', '.join(r.title() for r in m['revisores']))}. Se cuenta la última respuesta de cada "
         "revisor por hallazgo; las banderas sin responder no entran en el denominador.</p>"
-        "<table><thead><tr><th>Métrica</th><th>Resultado</th></tr></thead><tbody>"
-        f"<tr><td>Acierto de categoría OWASP</td><td>{_proporcion(m['acierto_owasp'])}</td></tr>"
-        f"<tr><td>Acierto de prioridad</td><td>{_proporcion(m['acierto_prioridad'])}</td></tr>"
-        f"<tr><td>Remediación útil</td><td>{_proporcion(m['remediacion_util'])}</td></tr>"
-        f"<tr><td>Tasa de alucinación</td><td>{_proporcion(m['alucinacion'])}</td></tr>"
-        "</tbody></table>"
+        '<div class="metricas">'
+        + tarjeta("Acierto de categoría OWASP", m["acierto_owasp"])
+        + tarjeta("Acierto de prioridad", m["acierto_prioridad"])
+        + tarjeta("Remediación útil", m["remediacion_util"])
+        + tarjeta("Tasa de alucinación", m["alucinacion"])
+        + "</div>"
     )
 
 
@@ -373,8 +511,8 @@ def renderizar_html(datos: dict) -> str:
     obj = datos["objetivo"]
     res = datos["resumen"]
     escaneos = "".join(
-        f"<tr><td>{_e(s['herramienta'])} {_e(s['version'])}</td><td>{_e(s['inicio'])}</td>"
-        f"<td><code>{_e(s['sha256'])}</code></td></tr>"
+        f"<tr><td>{_e(s['herramienta'])} {_e(s['version'])}</td><td>{_fecha(s['inicio'])}</td>"
+        f'<td><code class="hash">{_e(s["sha256"])}</code></td></tr>'
         for s in datos["escaneos"]
     )
     vigentes = "".join(_seccion_hallazgo(h, i) for i, h in enumerate(datos["hallazgos"], 1))
@@ -384,6 +522,7 @@ def renderizar_html(datos: dict) -> str:
         f"<td>{_e(h['decision']['revisor'] if h['decision'] else None)}</td></tr>"
         for h in datos["descartados"]
     )
+    p1 = res["por_prioridad"].get("p1", 0)
 
     return f"""<!doctype html>
 <html lang="es">
@@ -392,47 +531,56 @@ def renderizar_html(datos: dict) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Informe técnico · {_e(obj['nombre'])}</title>
 <style>{_CSS}</style>
+<script>{_SCRIPT}</script>
 </head>
 <body>
-<main>
-<header>
-  <p class="suave">SentinelAI · Informe técnico de hallazgos</p>
+<header class="portada"><div class="contenido">
+  <p class="marca">SentinelAI · Informe técnico de hallazgos</p>
   <h1>{_e(obj['nombre'])}</h1>
-  <p class="suave"><code>{_e(obj['url'])}</code> · entorno {_e(obj['entorno'])} · generado {_e(datos['generado_en'])}</p>
-</header>
-
+  <p class="meta"><code>{_e(obj['url'])}</code> · entorno {_e(obj['entorno'])} · {len(datos['escaneos'])} escaneos · generado {_fecha(datos['generado_en'])}</p>
+</div></header>
+<main>
 <p class="aviso">La evidencia de cada hallazgo se muestra tal como la entregó la herramienta.
 La salida de la IA es una sugerencia; la decisión final la toma una persona.</p>
 
 <h2>1. Resumen</h2>
+<div class="kpis">
+  <div class="kpi base"><div class="valor">{res['vigentes']}</div><div class="rotulo">hallazgos vigentes, de {res['total']}</div></div>
+  <div class="kpi alerta"><div class="valor">{p1}</div><div class="rotulo">con prioridad p1</div></div>
+  <div class="kpi revisar"><div class="valor">{res['por_revisar']}</div><div class="rotulo">para revisar primero</div></div>
+  <div class="kpi persona"><div class="valor">{res['con_decision']}</div><div class="rotulo">con decisión humana</div></div>
+</div>
 <p><strong>{res['vigentes']}</strong> hallazgos vigentes y <strong>{res['descartados']}</strong>
 descartados (falsos positivos o duplicados), de {res['total']} en total.
 Con sugerencia de la IA: {res['con_ia']}. Con decisión humana: {res['con_decision']}.
 Hallazgos marcados para revisar primero: {res['por_revisar']}, porque la categoría del modelo no
 coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
-<h3>Por severidad</h3>
-{_tabla_conteo(res['por_severidad'], ETIQUETA_SEVERIDAD)}
-<h3>Por prioridad</h3>
-{_tabla_conteo(res['por_prioridad'])}
-<h3>Por estado</h3>
-{_tabla_conteo(res['por_estado'], ETIQUETA_ESTADO)}
+<div class="tres">
+  <div class="tarjeta"><h3>Por severidad</h3>{_barras(res['por_severidad'], ETIQUETA_SEVERIDAD, clase=True)}</div>
+  <div class="tarjeta"><h3>Por prioridad</h3>{_barras(res['por_prioridad'])}</div>
+  <div class="tarjeta"><h3>Por estado</h3>{_barras(res['por_estado'], ETIQUETA_ESTADO)}</div>
+</div>
 
 <h2>2. Escaneos de origen</h2>
-<p>El hash SHA-256 de cada reporte permite verificar que la evidencia no se modificó después de importarla.</p>
-<table><thead><tr><th>Herramienta</th><th>Inicio</th><th>SHA-256 del reporte</th></tr></thead>
-<tbody>{escaneos or '<tr><td colspan="3">—</td></tr>'}</tbody></table>
+<p class="suave">El hash SHA-256 de cada reporte permite verificar que la evidencia no se modificó después de importarla.</p>
+<div class="tabla"><table><thead><tr><th>Herramienta</th><th>Inicio</th><th>SHA-256 del reporte</th></tr></thead>
+<tbody>{escaneos or '<tr><td colspan="3">—</td></tr>'}</tbody></table></div>
 
 <h2>3. Hallazgos</h2>
-<p class="suave">Ordenados por prioridad y severidad.</p>
+<p class="suave">Ordenados por prioridad y severidad. Cada ficha muestra tres capas: lo que entregó el escáner,
+lo que sugiere la IA y lo que decidió una persona.</p>
+{_indice(datos['hallazgos'])}
+<div style="height:18px"></div>
 {vigentes or '<p>No hay hallazgos vigentes.</p>'}
 
 <h2>4. Descartados</h2>
-<table><thead><tr><th>Hallazgo</th><th>Ruta</th><th>Motivo</th><th>Revisor</th></tr></thead>
-<tbody>{descartados or '<tr><td colspan="4">—</td></tr>'}</tbody></table>
+<div class="tabla"><table><thead><tr><th>Hallazgo</th><th>Ruta</th><th>Motivo</th><th>Revisor</th></tr></thead>
+<tbody>{descartados or '<tr><td colspan="4">—</td></tr>'}</tbody></table></div>
 
 <h2>5. Calidad de la IA (golden set)</h2>
 {_seccion_metricas(datos['metricas'])}
 </main>
+<footer>Generado por SentinelAI a partir de la base del laboratorio. Proyecto de título · Duoc UC · Grupo 3.</footer>
 </body>
 </html>
 """
