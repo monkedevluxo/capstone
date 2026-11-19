@@ -9,6 +9,7 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     POST /findings/{id}/enrich  enriquece un hallazgo con el modelo local (T-032)
     POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
     POST /findings/{id}/validaciones  registra la decisión de una persona (T-057)
+    GET  /informe            informe técnico de un objetivo, en HTML (T-058, T-059)
 
 Cada hallazgo trae además `referencia`: la categoría OWASP según la tabla
 CWE -> OWASP 2025, la prioridad por regla y la marca "revisar" de la opción
@@ -22,6 +23,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
 from sqlalchemy import Integer, String, and_, case, cast, column, func, not_, or_, select, values
 from sqlalchemy.orm import Session, aliased, selectinload
@@ -36,6 +38,7 @@ from app.enriquecimiento import (
 )
 from app.ia.cliente import ClienteOllama
 from app.ia.owasp_por_cwe import TABLA
+from app.informe_consulta import elegir_objetivo, generar
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.validacion import recalcular_estado
 from app.models import (
@@ -616,3 +619,31 @@ def enriquecer_lote(
     if resumen.detenido_por and resumen.procesados == 0:
         raise HTTPException(status_code=503, detail=_OLLAMA_APAGADO)
     return resumen.como_dict()
+
+
+# ── Informe técnico ───────────────────────────────────────────────────────
+
+@router.get("/informe", tags=["informe"], response_class=HTMLResponse)
+def informe(
+    objetivo: str | None = Query(
+        None, description="base_url del objetivo. Sin él, el que tiene más hallazgos"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    Informe técnico de un objetivo como página HTML autocontenida: resumen,
+    escaneos, una ficha por hallazgo con su evidencia original, la sugerencia
+    de la IA y la decisión humana, los descartados y la calidad de la IA.
+    Es el mismo que genera `scripts/informe.py`. Para PDF: imprimir desde el
+    navegador.
+
+    - **200**: la página HTML
+    - **404**: no hay hallazgos importados, o el objetivo no existe
+    """
+    elegido = elegir_objetivo(db, objetivo)
+    if elegido is None:
+        detalle = (f"no existe el objetivo {objetivo}" if objetivo
+                   else "no hay escaneos importados: importa uno primero")
+        raise HTTPException(status_code=404, detail=detalle)
+    html, _ = generar(db, elegido)
+    return HTMLResponse(html)
