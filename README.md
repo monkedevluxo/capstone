@@ -108,7 +108,8 @@ capstone/
 │   ├── scripts/
 │   │   ├── seed.py                 Datos de prueba sintéticos
 │   │   ├── verificar_bd.py         Verifica las restricciones de la base
-│   │   └── metricas_golden_set.py  Métricas del modelo contra el golden set
+│   │   ├── metricas_golden_set.py  Métricas del modelo contra el golden set
+│   │   └── intercambio.py          Intercambio entre equipos y acuerdo entre revisores
 │   └── tests/                Parser, esquema, módulo de IA e ingesta
 ├── frontend/             Dashboard en Next.js (desde el S5)
 ├── lab/
@@ -281,6 +282,46 @@ bun --bun run typecheck   # tsc de TypeScript 7
 Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
 compila y se ve igual sin internet.
 
+### Anotar el golden set entre varios equipos
+
+Cada integrante tiene su propia base y los ids no coinciden entre bases.
+`backend/scripts/intercambio.py` identifica cada hallazgo por el objetivo
+(`base_url`) y su `dedupe_key`, y conserva el uuid de cada enriquecimiento y
+validación. Importar es idempotente: lo que ya está se omite, un uuid con
+contenido distinto se reporta como conflicto y no se pisa, y nunca se crean
+hallazgos. Todos deben tener importados los mismos fixtures.
+
+```bash
+# 1. Joaquín enriquece con Ollama real y exporta
+docker compose exec -T api python scripts/intercambio.py exportar --que enriquecimientos > enriquecimientos_joaquin.json
+
+# 2. Cada uno los importa (primero --simular para ver el reporte sin guardar)
+docker compose exec -T api python scripts/intercambio.py importar --simular < enriquecimientos_joaquin.json
+docker compose exec -T api python scripts/intercambio.py importar < enriquecimientos_joaquin.json
+
+# 3. Cada uno anota en su dashboard y exporta sus validaciones
+docker compose exec -T api python scripts/intercambio.py exportar --que validaciones --revisor "Felipe" > validaciones_felipe.json
+
+# 4. Luciano importa todas y calcula las métricas
+docker compose exec -T api python scripts/intercambio.py importar < validaciones_felipe.json
+docker compose exec -T api python scripts/intercambio.py metricas          # o --json
+```
+
+- Si el enriquecimiento importado es vigente, el local pasa a histórico. La
+  excepción es la misma regla del enriquecimiento con Ollama: uno fallido no
+  desplaza a uno válido, entra como histórico y el reporte lo avisa.
+- Una validación cuyo enriquecimiento no está en tu base se omite ("importa
+  primero los enriquecimientos de …"). Al reimportarla después, entra.
+- El estado de cada hallazgo lo vuelve a fijar su validación más reciente.
+- Si el archivo no es válido no se importa nada (código de salida 2).
+- Una validación con fecha más de 10 minutos en el futuro (respecto de la base)
+  se omite como conflicto: revisa el reloj de la máquina que la exportó. Con
+  menos desfase, o en un enriquecimiento, se importa con un aviso.
+- Las métricas agrupan a cada revisor por su nombre sin importar mayúsculas ni
+  espacios ("felipe  cayún" = "Felipe Cayún"), y cuentan su última respuesta por hallazgo y
+  sugerencia, sin los "no sé". El κ va con su n y el % de acuerdo simple: con
+  n chico, el κ solo no dice nada.
+
 ### Variables de entorno
 
 La configuración se lee de variables de entorno; no hay credenciales en el código. Antes del primer arranque:
@@ -387,7 +428,7 @@ Cada PR hacia `main` corre automáticamente en GitHub Actions
 | **Migraciones y restricciones** | Que la migración aplique, se revierta y se reaplique sobre un PostgreSQL limpio; que modelos y migraciones estén sincronizados (`alembic check`); que la base rechace lo que debe rechazar; y los tests de ingesta y consulta contra la base real |
 | **Frontend** | Que el dashboard pase ESLint, el chequeo de tipos con TypeScript 7 y `next build` |
 
-En total son 216 pruebas automatizadas, más las verificaciones de restricciones.
+En total son 253 pruebas automatizadas, más las verificaciones de restricciones.
 
 Las restricciones que se verifican en cada PR:
 

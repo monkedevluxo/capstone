@@ -120,13 +120,32 @@ def enriquecer_hallazgo(db: Session, f: Finding, cliente: ClienteOllama) -> AiEn
     if resultado["state"] == "failed" and resultado["failure_reason"] == MOTIVO_OLLAMA_APAGADO:
         raise OllamaApagado(cliente.url)
 
+    nueva = _fila(f.id, resultado)
+    registrar_enriquecimiento(db, f.id, nueva)
+    return nueva
+
+
+def registrar_enriquecimiento(db: Session, finding_id, nueva: AiEnrichment) -> bool:
+    """Guarda `nueva` aplicando la regla de vigencia. No hace commit.
+
+    Si `nueva` llega con is_current=False, se guarda solo como historial.
+    Si llega vigente, manda la regla del módulo: un fallo no desplaza a un ok
+    vigente; en cualquier otro caso la anterior pasa a histórica.
+    Devuelve True si `nueva` quedó vigente.
+
+    La usan el enriquecimiento con Ollama y la importación entre equipos
+    (scripts/intercambio.py): la regla vive en un solo lugar.
+    """
     # Bloquea el hallazgo hasta el commit: dos enriquecimientos simultáneos del
     # mismo hallazgo se ordenan en vez de chocar con uq_enrichment_vigente.
-    db.execute(select(Finding.id).where(Finding.id == f.id).with_for_update())
+    db.execute(select(Finding.id).where(Finding.id == finding_id).with_for_update())
 
-    actual = vigente(db, f.id)
-    nueva = _fila(f.id, resultado)
+    if nueva.is_current is False:
+        db.add(nueva)
+        db.flush()
+        return False
 
+    actual = vigente(db, finding_id)
     conservar_vigente = (
         nueva.state == EstadoIA.failed
         and actual is not None
@@ -137,14 +156,14 @@ def enriquecer_hallazgo(db: Session, f: Finding, cliente: ClienteOllama) -> AiEn
     else:
         db.execute(
             update(AiEnrichment)
-            .where(AiEnrichment.finding_id == f.id, AiEnrichment.is_current.is_(True))
+            .where(AiEnrichment.finding_id == finding_id, AiEnrichment.is_current.is_(True))
             .values(is_current=False)
         )
         nueva.is_current = True
 
     db.add(nueva)
     db.flush()
-    return nueva
+    return nueva.is_current
 
 
 @dataclass
