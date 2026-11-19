@@ -6,6 +6,14 @@ El informe técnico reúne, para un objetivo, todo lo que el sistema sabe de sus
 
 ## Cómo generarlo
 
+### Desde el dashboard
+
+En `http://127.0.0.1:3000`, el botón **Informe** de la barra lateral abre el informe del objetivo con más hallazgos en una pestaña nueva. Si todavía no hay escaneos importados, la pestaña lo dice.
+
+Por debajo, el dashboard pide la página a la API (`GET /informe`, con `?objetivo=<base_url>` opcional) desde su servidor, igual que el resto de los datos: el navegador no habla con la API directo.
+
+### Desde la terminal
+
 Desde la raíz del repositorio, con el laboratorio arriba (`docker compose up -d`):
 
 ```bash
@@ -56,9 +64,13 @@ La evidencia de ZAP contiene ataques reales (por ejemplo `<script>alert(1)</scri
 | Archivo | Qué hace |
 |---|---|
 | `backend/app/informe.py` | Arma los datos y la página. No consulta la base, así que se prueba sin PostgreSQL |
-| `backend/scripts/informe.py` | Consulta la base y escribe el HTML |
-| `backend/tests/test_informe.py` | 10 tests: prioridad, decisión vigente, descartados, orden, métricas y escape HTML |
+| `backend/app/informe_consulta.py` | Elige el objetivo y carga sus escaneos y hallazgos. Lo usan la terminal y la API, así las dos entregan el mismo informe |
+| `backend/scripts/informe.py` | Línea de comandos: escribe el HTML en la salida estándar |
+| `backend/app/rutas.py` | `GET /informe`: el mismo HTML desde la API (404 si no hay escaneos o el objetivo no existe) |
+| `frontend/src/app/informe/route.ts` | Lo pide a la API para el botón **Informe** del dashboard |
+| `backend/tests/test_informe.py` | Tests sin base: prioridad, decisión vigente, descartados, orden, métricas, marca "Revisar" y escape HTML |
+| `backend/tests/test_informe_api.py` | 5 tests contra PostgreSQL: respuesta HTML, objetivo, 404 y que la API y la terminal generen lo mismo |
 
 ## Pendiente
 
-- Conectar el botón "Informe" del dashboard, hoy deshabilitado ("Próximamente"), para descargarlo desde la interfaz.
+- Elegir el objetivo desde el dashboard. Hoy el botón abre el del objetivo con más hallazgos, que en el laboratorio es el único (Juice Shop); la API ya acepta `?objetivo=`.
