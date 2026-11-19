@@ -119,7 +119,8 @@ FALTAN=0
 for seccion in "1. Resumen" "2. Escaneos de origen" "3. Hallazgos" "4. Descartados" "5. Calidad de la IA"; do
   grep -q "${seccion}" "${INFORME}" || { falla "al informe le falta la sección '${seccion}'"; FALTAN=1; }
 done
-FICHAS="$(grep -o '<article class="hallazgo"' "${INFORME}" | wc -l)"
+# Sin la comilla de cierre: las fichas marcadas para revisar traen class="hallazgo revisar".
+FICHAS="$(grep -o '<article class="hallazgo' "${INFORME}" | wc -l)"
 [[ "${FALTAN}" -eq 0 ]] && ok "${INFORME} · 5 secciones · ${FICHAS} fichas de hallazgo"
 [[ "${FICHAS}" == "${TOTAL}" ]] && ok "una ficha por hallazgo" \
   || falla "el informe trae ${FICHAS} fichas y la base tiene ${TOTAL} hallazgos"
