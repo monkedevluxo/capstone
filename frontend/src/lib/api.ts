@@ -6,6 +6,7 @@
 // la respuesta de la API, hay que cambiarlos acá.
 
 import { unstable_rethrow } from "next/navigation";
+import { cache } from "react";
 
 export type Severidad = "critica" | "alta" | "media" | "baja" | "informativa";
 
@@ -15,7 +16,8 @@ export type EstadoHallazgo =
   | "confirmado"
   | "falso_positivo"
   | "riesgo_aceptado"
-  | "remediado";
+  | "remediado"
+  | "duplicado";
 
 export type Prioridad = "p1" | "p2" | "p3" | "p4";
 
@@ -223,3 +225,110 @@ export interface ResumenLote {
   detenido_por: string | null;
   hallazgos: { id: string; titulo: string; estado: "ok" | "failed"; motivo_fallo: string | null }[];
 }
+
+// ── Detalle de un hallazgo ───────────────────────────────────────────────
+
+/** `ia` completo en GET /findings/{id}. */
+export interface DetalleIA extends ResumenIA {
+  /** Id de la sugerencia: el formulario de validación lo manda como enrichment_id. */
+  id: string;
+  explicacion: string | null;
+  impacto: string | null;
+  remediacion: string | null;
+  pasos: string[] | null;
+  modelo: string;
+  prompt_version: string;
+  prompt_sha256: string;
+  intentos: number;
+  latencia_ms: number | null;
+  /** ISO 8601 */
+  generado: string;
+}
+
+export type DecisionValidacion =
+  | "confirmado"
+  | "falso_positivo"
+  | "riesgo_aceptado"
+  | "duplicado"
+  | "requiere_segunda_opinion";
+
+export interface Validacion {
+  id: string;
+  decision: DecisionValidacion;
+  revisor: string;
+  /** ISO 8601 */
+  fecha: string;
+  comentario: string | null;
+  prioridad_corregida: Prioridad | null;
+  /** Qué sugerencia del modelo se juzgó; null si no había. */
+  enrichment_id: string | null;
+  // Banderas del golden set (true, false o null = "no sé"). El historial no
+  // las muestra: cada revisor anota sin ver lo que respondieron los demás.
+  ai_owasp_correcto: boolean | null;
+  ai_prioridad_correcta: boolean | null;
+  ai_remediacion_util: boolean | null;
+  ai_alucinacion: boolean | null;
+  ai_nota: string | null;
+}
+
+/** Una instancia tal como la trae la alerta de ZAP en `origen.instances`. */
+export interface InstanciaZap {
+  uri?: string;
+  method?: string;
+  param?: string;
+  attack?: string;
+  evidence?: string;
+  otherinfo?: string;
+}
+
+/** La alerta de ZAP sin modificar (source_raw). Solo los campos que se usan. */
+export interface OrigenZap {
+  pluginid?: string;
+  alertRef?: string;
+  wascid?: string;
+  riskdesc?: string;
+  confidence?: string;
+  desc?: string;
+  solution?: string;
+  reference?: string;
+  otherinfo?: string;
+  instances?: InstanciaZap[];
+  [campo: string]: unknown;
+}
+
+export interface HallazgoDetalle {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  severidad: Severidad;
+  /** Ej. "High" */
+  severidad_herramienta: string | null;
+  /** Ej. "low", "medium", "high", "confirmed" */
+  confianza_herramienta: string | null;
+  estado: EstadoHallazgo;
+  cwe: number | null;
+  url: string | null;
+  ruta: string | null;
+  metodo: string | null;
+  parametro: string | null;
+  evidencia: string | null;
+  ocurrencias: number;
+  primera_vez: string;
+  ultima_vez: string;
+  escaneos: string[];
+  instancias: { url: string; metodo: string | null; parametro: string | null }[];
+  origen: OrigenZap | null;
+  ia: DetalleIA | null;
+  referencia: Referencia;
+  validaciones: Validacion[];
+}
+
+/**
+ * GET /findings/{id}. Con 404 lanza ErrorApi con status 404.
+ *
+ * Con cache() de React: generateMetadata (el título de la pestaña) y la
+ * página lo piden en el mismo render y la API recibe una sola consulta.
+ */
+export const obtenerHallazgo = cache((id: string) =>
+  obtener<HallazgoDetalle>(`/findings/${encodeURIComponent(id)}`),
+);

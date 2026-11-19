@@ -71,6 +71,8 @@ class EstadoHallazgo(str, enum.Enum):
     falso_positivo = "falso_positivo"
     riesgo_aceptado = "riesgo_aceptado"
     remediado = "remediado"
+    # Una persona lo marcó como el mismo problema que otro hallazgo.
+    duplicado = "duplicado"
 
 
 class EstadoEscaneo(str, enum.Enum):

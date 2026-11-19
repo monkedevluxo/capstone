@@ -64,3 +64,20 @@ Se aprueba la propuesta anterior. Acordada por Felipe Cayún, Joaquín Herrera y
 | Revisores | Felipe Cayún y Joaquín Herrera, cada uno por separado y sin ver las respuestas del otro |
 | Enriquecimientos | Los genera Joaquín con Ollama y los exporta con `scripts/intercambio.py`; cada revisor los importa antes de anotar |
 | Acuerdo entre revisores | Lo calcula `scripts/intercambio.py metricas`, con el κ y su n junto al porcentaje de acuerdo simple |
+
+## Corrección: tamaño real de la muestra (17-11-2026)
+
+La estimación de "alrededor de 34 hallazgos únicos" de la propuesta era incorrecta. Al importar los tres fixtures acordados en la base, en orden cronológico, el resultado fue:
+
+| Fixture | Alertas en el reporte | Hallazgos nuevos | Repetidos |
+|---|---|---|---|
+| `zap_juiceshop_full_v1` | 5 | 5 | 0 |
+| `zap_juiceshop_ajax_v2` | 13 | 9 | 4 |
+| `zap_juiceshop_ajax_auth_v1` | 15 | 3 | 12 |
+| **Total en la base** | | **17** | |
+
+**Causa del error:** la estimación contó cada ruta afectada como un hallazgo distinto, pero el parser genera un hallazgo por alerta de ZAP y guarda sus rutas como instancias de ese hallazgo. El número correcto es el que entrega la base.
+
+**Lo que confirma la importación:** la deduplicación funciona entre escaneos. Los 16 hallazgos que reaparecieron en los escaneos posteriores se reconocieron como repetidos y no se duplicaron.
+
+**Decisión del equipo:** se anotan los 17 hallazgos, los dos revisores por separado (34 anotaciones en total). La muestra queda bajo el rango de 30 a 50 hallazgos planificado, porque es todo lo que ZAP produce sobre Juice Shop con los escaneos realizados; esta limitación se informa junto a las métricas.
