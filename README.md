@@ -281,7 +281,20 @@ bun --bun run typecheck   # tsc de TypeScript 7
 Las fuentes (IBM Plex) vienen empaquetadas, no de Google Fonts: el dashboard
 compila y se ve igual sin internet.
 
-<!-- TODO: documentar las variables de entorno y el archivo .env.ejemplo -->
+### Variables de entorno
+
+La configuración se lee de variables de entorno; no hay credenciales en el código. Antes del primer arranque:
+
+```bash
+cp .env.ejemplo .env
+```
+
+| Variable | Para qué sirve |
+|---|---|
+| `OLLAMA_URL` | Dirección de Ollama vista desde el contenedor de la API. Es lo único que normalmente hay que ajustar |
+| `SQL_ECHO` | `true` imprime cada consulta SQL en los logs de la API |
+
+El `.env` no se versiona. El resto de los parámetros (modelo, tiempos límite, equipos del laboratorio) y cómo cambiarlos están en `docs/guias/MANUAL_TECNICO.md`, sección "Configuración".
 
 ---
 
@@ -305,6 +318,13 @@ Con 16 GB de RAM no conviene levantar todo simultáneamente. El pipeline es natu
 | Introducción a Docker | `docs/guias/DOCKER_BASICO.md` |
 | Visión del producto | `docs/producto/PRODUCT_VISION.md` |
 | Definición de terminado | `docs/producto/DEFINITION_OF_DONE.md` |
+| Product Backlog (historias de usuario) | `docs/producto/PRODUCT_BACKLOG.md` |
+| Requisitos no funcionales | `docs/producto/REQUISITOS_NO_FUNCIONALES.md` |
+| Innovación | `docs/producto/INNOVACION.md` |
+| Retrospectivas por sprint | `docs/producto/RETROSPECTIVAS.md` |
+| **Documento de diseño** (arquitectura, UML, decisiones) | `docs/diseno/DISENO.md` |
+| **Manual técnico** (configuración, operación, respaldo) | `docs/guias/MANUAL_TECNICO.md` |
+| Plan de pruebas y resultados | `docs/evidencias/plan_pruebas.md` |
 | Esquema del hallazgo normalizado | `docs/diseno/ESQUEMA_HALLAZGO.md` |
 | Modelo de datos (DER y tablas) | `docs/diseno/MODELO_DATOS.md` |
 | Modelo de IA, prompt y alternativas | `docs/diseno/IA_MODELO_Y_PROMPT.md` |
