@@ -79,7 +79,8 @@ Recorre el flujo completo y verifica cada paso:
 | 4 | Importa el mismo reporte otra vez: 409 |
 | 5 | El resumen de la API cuenta los mismos hallazgos que se importaron |
 | 6 | Enriquece el escaneo con la IA. Si Ollama no responde, avisa y sigue: el sistema está diseñado para funcionar con hallazgos "sin enriquecer" |
-| 7 | Genera el informe técnico en `lab/salidas/e2e_informe.html` y verifica sus 5 secciones y una ficha por hallazgo |
+| 7 | Registra una decisión humana por la API: 201 y el hallazgo pasa a "confirmado" |
+| 8 | Genera el informe técnico en `lab/salidas/e2e_informe.html` y verifica sus 5 secciones, una ficha por hallazgo (incluidas las marcadas "Revisar") y la decisión del paso 7 |
 
 Termina con `E2E OK` o con la lista de pasos que fallaron, y sale con código 1 si hubo fallas.
 
