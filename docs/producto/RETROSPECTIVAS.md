@@ -81,6 +81,7 @@ Se completa al cierre del sprint. Lo observado hasta el 18-11:
 
 - **Funcionó:** el informe técnico, la prueba de extremo a extremo y la corrección de la muestra entraron rápido, con revisión cruzada.
 - **No funcionó:** varias ramas apiladas esperan una sola aprobación. El pull request #28 (detalle y decisión humana) lleva dos días sin revisión y bloquea a otras cuatro.
+- **Actualización 19-11:** el pull request #28 entró el 18-11, y las ramas que dependían de él, entre el 18 y el 19-11.
 - **En evaluación:** dos scripts que resuelven lo mismo (compartir sugerencias del modelo entre equipos) se desarrollaron en paralelo, por falta de coordinación.
 
 ---
