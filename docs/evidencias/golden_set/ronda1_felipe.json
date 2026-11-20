@@ -1,0 +1,469 @@
+{
+  "formato": "sentinelai-intercambio",
+  "version": 1,
+  "tipo": "validaciones",
+  "exportado_en": "2026-11-20T01:48:25.367801+00:00",
+  "base_origen": "sentinelai@8a0bca2c",
+  "items": [
+    {
+      "uuid": "90a2af92-8027-40ef-ad86-ad4459e3e1ab",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "74b9081b7445806c",
+        "titulo": "SQL Injection",
+        "ruta": "/rest/products/search?q"
+      },
+      "enrichment_uuid": "1e71a24e-cd6f-4eec-b4fc-ac840c7f066c",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:01:02.336085+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A05. Error 500 al inyectar comilla y paréntesis en q y email (CWE-89), indicio consistente con SQL Injection.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "90a5dc06-f4d8-4e1c-8d2d-d195937af49a",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "4cf681a8856b2561",
+        "titulo": "Off-site Redirect",
+        "ruta": "/redirect?to"
+      },
+      "enrichment_uuid": "401bc8a2-bef5-40f0-b3de-528a941b9355",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:02:49.551065+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Redirección abierta confirmada en parámetro to hacia URL externa (CWE-601).",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "1801ed9a-5ddc-418c-bf61-626ed6d02166",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7de9f7957f6e76c5",
+        "titulo": "External Redirect",
+        "ruta": "/redirect?to"
+      },
+      "enrichment_uuid": "686af965-a5ef-4188-af8d-8ccbfccf3a24",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:03:43.212076+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Redirección externa confirmada en parámetro to hacia dominio externo (CWE-601).",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "0cc5a2a4-7a45-4d3e-a31a-7a4ce5238645",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "96aeba283c7fa422",
+        "titulo": "Content Security Policy (CSP) Header Not Set",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "a5f4d90f-a9ad-457d-8e90-8b432d3763d8",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:04:42.907298+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A06. Falta cabecera Content-Security-Policy en 5 rutas (CWE-693), lo que debilita mitigación ante XSS e inyección.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A05 y p1 en vez de A06 y p2."
+    },
+    {
+      "uuid": "bd1f868d-59c3-4fb4-b5c6-25c929060f23",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "96aeba283c7fa422",
+        "titulo": "Content Security Policy (CSP) Header Not Set",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "a5f4d90f-a9ad-457d-8e90-8b432d3763d8",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:05:43.193210+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A06. Falta cabecera Content-Security-Policy en 5 rutas (CWE-693), lo que debilita mitigación ante XSS e inyección.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A05 y p1 en vez de A06 y p2."
+    },
+    {
+      "uuid": "167c0282-0ea1-4290-8454-f3081115c6e6",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "96aeba283c7fa422",
+        "titulo": "Content Security Policy (CSP) Header Not Set",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "a5f4d90f-a9ad-457d-8e90-8b432d3763d8",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:06:46.763625+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A06. Falta cabecera Content-Security-Policy en 5 rutas (CWE-693), lo que debilita mitigación ante XSS e inyección.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A05 y p1 en vez de A06 y p2."
+    },
+    {
+      "uuid": "48826f37-48e9-414e-ab5e-6f9e6d808498",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "69f35c4b67c20ffe",
+        "titulo": "Session ID in URL Rewrite",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "f7b1df8b-e206-4ae5-a812-faef073df1ab",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:08:21.555205+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A06. ID de sesión expuesto en URL query parámetro sid en 5 instancias de socket.io (CWE-598).",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": true,
+      "ai_nota": "Modelo erró en categoría (A01 vs A06), prioridad (p1 vs p2) y habló de redirección en vez de sid en URL."
+    },
+    {
+      "uuid": "2ef4237c-6677-47f9-bdda-345d784c5307",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "97731d19a126acc3",
+        "titulo": "Information Disclosure - Information in Browser localStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "76a93114-f26e-4901-a357-1584182a8c82",
+      "decision": "falso_positivo",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:09:34.053910+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Alerta informativa de uso de localStorage en parámetro token (CWE-359), sin acción obligatoria según ZAP.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "9c4183a5-329c-48e6-9f6b-4d4e07717359",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "96aeba283c7fa422",
+        "titulo": "Content Security Policy (CSP) Header Not Set",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "a5f4d90f-a9ad-457d-8e90-8b432d3763d8",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:11:51.640746+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A06. Falta cabecera Content-Security-Policy en 5 rutas (CWE-693), lo que debilita mitigación ante XSS e inyección.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A05 y p1 en vez de A06 y p2."
+    },
+    {
+      "uuid": "c2bc2c28-6127-4804-a488-3b18067fabf5",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7affd5777fded083",
+        "titulo": "Cross-Domain Misconfiguration",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "955ffece-bde5-4ed6-906d-480c59431fab",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:13:32.253134+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Cabecera Access-Control-Allow-Origin abierta (*) en 5 rutas públicas (CWE-264), revisando impacto de CORS.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "CWE-264 figura fuera de la tabla; modelo sugirió A01 y p1 en vez de regla p2."
+    },
+    {
+      "uuid": "096e46b9-2976-4ff1-89cf-95b043ecd7dc",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "e9d03d7726badd9c",
+        "titulo": "Information Disclosure - Information in Browser sessionStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "a159fd46-bbb6-4ce5-ab6b-db6dc7cdaa71",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:20:24.111156+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Alerta informativa de uso de sessionStorage en parámetro bid (CWE-359), sin acción requerida según ZAP.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A06 en vez de A01."
+    },
+    {
+      "uuid": "32f6ffe2-61bf-47bf-b5e5-5096efda2159",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "27369d63fb2339ad",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/assets"
+      },
+      "enrichment_uuid": "cfecc0e6-dca9-4ffe-bc3f-8178d4fa8968",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:23:13.910109+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A01. Sonda informativa de User-Agent en rutas assets sin CWE ni vulnerabilidad confirmada.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso prioridad p2 en vez de p4 y sugiere restringir User-Agent."
+    },
+    {
+      "uuid": "84dc2608-5cb1-41e5-bb9a-49e27124ebbb",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "8757ce05e2073570",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "cedf21c0-492d-4485-a13c-03bd4b6d3862",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:24:23.323403+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A05. Sonda informativa de User-Agent en socket.io sin CWE ni vulnerabilidad confirmada.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso prioridad p2 en vez de p4 y sugiere restringir User-Agent."
+    },
+    {
+      "uuid": "9c559048-9042-488c-a726-cd87113ed8f4",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "02b2dc7d394f4bde",
+        "titulo": "Modern Web Application",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "eec4b704-241a-46ad-ba51-7488263c77d6",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:25:37.508839+00:00",
+      "priority_override": null,
+      "comment": "Mi categoría: A05. Detección informativa de app web moderna por script de cookieconsent en 5 rutas, sin CWE ni fallo real.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": true,
+      "ai_nota": "Modelo puso p2 en vez de p4 y trata un script normal de cookieconsent como posible inyección de código."
+    },
+    {
+      "uuid": "a2625504-7e84-4f7f-872f-ff8e8a7527d9",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "11887ad8f98c65b9",
+        "titulo": "Information Disclosure - Information in Browser sessionStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "518f8458-2f35-4ebe-a458-5e14bb014488",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:27:49.946456+00:00",
+      "priority_override": null,
+      "comment": "A01. Alerta informativa de uso de sessionStorage en parámetro itemTotal (CWE-359), sin acción requerida según ZAP.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A02 y p2 en vez de A01 y p4."
+    },
+    {
+      "uuid": "fd6c8867-6be1-4fc0-9714-5b4b033e826e",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "69d845f8b7c70b5b",
+        "titulo": "Private IP Disclosure",
+        "ruta": "/rest/admin/application-configuration"
+      },
+      "enrichment_uuid": "7f4a3eef-3b0c-47d5-9c35-73e0887d22bf",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:30:34.163371+00:00",
+      "priority_override": null,
+      "comment": "A01. Expone IP privada interna (192.168.99.100:3000) en respuesta de application-configuration (CWE-497).",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A02 y p2 en vez de A01 y p3."
+    },
+    {
+      "uuid": "acff807f-9145-40d3-a8a1-d404549f51af",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "e2a4314270c6212f",
+        "titulo": "X-Content-Type-Options Header Missing",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "86440a62-939b-4ae3-ba71-22aa8bd8bda5",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:32:46.214773+00:00",
+      "priority_override": null,
+      "comment": "A06. Falta cabecera X-Content-Type-Options: nosniff en 3 instancias de socket.io (CWE-693).",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso A02 y p2 en vez de A06 y p3."
+    },
+    {
+      "uuid": "fcb201c4-14d6-4d6a-8de3-10e6c596f143",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "72220002e8642fe1",
+        "titulo": "Information Disclosure - JWT in Browser localStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "815d4db0-5218-4bf6-8761-4bfcc6534912",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:33:39.350319+00:00",
+      "priority_override": null,
+      "comment": "A01. JWT almacenado en localStorage en parámetro token (CWE-922), persistiendo sin expiración en el navegador.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso p1 en vez de p2 según regla de severidad media."
+    },
+    {
+      "uuid": "5076e86b-5139-4994-87b5-eeceb52da258",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "ae06712447ec2663",
+        "titulo": "Missing Anti-clickjacking Header",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "3bba623f-38f3-4168-b946-63c49524b95f",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:34:43.735665+00:00",
+      "priority_override": null,
+      "comment": "A06. Falta cabecera anti-clickjacking (X-Frame-Options / CSP frame-ancestors) en socket.io (CWE-1021).",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo sugirió categoría A02 en vez de A06."
+    },
+    {
+      "uuid": "00a45981-0f10-4784-9b22-22704594db2c",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "cf5cecce3d001d80",
+        "titulo": "Timestamp Disclosure - Unix",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "aa8217c6-04a9-4eb5-bd72-a431ba732167",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:36:47.622746+00:00",
+      "priority_override": null,
+      "comment": "A01. Expone timestamps Unix en 5 instancias de / y styles.css (CWE-497), sin sensibilidad confirmada.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": true,
+      "ai_nota": "Modelo puso categoría A04 en vez de A01 e inventó configurar cabecera Date como privada."
+    },
+    {
+      "uuid": "8b6e6d6f-eb27-43e9-97bf-0f3cbf6cd1b2",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7affd5777fded083",
+        "titulo": "Cross-Domain Misconfiguration",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "955ffece-bde5-4ed6-906d-480c59431fab",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:40:28.706085+00:00",
+      "priority_override": null,
+      "comment": "A01. Cabecera Access-Control-Allow-Origin abierta (*) en 5 rutas públicas (CWE-264), revisando impacto de CORS.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "Modelo puso prioridad p1 en vez de p2 según regla de severidad media; CWE-264 figura fuera de la tabla."
+    },
+    {
+      "uuid": "73a676f5-1bf9-4d61-9404-586e2d15dc11",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "27369d63fb2339ad",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/assets"
+      },
+      "enrichment_uuid": "cfecc0e6-dca9-4ffe-bc3f-8178d4fa8968",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:41:33.110399+00:00",
+      "priority_override": null,
+      "comment": "no aplica. Sonda informativa de User-Agent en rutas assets sin CWE ni vulnerabilidad confirmada.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": false,
+      "ai_nota": "Sin CWE de referencia; modelo puso p2 en vez de p4 y sugiere restringir User-Agent."
+    },
+    {
+      "uuid": "5c2c840b-2110-4c9c-9be7-308414681bbc",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "8757ce05e2073570",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "cedf21c0-492d-4485-a13c-03bd4b6d3862",
+      "decision": "confirmado",
+      "reviewer": "Felipe Cayún",
+      "reviewed_at": "2026-11-19T02:42:08.016819+00:00",
+      "priority_override": null,
+      "comment": "no aplica. Sonda informativa de User-Agent en socket.io sin CWE ni vulnerabilidad confirmada.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": false,
+      "ai_nota": "Sin CWE de referencia; modelo puso p2 en vez de p4 y sugiere restringir User-Agent."
+    }
+  ]
+}

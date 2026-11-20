@@ -1,0 +1,389 @@
+{
+  "formato": "sentinelai-intercambio",
+  "version": 1,
+  "tipo": "validaciones",
+  "exportado_en": "2026-11-20T02:32:41.221895+00:00",
+  "base_origen": "sentinelai@8dcf033e",
+  "items": [
+    {
+      "uuid": "273b00ca-2a32-43d4-89ea-0c0f2395553b",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "74b9081b7445806c",
+        "titulo": "SQL Injection",
+        "ruta": "/rest/products/search?q"
+      },
+      "enrichment_uuid": "ef713d5d-cac3-4bc8-a50b-76e9ad381a82",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T01:58:18.527379+00:00",
+      "priority_override": "p4",
+      "comment": "Error 500 al inyectar en el parámetro q del buscador público, indicio de SQL Injection.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "7d4dc2c8-6e9c-4a81-8c7c-a180437499b2",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7de9f7957f6e76c5",
+        "titulo": "External Redirect",
+        "ruta": "/redirect?to"
+      },
+      "enrichment_uuid": "133c7b5f-a38b-4885-832b-20b76bcba329",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:00:56.226635+00:00",
+      "priority_override": null,
+      "comment": null,
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "79234564-5875-4af3-b45f-bf09da836d2c",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "4cf681a8856b2561",
+        "titulo": "Off-site Redirect",
+        "ruta": "/redirect?to"
+      },
+      "enrichment_uuid": "63bb2d03-4489-45d5-bd2f-98b558d1e858",
+      "decision": "duplicado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:03:40.465224+00:00",
+      "priority_override": null,
+      "comment": "El problema existe, pero es el mismo que #2 y marcarlo como falso positivo podría hacer pensar que /redirect es seguro.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": true,
+      "ai_nota": null
+    },
+    {
+      "uuid": "0d0fa553-ac02-4786-832d-3f121bbe0f7d",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "69f35c4b67c20ffe",
+        "titulo": "Session ID in URL Rewrite",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "e4b56197-c3fa-48d7-a273-611fa263992b",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:07:22.992978+00:00",
+      "priority_override": "p4",
+      "comment": "ZAP detecta algo real (un sid en la URL), pero no es el problema que dice (una sesión de usuario expuesta)",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": null,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": true,
+      "ai_nota": null
+    },
+    {
+      "uuid": "c594b98a-3ada-49b4-8a80-cb78116960d6",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "96aeba283c7fa422",
+        "titulo": "Content Security Policy (CSP) Header Not Set",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "3fd57f3b-1f5b-4bb0-b505-100c246327f7",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:09:28.457772+00:00",
+      "priority_override": null,
+      "comment": "No hay un ataque confirmado, solo una falta de protección.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "beba5879-c47d-4ac1-820a-84cf43eea17a",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "ae06712447ec2663",
+        "titulo": "Missing Anti-clickjacking Header",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "06e3b4f9-90b8-4958-8a5d-811b2357655b",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:12:54.974316+00:00",
+      "priority_override": "p4",
+      "comment": "Falta X-Frame-Options solo en POST /socket.io, que es el canal técnico de notificaciones y no una página visible. No hay nada que se pueda enmarcar para engañar al usuario.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "5599a9f9-2c7a-4109-bbc9-b0daf9e683b9",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7affd5777fded083",
+        "titulo": "Cross-Domain Misconfiguration",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "744adf15-4d7c-493c-9245-74ce12c1f804",
+      "decision": "riesgo_aceptado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:15:14.309469+00:00",
+      "priority_override": null,
+      "comment": "Access-Control-Allow-Origin: * en 5 rutas públicas (/, favicon, robots.txt, sitemap.xml). Configuración permisiva, pero sin datos sensibles en la evidencia y sin credenciales con *. Impacto bajo.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": "No declaró categoría OWASP."
+    },
+    {
+      "uuid": "2d695a1b-0453-451b-958f-438e9f4e2134",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "72220002e8642fe1",
+        "titulo": "Information Disclosure - JWT in Browser localStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "da115dd4-8742-456a-b14b-19ecdd86bd9b",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:16:25.586712+00:00",
+      "priority_override": null,
+      "comment": "El JWT de sesión se guarda en localStorage, accesible desde cualquier JavaScript y sin expiración. Explotable si existe un XSS en la app. Real, pero depende de otro fallo.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "c61cff97-228b-4f5a-8c07-a0c10d269c0d",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "e2a4314270c6212f",
+        "titulo": "X-Content-Type-Options Header Missing",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "89e27eb6-a95f-4be6-867f-b18166a43861",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:18:53.826255+00:00",
+      "priority_override": null,
+      "comment": "Falta X-Content-Type-Options: nosniff en 3 respuestas de /socket.io. Defensa ausente real, pero de bajo impacto: afecta sobre todo a navegadores antiguos.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "d7cbad6c-d412-44ce-8063-6cefdcf6f38b",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "cf5cecce3d001d80",
+        "titulo": "Timestamp Disclosure - Unix",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "99383d68-beee-4cb5-ba26-9a0265bc1b28",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:21:25.413598+00:00",
+      "priority_override": "p4",
+      "comment": "Números de 10 dígitos el sistema los detecta como fechas. No revelan información.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "02313758-7b63-47a1-9cd2-977c6f6d2459",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "69d845f8b7c70b5b",
+        "titulo": "Private IP Disclosure",
+        "ruta": "/rest/admin/application-configuration"
+      },
+      "enrichment_uuid": "c5a745d1-6e94-41c6-9eeb-d86c7367d9e7",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:22:35.205768+00:00",
+      "priority_override": null,
+      "comment": null,
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": false,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "00d2cc5c-fbf7-437e-aac2-2c9c76a36664",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "69d845f8b7c70b5b",
+        "titulo": "Private IP Disclosure",
+        "ruta": "/rest/admin/application-configuration"
+      },
+      "enrichment_uuid": "c5a745d1-6e94-41c6-9eeb-d86c7367d9e7",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:23:16.452245+00:00",
+      "priority_override": null,
+      "comment": "Expone la IP privada en /rest/admin/application-configuration, que se puede leer sin ser administrador. Información interna de bajo impacto por sí sola.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": null,
+      "ai_remediacion_util": null,
+      "ai_alucinacion": null,
+      "ai_nota": null
+    },
+    {
+      "uuid": "9cd7690f-6f92-4f51-b40f-2de1eef97ee0",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "97731d19a126acc3",
+        "titulo": "Information Disclosure - Information in Browser localStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "8a52efd1-d943-44c8-ad8c-27b91c7aa0ae",
+      "decision": "duplicado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:24:19.002095+00:00",
+      "priority_override": null,
+      "comment": "Mismo token de sesión (JWT) que el hallazgo “JWT in Browser localStorage”, reportado por la regla genérica 120000. Es el mismo problema; queda anotado en el otro hallazgo.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "ac60ebb3-cca0-4b59-9361-8a9791c8c0a6",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "e9d03d7726badd9c",
+        "titulo": "Information Disclosure - Information in Browser sessionStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "65e092cb-c90c-4632-a5de-58b3730895e1",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:25:30.979597+00:00",
+      "priority_override": null,
+      "comment": "Guarda el id del carrito (bid) en sessionStorage. Es un identificador, no un secreto, y es una práctica común. La alerta es informativa; el riesgo real (ver carritos ajenos) estaría en el servidor y no aparece en esta evidencia.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "11a86661-9169-4ce1-af73-54b2e5d93cd3",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "11887ad8f98c65b9",
+        "titulo": "Information Disclosure - Information in Browser sessionStorage",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "b1a1a09a-83e1-4fa4-bf46-7df6f1035b60",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:26:29.089251+00:00",
+      "priority_override": null,
+      "comment": "Guarda itemTotal (cantidad de productos del carrito) en sessionStorage para mostrarlo en pantalla. No es un dato sensible y los precios reales los calcula el servidor. Alerta informativa sin riesgo.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "f45f87c9-f7c8-43f2-b908-7374b3f3525c",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "02b2dc7d394f4bde",
+        "titulo": "Modern Web Application",
+        "ruta": "/"
+      },
+      "enrichment_uuid": "869bafb3-1646-414a-8938-99ad2240ec7f",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:27:48.576132+00:00",
+      "priority_override": null,
+      "comment": "Aviso informativo de ZAP: la app usa JavaScript moderno. La evidencia es el script normal del aviso de cookies. No es una vulnerabilidad ni requiere acción.",
+      "ai_owasp_correcto": false,
+      "ai_prioridad_correcta": false,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "64804c06-7f7c-480a-82b4-8baa1a8fef2f",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "27369d63fb2339ad",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/assets"
+      },
+      "enrichment_uuid": "00532f0e-97c8-41bd-ad77-762aa5703e9f",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:28:54.152381+00:00",
+      "priority_override": null,
+      "comment": "Prueba informativa de ZAP: pidió /assets como Internet Explorer 8 y la respuesta cambió. Sin CWE y sin evidencia de un problema de seguridad. No requiere acción.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "8f9218b0-2530-47ef-9663-ad9b1c7424b1",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "8757ce05e2073570",
+        "titulo": "User Agent Fuzzer",
+        "ruta": "/socket.io?EIO&sid&t&transport"
+      },
+      "enrichment_uuid": "0a677eeb-cf99-417b-a2ca-047f376dffc4",
+      "decision": "falso_positivo",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:29:36.740636+00:00",
+      "priority_override": null,
+      "comment": "Prueba informativa de ZAP: pidió /socket.io como Internet Explorer 8 y la respuesta cambió, lo esperable en el canal técnico de notificaciones. Sin CWE y sin evidencia de un problema de seguridad.",
+      "ai_owasp_correcto": null,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    },
+    {
+      "uuid": "dce59887-9a83-42f7-91b6-fb1a0ee38758",
+      "hallazgo": {
+        "base_url": "http://juiceshop:3000",
+        "dedupe_key": "7de9f7957f6e76c5",
+        "titulo": "External Redirect",
+        "ruta": "/redirect?to"
+      },
+      "enrichment_uuid": "133c7b5f-a38b-4885-832b-20b76bcba329",
+      "decision": "confirmado",
+      "reviewer": "Joaquin Herrera",
+      "reviewed_at": "2026-11-20T02:30:53.450935+00:00",
+      "priority_override": null,
+      "comment": "Redirección abierta confirmada en el parámetro to de /redirect: la app envió a un dominio externo (…owasp.org) que ZAP coló agregando la URL permitida de GitHub al final. La ruta es pública y se puede usar en enlaces de phishing.",
+      "ai_owasp_correcto": true,
+      "ai_prioridad_correcta": true,
+      "ai_remediacion_util": true,
+      "ai_alucinacion": false,
+      "ai_nota": null
+    }
+  ]
+}
