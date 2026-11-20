@@ -54,17 +54,43 @@ El modelo tiende a A01 y A02 (11 de 17 respuestas) y a subir la prioridad: en 11
    - **Por criterio (conversado):** 20 diferencias en decisión, remediación e invención. Felipe pasó a falso positivo o duplicado los 9 hallazgos donde aplicó el criterio de octubre que había dejado de usar. Joaquín reconoció que en Timestamp la IA sí inventó (una cabecera Date que no está en la evidencia).
 3. Cada revisor volvió a guardar en el dashboard solo sus hallazgos corregidos. La anotación anterior queda en el historial.
 
-## Ronda 2: con regla común
+## Ronda 2: con regla común (20-11-2026)
 
-Archivos: `golden_set/ronda2_felipe.json`, `golden_set/ronda2_joaquin.json`.
-
-**Pendiente:** se completa cuando estén los dos exports calibrados, con:
+Archivos: `golden_set/ronda2_felipe.json`, `golden_set/ronda2_joaquin.json`. Se calcula igual:
 
 ```bash
 python3 backend/scripts/acuerdo_revisores.py \
     docs/evidencias/golden_set/ronda2_felipe.json \
     docs/evidencias/golden_set/ronda2_joaquin.json
 ```
+
+| Pregunta | Felipe | Joaquín | Acuerdo | κ |
+|---|---|---|---|---|
+| Categoría OWASP correcta | 4/13 (31 %) | 4/13 (31 %) | 13/13 (100 %) | 1,00 |
+| Prioridad correcta | 5/17 (29 %) | 4/17 (24 %) | 16/17 (94 %) | 0,85 |
+| Remediación útil | 12/17 (71 %) | 13/17 (76 %) | 12/17 (71 %) | 0,25 |
+| Inventó algo | 3/17 (18 %) | 3/17 (18 %) | 17/17 (100 %) | 1,00 |
+| Decisión (confirmado, falso positivo, …) | — | — | 16/17 (94 %) | 0,91 |
+
+### Qué queda en desacuerdo
+
+- **Prioridad, 1 caso:** Timestamp Disclosure. Felipe deja la de la regla (p3) y Joaquín la baja a p4 porque los números no revelan nada. Los dos aplican bien la regla; difieren en su prioridad final.
+- **Decisión, 1 caso:** Cross-Domain Misconfiguration. Felipe lo confirma (CORS abierto en rutas públicas) y Joaquín lo deja como riesgo aceptado (sin datos sensibles en la evidencia).
+- **Remediación útil, 5 casos:** Off-site Redirect, Session ID in URL, los dos User Agent Fuzzer y Private IP. Es la pregunta con más juicio: si una remediación correcta pero genérica sirve o no. La regla común la acotó, pero no la resolvió.
+
+### Resultado sobre el modelo
+
+Con la regla común, los dos revisores coinciden en lo que el modelo hace bien y mal:
+
+| Qué | Resultado |
+|---|---|
+| Categoría OWASP correcta | 4 de 13 (31 %), igual a la medición objetiva contra la tabla |
+| Prioridad correcta | 4 a 5 de 17 (24 % a 29 %) |
+| Remediación útil | 12 a 13 de 17 (71 % a 76 %) |
+| Inventó algo | 3 de 17 (18 %): Session ID in URL, Timestamp y Modern Web Application |
+| Falsos positivos y duplicados de ZAP | 9 de 17 según los dos revisores (7 falsos positivos y 2 duplicados) |
+
+El modelo explica y propone remediaciones útiles en la mayoría de los casos, pero falla en clasificar y priorizar, y en casi uno de cada cinco hallazgos agrega algo que no está en la evidencia. Respalda la decisión mixta del proyecto: la categoría la da la tabla CWE, la prioridad la regla, la IA explica y una persona decide.
 
 ## Limitaciones
 

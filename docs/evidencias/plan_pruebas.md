@@ -60,6 +60,7 @@ Las pruebas de integración se saltan si no hay PostgreSQL disponible, y el CI l
 | CP-19 | Registrar una decisión humana por la API | 201, el hallazgo cambia de estado y la decisión aparece en el informe | 201, estado "confirmado" y la decisión en el informe | ✅ | `lab/e2e.sh`, pasos 7 y 8 |
 | CP-20 | Hallazgo cuyo CWE no está en la tabla o cuya categoría no coincide con el modelo | La ficha del informe sale marcada "Revisar" con el motivo | Marcada en el test y en el informe de los 17 hallazgos reales (1 por CWE fuera de la tabla) | ✅ | `test_informe.py` |
 | CP-21 | Golden set completo (17 hallazgos), primer revisor | Medir la calidad del modelo contra el criterio humano | Categoría 5/14 (36 %), prioridad 6/17 (35 %), remediación útil 12/17 (71 %), alucinación 3/17 (18 %) | 📊 | `scripts/intercambio.py metricas` |
+| CP-22 | Golden set de 17 con dos revisores | Medir el acuerdo entre revisores y la calidad del modelo | Ronda independiente: κ ≈ 0 en categoría y prioridad (sin regla común). Con regla común: κ 1,00 en categoría e invención, 0,85 en prioridad, 0,91 en decisión; el modelo acierta 31 % en categoría, 24–29 % en prioridad e inventa en 18 % | 📊 | `golden_set_17.md` |
 
 ✅ cumple lo esperado · 📊 medición: el resultado es un dato, no un aprobado o reprobado
 
