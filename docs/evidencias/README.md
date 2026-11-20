@@ -56,6 +56,8 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 | `revision_alucinaciones.csv` | Revisión de alucinaciones de Joaquín Herrera (20 respuestas) |
 | `revision_alucinaciones_felipe.csv` | Segunda revisión independiente, de Felipe Cayún |
 | `acuerdo_alucinaciones.md` | Acuerdo entre los dos revisores: 90 % (18 de 20), κ de Cohen 0,74 |
+| `golden_set_17.md` | Golden set de 17 hallazgos con dos revisores: la ronda independiente (acuerdo casi nulo en categoría y prioridad, y por qué), la regla común, la calibración y la ronda 2 |
+| `golden_set/` | Exports de las anotaciones de cada revisor por ronda, para repetir el cálculo con `backend/scripts/acuerdo_revisores.py` |
 
 ## Cómo reproducir las evidencias principales
 
