@@ -1,6 +1,6 @@
 # Requisitos no funcionales
 
-**SentinelAI** · Actualizado: 18-11-2026
+**SentinelAI** · Actualizado: 19-11-2026
 
 Los requisitos funcionales están expresados como historias de usuario en `docs/producto/PRODUCT_BACKLOG.md`. Este documento define **con qué calidad** debe operar el sistema. Cada requisito tiene un criterio medible y dice cómo se verifica; los casos de prueba (CP-xx) están en `docs/evidencias/plan_pruebas.md`.
 
@@ -40,7 +40,7 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 | RNF-10 | Un reporte no se importa dos veces | El segundo intento responde 409 y no modifica datos | CP-09 | ✅ |
 | RNF-11 | Una importación no queda a medias | La ingesta ocurre en una transacción: si falla, no se guarda nada | Tests de ingesta | ✅ |
 | RNF-12 | Toda sugerencia de la IA es trazable | Guarda el modelo, la versión y la huella del prompt, los intentos, la latencia y la fecha | Tests de enriquecimiento | ✅ |
-| RNF-13 | Toda decisión humana es trazable | Guarda revisor, fecha, comentario y la sugerencia exacta que se juzgó; nada se borra | Tests de validaciones *(pull request #28)* | 🔶 |
+| RNF-13 | Toda decisión humana es trazable | Guarda revisor, fecha, comentario y la sugerencia exacta que se juzgó; nada se borra | `test_validaciones_api.py` | ✅ |
 
 ## 4. Rendimiento
 
@@ -65,7 +65,7 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 | ID | Requisito | Criterio | Verificación | Estado |
 |---|---|---|---|---|
 | RNF-22 | La interfaz está en español y sin jerga innecesaria | Textos, mensajes de error y estados en español | Revisión manual | ✅ |
-| RNF-23 | Se distingue qué dijo el escáner, qué sugirió la IA y qué decidió una persona | Tres capas visualmente separadas; la IA se presenta como "sugerencia, no decisión" | Pantalla de detalle *(pull request #28)* | 🔶 |
+| RNF-23 | Se distingue qué dijo el escáner, qué sugirió la IA y qué decidió una persona | Tres capas visualmente separadas; la IA se presenta como "sugerencia, no decisión" | Pantalla de detalle del hallazgo | ✅ |
 | RNF-24 | Funciona en escritorio y en teléfono | Sin desplazamiento horizontal entre 390 y 1440 px de ancho | Capturas a 390, 1024, 1280 y 1440 px durante el desarrollo | 🔶 |
 | RNF-25 | Se puede usar con teclado | Todos los controles alcanzables con el teclado y con nombre para lectores de pantalla | Revisión manual; sin auditoría formal | 🔶 |
 
@@ -91,7 +91,7 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 | ID | Requisito | Criterio | Verificación | Estado |
 |---|---|---|---|---|
 | RNF-33 | Solo se escanean objetivos autorizados | Únicamente aplicaciones deliberadamente vulnerables en el laboratorio local, conforme a la Ley 21.459 | RNF-01 y RNF-02; `README.md`, "Marco ético y legal" | ✅ |
-| RNF-34 | Una persona decide sobre cada hallazgo | El estado de un hallazgo solo cambia con una validación humana registrada | Endpoint de validaciones *(pull request #28)* | 🔶 |
+| RNF-34 | Una persona decide sobre cada hallazgo | El estado de un hallazgo solo cambia con una validación humana registrada | `test_validaciones_api.py` y prueba de extremo a extremo (`lab/e2e.sh`) | ✅ |
 
 ---
 
@@ -99,9 +99,9 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 
 | Estado | Requisitos |
 |---|---|
-| ✅ Cumple | 24 |
-| 🔶 Parcial | 7 |
+| ✅ Cumple | 27 |
+| 🔶 Parcial | 4 |
 | ⬜ Sin medir | 3 |
 | **Total** | **34** |
 
-Tres de los parciales pasan a cumplir cuando se integre el pull request #28. Los tres sin medir se cierran antes de la defensa: la medición del lote real (RNF-15), la de importación (RNF-16) y la prueba sin conexión (RNF-31).
+Los parciales son los que se verificaron solo de forma manual. Los tres sin medir se cierran antes de la defensa: la medición del lote real (RNF-15), la de importación (RNF-16) y la prueba sin conexión (RNF-31).

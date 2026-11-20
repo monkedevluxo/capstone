@@ -511,8 +511,8 @@ El plan parte el 7 de septiembre de 2026 y termina el 13 de diciembre, dentro de
 - [x] **S2 · 21 sep – 4 oct** — Modelo de datos y migraciones
 - [x] **S3 · 5 oct – 18 oct** — Parser, normalización y API de ingesta
 - [x] **S4 · 19 oct – 1 nov** — IA integrada a la API y enriquecimiento por lote
-- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(dashboard hecho: inicio, lista con filtros y detalle, PR #21 en revisión; golden set: la herramienta para anotarlo entre varios revisores está lista, falta la anotación)*
-- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega) *(validación humana hecha: decisión desde el detalle y estado `duplicado`; falta el informe técnico)*
+- [ ] **S5 · 2 nov – 15 nov** — Golden set completo y dashboard *(dashboard hecho; golden set: sugerencias reales del modelo y herramienta de anotación listas, falta la anotación con dos revisores)*
+- [ ] **S6 · 16 nov – 29 nov** — Validación humana, informe técnico y congelamiento (tercera entrega) *(validación humana e informe técnico hechos, con el botón Informe en el dashboard; falta el congelamiento)*
 - [ ] **S7 · 30 nov – 13 dic** — Documentación, evidencias y defensa
 
 El detalle de las 71 tareas, con su estado y responsable, está en la planilla de sprints.

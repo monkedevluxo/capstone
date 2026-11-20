@@ -1,6 +1,6 @@
 # Product Backlog
 
-**SentinelAI** · Actualizado: 16-11-2026
+**SentinelAI** · Actualizado: 19-11-2026
 
 Este documento expresa el alcance del proyecto como **historias de usuario**. El equipo planificó y ejecutó el trabajo con un backlog de tareas técnicas (`docs/SentinelAI_Plan_Sprints.xlsx`). Las historias se redactaron en noviembre de 2026 a partir de ese backlog y del sistema construido, para describir el mismo alcance desde el punto de vista de quien lo usa. Cada historia indica las tareas que la implementan.
 
@@ -15,10 +15,10 @@ Este documento expresa el alcance del proyecto como **historias de usuario**. El
 
 | Estado | Historias | Qué significa |
 |---|---|---|
-| Hecha | 17 | Integrada en la rama `main` |
-| En revisión | 6 | Implementada, con pull request abierto |
-| En curso | 3 | Implementada en una rama sin pull request, o parcialmente lista |
-| Pendiente | 1 | No iniciada |
+| Hecha | 26 | Integrada en la rama `main` |
+| En revisión | 0 | Implementada, con pull request abierto |
+| En curso | 1 | Implementada en una rama sin pull request, o parcialmente lista |
+| Pendiente | 0 | No iniciada |
 | **Total** | **27** | |
 
 Cada historia se considera terminada cuando cumple sus criterios de aceptación y la definición de terminado (`docs/producto/DEFINITION_OF_DONE.md`).
@@ -28,10 +28,10 @@ Cada historia se considera terminada cuando cumple sus criterios de aceptación 
 | 1. Laboratorio y escaneo | HU-01 a HU-02 | 2 de 2 |
 | 2. Ingesta y normalización | HU-03 a HU-07 | 5 de 5 |
 | 3. Enriquecimiento con IA | HU-08 a HU-12 | 5 de 5 |
-| 4. Revisión en el dashboard | HU-13 a HU-17 | 3 de 5 |
-| 5. Decisión humana | HU-18 a HU-20 | 0 de 3 |
-| 6. Informe | HU-21 a HU-22 | 0 de 2 |
-| 7. Calidad de la IA | HU-23 a HU-25 | 0 de 3 |
+| 4. Revisión en el dashboard | HU-13 a HU-17 | 5 de 5 |
+| 5. Decisión humana | HU-18 a HU-20 | 3 de 3 |
+| 6. Informe | HU-21 a HU-22 | 2 de 2 |
+| 7. Calidad de la IA | HU-23 a HU-25 | 2 de 3 |
 | 8. Operación y confianza en los cambios | HU-26 a HU-27 | 2 de 2 |
 
 ## Épica 1 · Laboratorio y escaneo
@@ -263,7 +263,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Alta | S5 | En revisión | T-052 (PR #28) |
+| Alta | S5 | Hecha | T-052 |
 
 ### HU-17 · Ver el historial de escaneos importados
 
@@ -276,7 +276,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Media | S6 | En curso | Sin tarea propia (rama `luciano/escaneos`) |
+| Media | S6 | Hecha | Sin tarea propia |
 
 
 ## Épica 5 · Decisión humana
@@ -293,7 +293,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Alta | S6 | En revisión | T-056, T-057 (PR #28) |
+| Alta | S6 | Hecha | T-056, T-057 |
 
 ### HU-19 · Marcar un hallazgo como duplicado de otro
 
@@ -306,7 +306,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Media | S6 | En revisión | T-057 (PR #28) |
+| Media | S6 | Hecha | T-057 |
 
 ### HU-20 · Corregir la prioridad que propone la regla
 
@@ -319,7 +319,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Media | S6 | En revisión | T-056, T-057 (PR #28) |
+| Media | S6 | Hecha | T-056, T-057 |
 
 
 ## Épica 6 · Informe
@@ -336,7 +336,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Alta | S6 | En revisión | T-058, T-059 (PR #22) |
+| Alta | S6 | Hecha | T-058, T-059 |
 
 ### HU-22 · Generar el informe desde el dashboard
 
@@ -348,7 +348,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Media | S6 | Pendiente | Sin tarea propia (depende del PR #22) |
+| Media | S6 | Hecha | T-058, T-059 |
 
 
 ## Épica 7 · Calidad de la IA
@@ -365,7 +365,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Alta | S6 | En revisión | T-043, T-056 (PR #28) |
+| Alta | S6 | Hecha | T-043, T-056 |
 
 ### HU-24 · Conocer el acierto del modelo y el acuerdo entre revisores
 
@@ -392,7 +392,7 @@ Criterios de aceptación:
 
 | Prioridad | Sprint | Estado | Tareas |
 |---|---|---|---|
-| Media | S6 | En curso | Sin tarea propia (rama `luciano/intercambio`) |
+| Media | S6 | Hecha | Sin tarea propia |
 
 
 ## Épica 8 · Operación y confianza en los cambios

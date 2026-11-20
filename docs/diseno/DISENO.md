@@ -1,6 +1,6 @@
 # Documento de diseño
 
-**SentinelAI** · Proyecto de Título · Capstone · Duoc UC · Grupo 3 · Actualizado: 16-11-2026
+**SentinelAI** · Proyecto de Título · Capstone · Duoc UC · Grupo 3 · Actualizado: 19-11-2026
 
 Este documento reúne el diseño del sistema: arquitectura, componentes, casos de uso, secuencias, modelo de datos, decisiones técnicas y despliegue. Resume y enlaza los documentos de detalle; no los reemplaza.
 
@@ -11,7 +11,7 @@ Este documento reúne el diseño del sistema: arquitectura, componentes, casos d
 | Modelo de lenguaje, prompt y validación | `docs/diseno/IA_MODELO_Y_PROMPT.md` |
 | Problema, usuarios y alcance | `docs/producto/PRODUCT_VISION.md` |
 
-**Alcance de este documento.** Describe el sistema completo que el equipo va a defender. Al 16-11-2026, cuatro partes están implementadas pero todavía no se integran a la rama `main`: el detalle del hallazgo con el registro de la decisión humana (pull request #28), el informe técnico (pull request #22), el intercambio de anotaciones entre equipos y la página de escaneos. Se indican como *por integrar* donde aparecen.
+**Alcance de este documento.** Describe el sistema que el equipo va a defender. Al 19-11-2026, todo lo descrito está integrado en la rama `main`.
 
 ---
 
@@ -80,7 +80,7 @@ flowchart TB
         cliente["Cliente de Ollama"]
         tabla["Tabla CWE a OWASP<br/>y regla de prioridad"]
         valid["Validación humana"]
-        informe["Informe técnico<br/>(por integrar)"]
+        informe["Informe técnico"]
         modelos["Modelos de datos"]
 
         rutas --> ingesta --> parser --> norm
@@ -114,16 +114,16 @@ flowchart TB
 | Módulo de IA | `backend/app/ia/` | Arma el prompt, valida la respuesta contra el esquema y reintenta hasta tres veces |
 | Cliente de Ollama | `backend/app/ia/cliente.py` | Llama al modelo con tiempo límite y distingue "modelo apagado" de "respuesta inválida" |
 | Tabla CWE a OWASP | `backend/app/ia/owasp_por_cwe.py` | Entrega la categoría de referencia, la prioridad por regla y la marca "revisar" |
-| Validación humana | `backend/app/validacion.py` | Fija el estado del hallazgo según la decisión más reciente *(por integrar)* |
-| Intercambio | `backend/app/intercambio.py` | Exporta e importa sugerencias y decisiones entre bases, y calcula las métricas *(por integrar)* |
-| Informe técnico | `backend/app/informe.py` | Arma el informe exportable en HTML *(por integrar)* |
+| Validación humana | `backend/app/validacion.py` | Fija el estado del hallazgo según la decisión más reciente |
+| Intercambio | `backend/app/intercambio.py` | Exporta e importa sugerencias y decisiones entre bases, y calcula las métricas |
+| Informe técnico | `backend/app/informe.py`, `informe_consulta.py` | Arma el informe exportable en HTML. Lo entrega `GET /informe` y lo usa también `scripts/informe.py`, así ambos generan lo mismo |
 | Modelos de datos | `backend/app/models.py` | Las siete tablas y sus restricciones |
 
 ### Dashboard
 
 | Componente | Ubicación | Responsabilidad |
 |---|---|---|
-| Páginas | `frontend/src/app/` | Inicio (importar), Hallazgos (lista con totales y filtros), Detalle (tres capas) y Escaneos (historial). Las dos últimas están por integrar |
+| Páginas | `frontend/src/app/` | Inicio (importar), Hallazgos (lista con totales y filtros), Detalle (tres capas), Escaneos (historial) e Informe, que abre el informe técnico en otra pestaña |
 | Acciones de servidor | `frontend/src/app/acciones.ts` | Importar un reporte, enriquecer y registrar una decisión. Se ejecutan en el servidor de Next |
 | Cliente de la API | `frontend/src/lib/api.ts` | Único punto que llama a la API; la dirección no llega al navegador |
 | Filtros | `frontend/src/lib/filtros.ts` | Guarda el estado de los filtros en la dirección de la página y lo valida |
