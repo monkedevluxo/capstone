@@ -30,9 +30,12 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
   const [cargado, setCargado] = useState(false);
 
   // El iframe puede terminar de cargar antes de que React se hidrate, y
-  // entonces onLoad nunca llega: se revisa una vez al montar.
+  // entonces onLoad nunca llega: se revisa una vez al montar. Mientras carga
+  // el src, el iframe tiene un about:blank inicial que ya está "complete", así
+  // que eso no cuenta como cargado: en ese caso se espera a onLoad.
   useEffect(() => {
-    if (marco.current?.contentDocument?.readyState === "complete") setCargado(true);
+    const doc = marco.current?.contentDocument;
+    if (doc?.readyState === "complete" && doc.location.href !== "about:blank") setCargado(true);
   }, []);
 
   const consulta = objetivo ? `?${new URLSearchParams({ objetivo })}` : "";
