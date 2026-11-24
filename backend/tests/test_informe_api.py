@@ -13,6 +13,8 @@ Usan PostgreSQL (como test_ingesta.py).
 OJO: vacían las tablas. No los corras contra una base con datos que te importen.
 """
 
+import csv
+import io
 import json
 from pathlib import Path
 
@@ -109,15 +111,14 @@ def test_exporta_el_informe_en_csv_con_un_hallazgo_por_fila():
     assert r.status_code == 200
     assert r.headers["content-type"].startswith("text/csv")
     assert 'filename="informe_juiceshop-3000_' in r.headers["content-disposition"]
-    lineas = r.content.decode("utf-8-sig").splitlines()
-    assert lineas[0].startswith("N°,Sección,Título")
-    import csv
-    assert len(list(csv.reader(lineas))) == nuevos + 1
+    # csv.reader sobre el texto completo: la evidencia de ZAP puede traer saltos
+    # de línea o caracteres que splitlines() también toma como fin de línea.
+    filas = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig"), newline="")))
+    assert filas[0][:3] == ["N°", "Sección", "Título"]
+    assert len(filas) == nuevos + 1
 
 
 def test_exporta_el_informe_en_xlsx_con_tres_hojas():
-    import io
-
     from openpyxl import load_workbook
 
     nuevos = _importar()["nuevos"]
