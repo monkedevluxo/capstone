@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { VistaInforme } from "@/components/informe/vista-informe";
 import { Aviso, AvisoApiCaida, Marco } from "@/components/marco";
-import { ErrorApi, obtenerResumen } from "@/lib/api";
+import { ErrorApi, listarEscaneos, obtenerResumen } from "@/lib/api";
 import { claseEnlace } from "@/lib/estilos";
 
 export const metadata: Metadata = { title: "Informe · SentinelAI" };
@@ -18,8 +18,16 @@ export default async function PaginaInforme({
   const elegido = typeof objetivo === "string" && objetivo ? objetivo : undefined;
 
   let total: number;
+  let existe = true;
   try {
-    total = (await obtenerResumen(new URLSearchParams())).total;
+    const [resumen, escaneos] = await Promise.all([
+      obtenerResumen(new URLSearchParams()),
+      elegido ? listarEscaneos() : null,
+    ]);
+    total = resumen.total;
+    // La API elige el objetivo por su base_url exacta (elegir_objetivo), y un
+    // objetivo existe desde que se importa su primer escaneo.
+    if (escaneos) existe = escaneos.some((e) => e.objetivo === elegido);
   } catch (error) {
     if (!(error instanceof ErrorApi)) throw error;
     return (
@@ -44,6 +52,25 @@ export default async function PaginaInforme({
         >
           El informe se arma con los hallazgos importados. Cuando haya al menos un escaneo, podrás
           verlo acá y exportarlo a PDF, Excel o CSV.
+        </Aviso>
+      </Marco>
+    );
+  }
+
+  if (!existe) {
+    return (
+      <Marco>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-navy">Informe</h1>
+        <Aviso
+          titulo="No existe ese objetivo"
+          accion={
+            <Link href="/informe" className={claseEnlace}>
+              Ver el informe del objetivo con más hallazgos
+            </Link>
+          }
+        >
+          No hay escaneos importados de <span className="font-mono break-all">{elegido}</span>. Revisa
+          la dirección del objetivo en el enlace.
         </Aviso>
       </Marco>
     );
