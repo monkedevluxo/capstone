@@ -101,3 +101,36 @@ def test_es_el_mismo_informe_que_genera_la_linea_de_comandos():
     # La fecha de generación cambia entre las dos llamadas; el resto debe ser igual.
     sin_fecha = lambda h: h.split("generado", 1)[1].split("</p>", 1)[1]  # noqa: E731
     assert sin_fecha(pagina) == sin_fecha(html_script)
+
+
+def test_exporta_el_informe_en_csv_con_un_hallazgo_por_fila():
+    nuevos = _importar()["nuevos"]
+    r = api.get("/informe.csv")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/csv")
+    assert 'filename="informe_juiceshop-3000_' in r.headers["content-disposition"]
+    lineas = r.content.decode("utf-8-sig").splitlines()
+    assert lineas[0].startswith("N°,Sección,Título")
+    import csv
+    assert len(list(csv.reader(lineas))) == nuevos + 1
+
+
+def test_exporta_el_informe_en_xlsx_con_tres_hojas():
+    import io
+
+    from openpyxl import load_workbook
+
+    nuevos = _importar()["nuevos"]
+    r = api.get("/informe.xlsx", params={"objetivo": OBJETIVO})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    assert r.headers["content-disposition"].endswith('.xlsx"')
+    libro = load_workbook(io.BytesIO(r.content))
+    assert libro.sheetnames == ["Resumen", "Hallazgos", "Escaneos"]
+    assert libro["Hallazgos"].max_row == nuevos + 1
+
+
+def test_exportar_sin_escaneos_responde_404():
+    assert api.get("/informe.csv").status_code == 404
+    assert api.get("/informe.xlsx").status_code == 404

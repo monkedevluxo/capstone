@@ -34,8 +34,8 @@ export const MODULOS: Modulo[] = [
   { etiqueta: "Inicio", icono: House, href: "/" },
   { etiqueta: "Hallazgos", icono: ListChecks, href: "/hallazgos" },
   { etiqueta: "Escaneos", icono: Radar, href: "/escaneos" },
-  // T-058 / T-059: página HTML que arma la API, para guardar o imprimir.
-  { etiqueta: "Informe", icono: FileText, href: "/informe", pestanaNueva: true },
+  // T-058 / T-059: vista previa del informe técnico y exportación a PDF, XLSX y CSV.
+  { etiqueta: "Informe", icono: FileText, href: "/informe" },
 ];
 
 /** Módulo al que pertenece una ruta: /hallazgos/<id> es parte de Hallazgos. */
