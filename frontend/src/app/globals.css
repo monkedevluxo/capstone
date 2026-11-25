@@ -222,7 +222,8 @@
   --secondary: #2e3339;
   --secondary-foreground: #e8e4df;
   --muted: #2e3339;
-  --muted-foreground: #9aa1a9;
+  /* #a8afb7: el placeholder de los campos (fondo #363b41) también llega a AA */
+  --muted-foreground: #a8afb7;
   --accent: #2e3339;
   --accent-foreground: #e8e4df;
   --destructive: #ff6b76;
