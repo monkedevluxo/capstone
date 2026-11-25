@@ -16,7 +16,9 @@ Reglas del informe:
 
 from __future__ import annotations
 
+import base64
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Iterable
 
 from app.ia.owasp_por_cwe import evaluar
@@ -213,13 +215,23 @@ ETIQUETA_ESTADO = ETIQUETA_DECISION | {"nuevo": "Nuevo", "en_triage": "En triage
 MOTIVO_REVISION = {"categoria_distinta": "categoría distinta",
                    "cwe_fuera_de_tabla": "CWE fuera de la tabla"}
 
+# El casco del logo, incrustado como data URI: el informe sigue siendo un solo
+# archivo HTML, sin pedir nada afuera.
+_CASCO = "data:image/png;base64," + base64.b64encode(
+    (Path(__file__).parent / "recursos" / "casco.png").read_bytes()
+).decode("ascii")
+
 _CSS = """
 :root {
-  --navy:#14263d; --tinta:#14263d; --suave:#556474; --borde:#d9e0e7; --fondo:#f5f7f9; --tarjeta:#fff;
-  --escaner:#4a5868; --escaner-suave:#eef1f4; --ia:#1f4e79; --ia-suave:#e7eef6;
-  --persona:#e8833a; --persona-suave:#fdf0e6; --persona-texto:#8a3b0b; --revisar-fondo:#fffbf7;
-  --critica:#8a1c1c; --alta:#9b1c1c; --alta-fondo:#fce4e4; --media:#6b4e00; --media-fondo:#fff1c7;
-  --baja:#3e4c5b; --baja-fondo:#e6ebf0; --info:#556474;
+  /* Bronce claro, la misma paleta del dashboard (frontend/src/app/globals.css).
+     El informe es siempre claro: es lo que se imprime. */
+  --grafito:#1c1f22; --tinta:#1a1c1e; --suave:#5a6067; --borde:#dededb; --fondo:#f4f4f3; --tarjeta:#fff;
+  --cobre:#c08666; --cobre-claro:#eaac86;
+  --escaner:#4b5058; --escaner-suave:#ededeb; --ia:#0e6a78; --ia-suave:#e3f1f3;
+  --persona:#c08666; --persona-suave:#f6eae2; --persona-texto:#8c4a26; --persona-borde:#e4c4ae;
+  --exito:#065f46; --exito-fondo:#ecfdf5;
+  --critica:#8a1c1c; --alta:#9b1c1c; --alta-fondo:#fbe3e1; --media:#5c5a00; --media-fondo:#f3f1c8;
+  --baja:#4b5058; --baja-fondo:#e9e9e6; --info:#5a6067;
 }
 * { box-sizing: border-box; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -227,11 +239,13 @@ body { margin: 0; background: var(--fondo); color: var(--tinta);
        font: 14px/1.55 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
 code, pre, .mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; }
 a { color: var(--ia); }
-.portada { background: var(--navy); color: #fff; }
-.portada .contenido { max-width: 1000px; margin: 0 auto; padding: 32px 24px 28px; }
-.marca { margin: 0; color: #c5d0dc; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; }
-.portada h1 { margin: 6px 0 10px; font-size: 30px; line-height: 1.2; }
-.portada .meta { margin: 0; color: #c5d0dc; font-size: 13px; }
+.portada { background: var(--grafito); color: #fff; }
+.portada .contenido { max-width: 1000px; margin: 0 auto; padding: 28px 24px 26px; }
+.marca { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--cobre-claro); font-size: 13px;
+         letter-spacing: .06em; text-transform: uppercase; }
+.marca img { height: 30px; width: auto; }
+.portada h1 { margin: 10px 0 10px; font-size: 30px; line-height: 1.2; }
+.portada .meta { margin: 0; color: #c9cdd2; font-size: 13px; }
 .portada .meta code { color: #fff; }
 main { max-width: 1000px; margin: 0 auto; padding: 24px; }
 h2 { font-size: 20px; margin: 40px 0 14px; display: flex; align-items: baseline; gap: 10px; }
@@ -239,24 +253,23 @@ h2 .num { color: var(--suave); font-weight: 500; }
 h3 { font-size: 14px; margin: 0 0 10px; color: var(--suave); font-weight: 600; }
 p { margin: 0 0 8px; }
 .suave { color: var(--suave); }
-.aviso { background: var(--tarjeta); border: 1px solid var(--borde); border-left: 4px solid var(--ia);
-         border-radius: 8px; padding: 12px 16px; margin: 0; }
+.aviso { background: var(--ia-suave); border: 1px solid #c6e2e6; border-radius: 8px; padding: 12px 16px; margin: 0; }
 .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 16px 18px; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 0 0 14px; }
 .kpi { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 14px 16px; }
 .kpi .valor { font-size: 28px; font-weight: 700; line-height: 1.1; }
 .kpi .rotulo { color: var(--suave); font-size: 12.5px; }
-.kpi.alerta { border-top: 3px solid var(--alta); }
-.kpi.revisar { border-top: 3px solid var(--persona); }
-.kpi.persona { border-top: 3px solid var(--persona); }
-.kpi.base { border-top: 3px solid var(--ia); }
+/* El color va en el número, no en una franja: así se lee también en blanco y negro. */
+.kpi.alerta .valor { color: var(--alta); }
+.kpi.revisar .valor, .kpi.persona .valor { color: var(--persona-texto); }
+.kpi.base .valor { color: var(--ia); }
 .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 12px; }
 .barra { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
 .barra .pista { background: var(--fondo); border-radius: 4px; height: 10px; overflow: hidden; }
 .barra .relleno { display: block; height: 100%; border-radius: 4px; background: var(--ia); }
 .barra .n { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
 .r-critica { background: var(--critica) !important; } .r-alta { background: var(--alta) !important; }
-.r-media { background: #c79100 !important; } .r-baja { background: #6b7c8f !important; } .r-informativa { background: #a7b3c0 !important; }
+.r-media { background: #8f8a16 !important; } .r-baja { background: #6b7178 !important; } .r-informativa { background: #8a8f96 !important; }
 table { width: 100%; border-collapse: collapse; background: var(--tarjeta); }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borde); vertical-align: top; }
 th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--suave); background: var(--escaner-suave); }
@@ -267,33 +280,31 @@ th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: v
 .etiqueta { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600;
             white-space: nowrap; border: 1px solid transparent; }
 .sev-critica { background: var(--critica); color: #fff; }
-.sev-alta { background: var(--alta-fondo); color: var(--alta); border-color: #f5c2c2; }
-.sev-media { background: var(--media-fondo); color: var(--media); border-color: #f0d98a; }
-.sev-baja { background: var(--baja-fondo); color: var(--baja); border-color: #cfd8e1; }
+.sev-alta { background: var(--alta-fondo); color: var(--alta); border-color: #f1c4c0; }
+.sev-media { background: var(--media-fondo); color: var(--media); border-color: #dedb93; }
+.sev-baja { background: var(--baja-fondo); color: var(--baja); border-color: #d3d3cf; }
 .sev-informativa { background: #fff; color: var(--info); border-color: var(--borde); }
 .prio { display: inline-block; min-width: 28px; text-align: center; padding: 1px 7px; border-radius: 6px;
-        font: 600 12px "IBM Plex Mono", ui-monospace, monospace; background: var(--navy); color: #fff; }
-.prio-p2 { background: #33506f; } .prio-p3 { background: #6b7c8f; } .prio-p4 { background: #a7b3c0; color: var(--navy); }
+        font: 600 12px "IBM Plex Mono", ui-monospace, monospace; background: var(--grafito); color: #fff; }
+.prio-p2 { background: #3d434a; } .prio-p3 { background: #5a6067; } .prio-p4 { background: #e9e9e6; color: var(--tinta); }
 .chip { display: inline-block; padding: 1px 8px; border-radius: 6px; background: var(--escaner-suave);
         color: var(--escaner); font-size: 12px; margin: 0 4px 4px 0; }
-.chip-ok { background: #e6f4ea; color: #1e6b34; } .chip-dif { background: var(--persona-suave); color: var(--persona-texto); }
+.chip-ok { background: var(--exito-fondo); color: var(--exito); } .chip-dif { background: var(--persona-suave); color: var(--persona-texto); }
 .indice td { font-size: 13px; } .indice a { color: var(--tinta); text-decoration: none; font-weight: 600; }
-.indice tr.revisar td { background: var(--revisar-fondo); }
 .hallazgo { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; margin: 0 0 18px;
             overflow: hidden; break-inside: avoid-page; }
-.hallazgo.revisar { border-color: #f2c48d; }
+.hallazgo.revisar { border-color: var(--persona-borde); }
 .hallazgo .cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
                       padding: 16px 18px 12px; border-bottom: 1px solid var(--borde); }
-.hallazgo.revisar .cabecera { background: var(--revisar-fondo); }
 .hallazgo h3 { margin: 0 0 6px; font-size: 17px; color: var(--tinta); }
 .hallazgo h3 .n { color: var(--suave); font-weight: 500; margin-right: 4px; }
 .insignias { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-.revisar-marca { color: #9a3412; font-weight: 600; font-size: 13px; margin: 6px 0 0; }
+.revisar-marca { color: var(--persona-texto); font-weight: 600; font-size: 13px; margin: 6px 0 0; }
 .capas { padding: 4px 18px 16px; }
-.capa { margin-top: 12px; padding: 10px 14px; border-radius: 8px; border-left: 4px solid var(--escaner);
-        background: var(--escaner-suave); }
-.capa.ia { border-left-color: var(--ia); background: var(--ia-suave); }
-.capa.persona { border-left-color: var(--persona); background: var(--persona-suave); }
+/* Cada capa con su tinte y un borde del mismo tono, sin franja lateral. */
+.capa { margin-top: 12px; padding: 10px 14px; border-radius: 8px; border: 1px solid #dcdcd8; background: var(--escaner-suave); }
+.capa.ia { border-color: #c6e2e6; background: var(--ia-suave); }
+.capa.persona { border-color: var(--persona-borde); background: var(--persona-suave); }
 .capa h4 { margin: 0 0 6px; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--escaner); }
 .capa.ia h4 { color: var(--ia); } .capa.persona h4 { color: var(--persona-texto); }
 dl { display: grid; grid-template-columns: 120px 1fr; gap: 4px 12px; margin: 0; }
@@ -303,7 +314,7 @@ pre { background: #fff; border: 1px solid var(--borde); border-radius: 6px; padd
 .capa table { margin-top: 8px; border: 1px solid var(--borde); border-radius: 6px; font-size: 12.5px; }
 .capa table td code { word-break: break-all; }
 details { margin-top: 8px; } summary { cursor: pointer; color: var(--ia); font-size: 13px; }
-details .texto-zap { margin-top: 6px; font-size: 13px; color: #33404f; }
+details .texto-zap { margin-top: 6px; font-size: 13px; color: #3d434a; }
 .metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .metrica .valor { font-size: 24px; font-weight: 700; } .metrica .rotulo { font-size: 12.5px; color: var(--suave); }
 .metrica .pista { background: var(--fondo); border-radius: 4px; height: 8px; margin-top: 8px; overflow: hidden; }
@@ -535,7 +546,7 @@ def renderizar_html(datos: dict) -> str:
 </head>
 <body>
 <header class="portada"><div class="contenido">
-  <p class="marca">SentinelAI · Informe técnico de hallazgos</p>
+  <p class="marca"><img src="{_CASCO}" alt=""> SentinelAI · Informe técnico de hallazgos</p>
   <h1>{_e(obj['nombre'])}</h1>
   <p class="meta"><code>{_e(obj['url'])}</code> · entorno {_e(obj['entorno'])} · {len(datos['escaneos'])} escaneos · generado {_fecha(datos['generado_en'])}</p>
 </div></header>
