@@ -6,6 +6,7 @@ import { BarraLateral } from "@/components/barra-lateral";
 import { FranjaSuperior } from "@/components/franja-superior";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { COOKIE_TEMA, leerTema, SCRIPT_TEMA_SISTEMA } from "@/lib/tema";
 import "./globals.css";
 
 // Fuentes empaquetadas (Fontsource), no Google Fonts: el dashboard tiene que
@@ -42,19 +43,28 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // La barra lateral recuerda si quedó colapsada (cookie que escribe
   // SidebarProvider). Leerla acá evita que parpadee al recargar.
-  const abierta = (await cookies()).get("sidebar_state")?.value !== "false";
+  const galletas = await cookies();
+  const abierta = galletas.get("sidebar_state")?.value !== "false";
+  // Tema elegido (cookie que escribe el selector). "oscuro" sale del servidor
+  // con la clase puesta; "sistema" la pone un script antes del primer pintado.
+  const tema = leerTema(galletas.get(COOKIE_TEMA)?.value);
 
   return (
     <html
       lang="es"
-      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased${tema === "oscuro" ? " dark" : ""}`}
+      // En "sistema" el script cambia la clase antes de hidratar: es esperado.
+      suppressHydrationWarning
     >
+      <head>
+        {tema === "sistema" && <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA_SISTEMA }} />}
+      </head>
       <body className="min-h-full">
         <TooltipProvider>
           <SidebarProvider defaultOpen={abierta}>
             <BarraLateral />
             <SidebarInset className="min-w-0">
-              <FranjaSuperior />
+              <FranjaSuperior tema={tema} />
               {children}
             </SidebarInset>
           </SidebarProvider>

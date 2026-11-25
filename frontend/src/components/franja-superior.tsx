@@ -3,13 +3,16 @@
 import { usePathname } from "next/navigation";
 
 import { moduloActivo } from "@/components/barra-lateral";
+import { SelectorTema } from "@/components/selector-tema";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import type { Tema } from "@/lib/tema";
 
 /**
- * Franja mínima sobre el contenido: dice dónde estás. En el teléfono también
- * abre la navegación; en pantallas grandes eso se hace desde la propia barra.
+ * Franja mínima sobre el contenido: dice dónde estás y deja elegir el tema.
+ * En el teléfono también abre la navegación; en pantallas grandes eso se hace
+ * desde la propia barra.
  */
-export function FranjaSuperior() {
+export function FranjaSuperior({ tema }: { tema: Tema }) {
   const ruta = usePathname();
   const modulo = moduloActivo(ruta);
   const enDetalle = modulo?.href !== undefined && modulo.href !== "/" && ruta !== modulo.href;
@@ -21,10 +24,11 @@ export function FranjaSuperior() {
         className="text-tinta hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/50 md:hidden"
       />
       <span aria-hidden className="h-4 w-px bg-border md:hidden" />
-      <p className="truncate text-sm font-medium text-tinta">
+      <p className="min-w-0 flex-1 truncate text-sm font-medium text-tinta">
         {modulo?.etiqueta ?? "SentinelAI"}
         {enDetalle && <span className="font-normal text-muted-foreground"> / Detalle</span>}
       </p>
+      <SelectorTema inicial={tema} />
     </header>
   );
 }
