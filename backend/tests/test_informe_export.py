@@ -95,3 +95,14 @@ def test_nombre_de_archivo_con_el_host_y_la_fecha():
     datos = _datos(hallazgo(1))
     assert nombre_archivo(datos, "csv") == "informe_juiceshop-3000_20261124.csv"
     assert nombre_archivo(datos, "xlsx").endswith(".xlsx")
+
+
+def test_la_fecha_del_nombre_de_archivo_es_la_de_chile_no_la_de_utc():
+    # 25-11 a las 00:03 UTC es todavía el 24-11 a las 21:03 en Santiago (UTC-3).
+    noche = armar_datos(OBJETIVO, [ESCANEO], [hallazgo(1)],
+                        generado_en=datetime(2026, 11, 25, 0, 3, tzinfo=timezone.utc))
+    assert nombre_archivo(noche, "csv") == "informe_juiceshop-3000_20261124.csv"
+    # En invierno Chile está en UTC-4: 1-07 a las 03:30 UTC es el 30-06 a las 23:30.
+    invierno = armar_datos(OBJETIVO, [ESCANEO], [hallazgo(1)],
+                           generado_en=datetime(2026, 7, 1, 3, 30, tzinfo=timezone.utc))
+    assert nombre_archivo(invierno, "csv") == "informe_juiceshop-3000_20260630.csv"

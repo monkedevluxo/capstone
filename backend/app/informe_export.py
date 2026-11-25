@@ -21,6 +21,7 @@ import io
 import re
 from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from openpyxl import Workbook
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
@@ -31,6 +32,9 @@ from app.informe import ETIQUETA_DECISION, ETIQUETA_ESTADO, ETIQUETA_SEVERIDAD, 
 
 TIPO_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 TIPO_CSV = "text/csv; charset=utf-8"
+
+# Zona del equipo y del laboratorio, para la fecha del nombre de archivo.
+ZONA_LOCAL = ZoneInfo("America/Santiago")
 
 # (encabezado, ancho en el XLSX, cómo sacar el valor de un hallazgo)
 COLUMNAS: list[tuple[str, int, Any]] = [
@@ -194,8 +198,12 @@ def a_xlsx(datos: dict) -> bytes:
 
 
 def nombre_archivo(datos: dict, extension: str) -> str:
-    """Ej: informe_juiceshop-3000_20261124.xlsx"""
+    """Ej: informe_juiceshop-3000_20261124.xlsx
+
+    La fecha es la del día en Chile: generado_en viene en UTC, y desde las
+    21:00 (20:00 en invierno) en UTC ya es el día siguiente.
+    """
     host = re.sub(r"^[a-z]+://", "", datos["objetivo"]["url"] or "objetivo")
     host = re.sub(r"[^A-Za-z0-9]+", "-", host).strip("-").lower() or "objetivo"
-    fecha = (datos["generado_en"] or "")[:10].replace("-", "") or datetime.now().strftime("%Y%m%d")
-    return f"informe_{host}_{fecha}.{extension}"
+    generado = datetime.fromisoformat(datos["generado_en"]) if datos["generado_en"] else datetime.now(ZONA_LOCAL)
+    return f"informe_{host}_{generado.astimezone(ZONA_LOCAL):%Y%m%d}.{extension}"
