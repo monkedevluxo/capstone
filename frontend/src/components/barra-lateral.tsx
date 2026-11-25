@@ -217,7 +217,7 @@ function IndicadorLaboratorio() {
       >
         <span aria-hidden className="size-2 shrink-0 rounded-full bg-emerald-400" />
         <span className={cn("truncate", colapsada && "sr-only")}>
-          Laboratorio aislado · <span className="font-mono text-white">juiceshop</span>
+          Laboratorio aislado · <span className="font-mono text-sidebar-accent-foreground">juiceshop</span>
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" align="center" hidden={!colapsada}>

@@ -56,7 +56,7 @@ export function EnriquecerHallazgo({
           className={cn(
             "px-4",
             principal
-              ? "bg-ia text-white hover:bg-ia/90"
+              ? "bg-ia text-ia-contraste hover:bg-ia/90"
               : "border-ia/40 bg-card text-ia hover:bg-ia-suave hover:text-ia",
           )}
         >

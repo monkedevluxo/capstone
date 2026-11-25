@@ -4,14 +4,21 @@ import { cn } from "@/lib/utils";
 
 /**
  * Las tres capas del detalle, cada una con su color en todo el dashboard:
- *   escáner -> acero (lo que dijo la herramienta)
- *   ia      -> azul        (sugerencia del modelo, no decisión)
- *   persona -> naranjo     (lo que decide alguien)
+ *   escáner -> acero   (lo que dijo la herramienta)
+ *   ia      -> petróleo / cian (sugerencia del modelo, no decisión)
+ *   persona -> cobre   (lo que decide alguien)
+ * En el tema oscuro la capa de la IA lleva un halo cian fijo, sin animación:
+ * es lo único que brilla en la pantalla.
  */
 const TONO = {
-  escaner: { cabecera: "bg-escaner-suave", titulo: "text-tinta", icono: "text-escaner" },
-  ia: { cabecera: "bg-ia-suave", titulo: "text-ia", icono: "text-ia" },
-  persona: { cabecera: "bg-persona-suave", titulo: "text-persona-fuerte", icono: "text-persona-texto" },
+  escaner: { seccion: "", cabecera: "bg-escaner-suave", titulo: "text-tinta", icono: "text-escaner" },
+  ia: {
+    seccion: "dark:border-ia/45 dark:shadow-[0_0_0_1px_color-mix(in_oklab,var(--ia)_15%,transparent),0_0_28px_color-mix(in_oklab,var(--ia)_12%,transparent)]",
+    cabecera: "bg-ia-suave",
+    titulo: "text-ia",
+    icono: "text-ia",
+  },
+  persona: { seccion: "", cabecera: "bg-persona-suave", titulo: "text-persona-fuerte", icono: "text-persona-texto" },
 } as const;
 
 export function Capa({
@@ -34,7 +41,7 @@ export function Capa({
 }) {
   const t = TONO[tono];
   return (
-    <section aria-labelledby={id} className={cn("overflow-hidden rounded-lg border bg-card", className)}>
+    <section aria-labelledby={id} className={cn("overflow-hidden rounded-lg border bg-card", t.seccion, className)}>
       <header className={cn("flex items-start gap-2.5 border-b px-5 py-3", t.cabecera)}>
         <Icono aria-hidden className={cn("mt-0.5 size-4 shrink-0", t.icono)} />
         <div className="min-w-0">

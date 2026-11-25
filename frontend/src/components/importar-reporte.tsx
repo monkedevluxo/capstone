@@ -553,7 +553,7 @@ function ReporteImportado({ resumen: r }: { resumen: ResumenImportacion }) {
   return (
     <section aria-labelledby="titulo-importado" className="rounded-lg border bg-card p-5">
       <div className="flex gap-3">
-        <CircleCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-emerald-700" />
+        <CircleCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-exito" />
         <div className="min-w-0">
           <h3 id="titulo-importado" className="font-semibold text-tinta">
             Reporte importado

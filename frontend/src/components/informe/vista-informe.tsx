@@ -149,6 +149,7 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
             <Skeleton className="h-40 w-full" />
           </div>
         )}
+        {/* El informe es un documento claro en los dos temas: es lo que se imprime. */}
         <iframe
           ref={marco}
           src={urlVer}

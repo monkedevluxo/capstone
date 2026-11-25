@@ -130,14 +130,14 @@ function IndicadorCoincidencia({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
     <Indicador
       etiqueta="Modelo y tabla"
       className={cn(
-        tono === "bien" && "border-emerald-700/25 bg-emerald-50",
+        tono === "bien" && "border-exito/25 bg-exito-fondo",
         tono === "revisar" && "border-persona/40 bg-persona-suave",
       )}
     >
       <dd
         className={cn(
           "flex items-center gap-1.5 text-base font-semibold",
-          tono === "bien" && "text-emerald-800",
+          tono === "bien" && "text-exito",
           tono === "revisar" && "text-persona-fuerte",
           tono === "neutro" && "text-tinta",
         )}
@@ -148,7 +148,7 @@ function IndicadorCoincidencia({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
       <dd
         className={cn(
           "text-xs",
-          tono === "bien" && "text-emerald-800/90",
+          tono === "bien" && "text-exito/90",
           tono === "revisar" && "text-persona-texto",
           tono === "neutro" && "text-muted-foreground",
         )}
