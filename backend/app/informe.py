@@ -295,7 +295,19 @@ th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: v
             overflow: hidden; break-inside: avoid-page; }
 .hallazgo.revisar { border-color: var(--persona-borde); }
 .hallazgo .cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-                      padding: 16px 18px 12px; border-bottom: 1px solid var(--borde); }
+                      padding: 16px 18px 12px; border-bottom: 1px solid var(--borde); cursor: pointer; list-style: none; }
+.hallazgo .cabecera::-webkit-details-marker { display: none; }
+.hallazgo .cabecera:hover { background: #fafaf9; }
+.hallazgo .cabecera:focus-visible { outline: 2px solid var(--grafito); outline-offset: -2px; }
+.ficha:not([open]) > .cabecera { border-bottom: 0; }
+.abrir { font-size: 12px; color: var(--suave); white-space: nowrap; margin-left: 4px; }
+.abrir::after { content: "Ver capas ▸"; }
+.ficha[open] .abrir::after { content: "Ocultar ▾"; }
+.controles-fichas { display: flex; gap: 8px; justify-content: flex-end; margin: 14px 0 10px; }
+.controles-fichas button { font: inherit; font-size: 13px; color: var(--tinta); background: var(--tarjeta);
+                           border: 1px solid #8a8f96; border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+.controles-fichas button:hover { background: var(--escaner-suave); }
+.controles-fichas button:focus-visible { outline: 2px solid var(--grafito); outline-offset: 2px; }
 .hallazgo h3 { margin: 0 0 6px; font-size: 17px; color: var(--tinta); }
 .hallazgo h3 .n { color: var(--suave); font-weight: 500; margin-right: 4px; }
 .insignias { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
@@ -329,15 +341,54 @@ footer { max-width: 1000px; margin: 32px auto 0; padding: 16px 24px 40px; color:
 @media print {
   body { background: #fff; font-size: 12px; } main { padding: 0 8px; }
   .portada .contenido { padding: 20px 8px; }
-  h2 { break-after: avoid; } details summary { display: none; }
+  h2 { break-after: avoid; } .capa details > summary, .abrir, .controles-fichas { display: none; }
+  /* Respaldo si se imprime sin que corra el script: el contenido de un <details>
+     cerrado también sale (navegadores con ::details-content). */
+  details::details-content { content-visibility: visible; display: contents; }
   pre { max-height: none; } a { text-decoration: none; }
   .tabla, .hallazgo, .kpi, .tarjeta { break-inside: avoid; }
 }
 """
 
 # Al imprimir se abren las descripciones de ZAP, para que el PDF las incluya.
-_SCRIPT = ("window.addEventListener('beforeprint',function(){"
-           "document.querySelectorAll('details').forEach(function(d){d.open=true;});});")
+_CONTROLES_FICHAS = (
+    '<div class="controles-fichas"><button type="button" data-fichas="abrir">Abrir todas</button>'
+    '<button type="button" data-fichas="cerrar">Cerrar todas</button></div>'
+)
+
+# Sin dependencias: abre todo al imprimir y lo deja como estaba después; abre
+# la ficha a la que se salta desde el índice; botones para abrir o cerrar todas.
+_SCRIPT = """
+(function () {
+  var guardado = null;
+  addEventListener('beforeprint', function () {
+    var todos = document.querySelectorAll('details');
+    guardado = Array.prototype.map.call(todos, function (d) { return d.open; });
+    todos.forEach(function (d) { d.open = true; });
+  });
+  addEventListener('afterprint', function () {
+    if (!guardado) return;
+    document.querySelectorAll('details').forEach(function (d, i) { d.open = guardado[i]; });
+    guardado = null;
+  });
+  function abrirDestino() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var art = id && document.getElementById(id);
+    var ficha = art && art.querySelector('details.ficha');
+    if (ficha) ficha.open = true;
+  }
+  addEventListener('hashchange', abrirDestino);
+  document.addEventListener('DOMContentLoaded', function () {
+    abrirDestino();
+    document.querySelectorAll('[data-fichas]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var abrir = b.getAttribute('data-fichas') === 'abrir';
+        document.querySelectorAll('details.ficha').forEach(function (d) { d.open = abrir; });
+      });
+    });
+  });
+})();
+""".strip()
 
 
 def _e(valor: Any) -> str:
@@ -424,7 +475,9 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
     )
     partes = [
         f'<article class="hallazgo{" revisar" if h["revisar"] else ""}" id="h-{_e(h["dedupe_key"])}">',
-        '<div class="cabecera"><div>',
+        # Cerrada por defecto: se ve la cabecera y las capas se abren con un clic.
+        # Al imprimir se abren todas (ver _SCRIPT), así el PDF sale completo.
+        '<details class="ficha"><summary class="cabecera"><div>',
         f'<h3><span class="n">{n}.</span>{_e(h["titulo"])}</h3>',
         f'<span class="chip">CWE {_e(h["cwe"])}</span>'
         f'<span class="chip">OWASP de referencia {_e(h["owasp_referencia"])}</span>'
@@ -432,7 +485,8 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
         f'<span class="chip">Prioridad {_e(origen)}</span>',
         (f'<p class="revisar-marca">⚠ Revisar · {_e(MOTIVO_REVISION.get(h["motivo_revision"], h["motivo_revision"]))}</p>'
          if h["revisar"] else ""),
-        f'</div><div class="insignias">{_sev(h["severidad"])} {_prio(h["prioridad"])}</div></div>',
+        f'</div><div class="insignias">{_sev(h["severidad"])} {_prio(h["prioridad"])}'
+        '<span class="abrir" aria-hidden="true"></span></div></summary>',
         '<div class="capas">',
         '<div class="capa"><h4>Evidencia original (ZAP)</h4><dl>',
         f"<dt>Ubicación</dt><dd><code>{_e(ub['metodo'])} {_e(ub['ruta'])}</code></dd>",
@@ -490,7 +544,7 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
     else:
         partes.append('<div class="capa persona"><h4>Decisión humana</h4><p>Pendiente de revisión.</p></div>')
 
-    partes.append("</div></article>")
+    partes.append("</div></details></article>")
     return "".join(partes)
 
 
@@ -579,9 +633,9 @@ coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
 
 <h2>3. Hallazgos</h2>
 <p class="suave">Ordenados por prioridad y severidad. Cada ficha muestra tres capas: lo que entregó el escáner,
-lo que sugiere la IA y lo que decidió una persona.</p>
+lo que sugiere la IA y lo que decidió una persona. Las fichas se abren con un clic; al imprimir salen todas abiertas.</p>
 {_indice(datos['hallazgos'])}
-<div style="height:18px"></div>
+{_CONTROLES_FICHAS if datos['hallazgos'] else ''}
 {vigentes or '<p>No hay hallazgos vigentes.</p>'}
 
 <h2>4. Descartados</h2>
