@@ -1,6 +1,6 @@
 # Plan de pruebas y resultados
 
-**Evidencia 9** del Encargo 1 · **Responsable:** Felipe Cayún · **Actualizado:** 19-11-2026
+**Evidencia 9** del Encargo 1 · **Responsable:** Felipe Cayún · **Actualizado:** 22-11-2026
 
 Reúne las pruebas del proyecto como casos con resultado esperado y obtenido, y registra las incidencias que encontraron y las mejoras que se aplicaron a partir de ellas.
 
@@ -79,5 +79,5 @@ Las pruebas de integración se saltan si no hay PostgreSQL disponible, y el CI l
 
 ## 5. Pendiente
 
-- Anotación del segundo revisor sobre los mismos 17 hallazgos, y acuerdo entre revisores con `scripts/intercambio.py metricas` (T-043).
-- Comparar CP-21 con CP-16 a CP-18: la muestra de 10 hallazgos de octubre y la de 17 de noviembre no son la misma, así que se informan por separado.
+- Ninguna prueba pendiente para la entrega. Antes de la defensa: repetir `./lab/e2e.sh` y probar la demo completa en el equipo y la red de la defensa (T-071).
+- CP-16 a CP-18 (octubre, 10 hallazgos) y CP-22 (noviembre, 17 hallazgos) usan muestras distintas, así que se informan por separado y no se promedian.

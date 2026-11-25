@@ -1,6 +1,6 @@
 # Evidencias del proyecto
 
-**Tarea:** T-067 · **Responsable:** Felipe Cayún · **Actualizado:** 19-11-2026
+**Tarea:** T-067 · **Responsable:** Felipe Cayún · **Actualizado:** 22-11-2026
 
 Índice de las diez evidencias comprometidas con el docente en la definición del proyecto (`docs/institucional/fase1/Encargo1_Definición_Proyecto_SentinelAI.docx`, sección 6), con dónde está cada una en el repositorio y su estado.
 
@@ -17,15 +17,15 @@ Estados: ✅ lista · 🟡 en curso · ⏳ pendiente
 | 5 | Importador y normalizador de resultados | Avance | `backend/app/parsers/zap.py`, `backend/app/ingesta.py`, `lab/fixtures/`, `docs/diseno/ESQUEMA_HALLAZGO.md` | ✅ |
 | 6 | Dashboard funcional | Final | `frontend/` | 🟡 |
 | 7 | Módulo de análisis con IA local | Final | `backend/app/ia/`, `docs/diseno/IA_MODELO_Y_PROMPT.md`, `respuestas_modelo/` | ✅ |
-| 8 | Reporte técnico generado por la plataforma | Final | `backend/app/informe.py`, `backend/scripts/informe.py`, `docs/guias/INFORME_TECNICO.md` | 🟡 |
-| 9 | Plan de pruebas y resultados | Final | `plan_pruebas.md`, `backend/tests/`, `.github/workflows/ci.yml`, `lab/e2e.sh`, golden set (abajo) | 🟡 |
+| 8 | Reporte técnico generado por la plataforma | Final | `backend/app/informe.py`, `backend/app/informe_consulta.py`, `frontend/src/app/informe/route.ts`, `docs/guias/INFORME_TECNICO.md` | ✅ |
+| 9 | Plan de pruebas y resultados | Final | `plan_pruebas.md`, `backend/tests/`, `.github/workflows/ci.yml`, `lab/e2e.sh`, golden set (abajo) | ✅ |
 | 10 | Documentación técnica y presentación final | Final | `README.md`, `docs/guias/`, `docs/diseno/` | ⏳ |
 
 ### Qué falta en cada una
 
-- **6 · Dashboard:** el listado con filtros y totales (PR #21), la vista de detalle y el registro de la decisión humana (PR #28) están en `main`. Falta conectar el botón "Informe".
-- **8 · Reporte técnico:** en `main` (PR #22), con 13 tests y la marca "Revisar" igual que el dashboard. Se genera desde la línea de comandos; falta conectarlo al botón "Informe" del dashboard.
-- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), y `plan_pruebas.md` las reúne como casos con resultado esperado y obtenido, más las incidencias y mejoras aplicadas. El golden set de 17 hallazgos ya tiene la anotación del primer revisor (CP-21); falta la del segundo y el acuerdo entre ambos (T-043).
+- **6 · Dashboard:** el listado con filtros y totales (PR #21), la vista de detalle y el registro de la decisión humana (PR #28), página de escaneos (PR #35) y botón Informe (PR #40) están en `main`. Para la carpeta solo faltan las capturas (T-060).
+- **8 · Reporte técnico:** completo (PR #22 y #40). Se abre con el botón Informe del dashboard (`GET /informe`) o desde la terminal, con 19 funciones de prueba.
+- **9 · Plan de pruebas y resultados:** las pruebas existen (tests automáticos en CI, prueba de extremo a extremo y golden set), y `plan_pruebas.md` las reúne como casos con resultado esperado y obtenido, más las incidencias y mejoras aplicadas. El golden set de 17 hallazgos está completo con dos revisores, una ronda de calibración y el acuerdo entre ambos (CP-22, `golden_set_17.md`).
 - **10 · Documentación y presentación final:** corresponde al sprint de cierre.
 
 ## Archivos de esta carpeta
