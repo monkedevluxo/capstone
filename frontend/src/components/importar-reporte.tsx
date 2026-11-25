@@ -401,7 +401,7 @@ function describir(estado: EstadoArchivo): {
         case "ok":
           return {
             icono: CircleCheck,
-            tono: "text-emerald-700",
+            tono: "text-exito",
             texto: (
               <>
                 Importado: <span className="font-medium text-foreground">{r.resumen.nuevos}</span>{" "}
