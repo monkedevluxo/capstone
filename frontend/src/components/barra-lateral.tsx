@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, House, ListChecks, Radar, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, House, ListChecks, Radar, type LucideIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -67,10 +68,18 @@ export function BarraLateral() {
               render={<Link href="/" onClick={cerrarEnMovil} />}
               className="hover:bg-sidebar-accent/60"
             >
+              {/* Logo: casco y texto en cobre. Con la barra colapsada queda solo el casco. */}
               <span className="flex size-8 shrink-0 items-center justify-center">
-                <ShieldCheck aria-hidden className="size-5! text-persona" />
+                <Image src="/marca/casco.png" alt="" width={81} height={96} priority className="h-7.5 w-auto" />
               </span>
-              <span className="text-base font-semibold tracking-tight text-white">SentinelAI</span>
+              <Image
+                src="/marca/texto.png"
+                alt="SentinelAI"
+                width={294}
+                height={48}
+                priority
+                className="h-3.75 w-auto group-data-[collapsible=icon]:hidden"
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
