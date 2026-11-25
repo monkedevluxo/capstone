@@ -20,7 +20,9 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { BotonTema } from "@/components/boton-tema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { Tema } from "@/lib/tema";
 import { cn } from "@/lib/utils";
 
 interface Modulo {
@@ -47,7 +49,7 @@ export function moduloActivo(ruta: string): Modulo | undefined {
   );
 }
 
-export function BarraLateral() {
+export function BarraLateral({ tema }: { tema: Tema }) {
   const ruta = usePathname();
   const activo = moduloActivo(ruta);
   const { isMobile, setOpenMobile } = useSidebar();
@@ -136,6 +138,7 @@ export function BarraLateral() {
       </SidebarContent>
 
       <SidebarFooter>
+        <BotonTema inicial={tema} />
         <IndicadorLaboratorio />
       </SidebarFooter>
       <SidebarRail />
@@ -145,8 +148,8 @@ export function BarraLateral() {
 
 /**
  * Colapsa o expande la barra desde la propia barra. En el teléfono la barra es
- * un panel encima del contenido: este botón lo cierra y el de la franja
- * superior lo abre. También responde a Ctrl/⌘ + B (SidebarProvider).
+ * un panel encima del contenido: este botón lo cierra y el de la barra del
+ * teléfono (BarraMovil) lo abre. También responde a Ctrl/⌘ + B (SidebarProvider).
  */
 function BotonColapsar() {
   const { state, isMobile } = useSidebar();

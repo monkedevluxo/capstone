@@ -30,7 +30,7 @@ export default async function Inicio() {
 
   return (
     <Marco>
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
+      <div className="flex flex-col gap-8">
         <h1 className="text-2xl font-semibold tracking-tight text-tinta">Inicio</h1>
         {/* ImportarReporte recibe el id del último escaneo: si es el que se
             acaba de importar, oculta el enlace repetido de "Último escaneo". */}

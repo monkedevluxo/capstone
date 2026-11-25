@@ -3,10 +3,10 @@ import localFont from "next/font/local";
 import { cookies } from "next/headers";
 
 import { BarraLateral } from "@/components/barra-lateral";
-import { FranjaSuperior } from "@/components/franja-superior";
+import { BarraMovil } from "@/components/barra-movil";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { COOKIE_TEMA, leerTema, SCRIPT_TEMA_SISTEMA } from "@/lib/tema";
+import { COOKIE_TEMA, leerTema } from "@/lib/tema";
 import "./globals.css";
 
 // Fuentes empaquetadas (Fontsource), no Google Fonts: el dashboard tiene que
@@ -45,26 +45,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // SidebarProvider). Leerla acá evita que parpadee al recargar.
   const galletas = await cookies();
   const abierta = galletas.get("sidebar_state")?.value !== "false";
-  // Tema elegido (cookie que escribe el selector). "oscuro" sale del servidor
-  // con la clase puesta; "sistema" la pone un script antes del primer pintado.
+  // Tema elegido (cookie que escribe el botón de tema): la página sale del
+  // servidor ya con la clase puesta, sin destello al cargar.
   const tema = leerTema(galletas.get(COOKIE_TEMA)?.value);
 
   return (
     <html
       lang="es"
       className={`${plexSans.variable} ${plexMono.variable} h-full antialiased${tema === "oscuro" ? " dark" : ""}`}
-      // En "sistema" el script cambia la clase antes de hidratar: es esperado.
-      suppressHydrationWarning
     >
-      <head>
-        {tema === "sistema" && <script dangerouslySetInnerHTML={{ __html: SCRIPT_TEMA_SISTEMA }} />}
-      </head>
       <body className="min-h-full">
         <TooltipProvider>
           <SidebarProvider defaultOpen={abierta}>
-            <BarraLateral />
+            <BarraLateral tema={tema} />
             <SidebarInset className="min-w-0">
-              <FranjaSuperior tema={tema} />
+              <BarraMovil />
               {children}
             </SidebarInset>
           </SidebarProvider>
