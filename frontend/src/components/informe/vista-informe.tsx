@@ -1,6 +1,15 @@
 "use client";
 
-import { ChevronDown, Download, ExternalLink, FileSpreadsheet, FileText, Sheet } from "lucide-react";
+import {
+  ChevronDown,
+  CircleAlert,
+  Download,
+  ExternalLink,
+  FileSpreadsheet,
+  FileText,
+  LoaderCircle,
+  Sheet,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -9,7 +18,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -23,11 +31,14 @@ import { cn } from "@/lib/utils";
  * El HTML viene de /informe/ver (mismo origen que el dashboard), así que el PDF
  * se saca imprimiendo el iframe: el informe ya trae su hoja de estilos para
  * imprimir y abre las descripciones de ZAP antes de hacerlo. CSV y XLSX los
- * genera la API y se descargan por /informe/descargar.
+ * genera la API y se descargan por /informe/descargar: se piden con fetch para
+ * poder avisar acá si fallan (con un enlace de descarga, el error no se ve).
  */
 export function VistaInforme({ objetivo }: { objetivo?: string }) {
   const marco = useRef<HTMLIFrameElement>(null);
   const [cargado, setCargado] = useState(false);
+  const [descargando, setDescargando] = useState<Formato | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // El iframe puede terminar de cargar antes de que React se hidrate, y
   // entonces onLoad nunca llega: se revisa una vez al montar. Mientras carga
@@ -40,8 +51,29 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
 
   const consulta = objetivo ? `?${new URLSearchParams({ objetivo })}` : "";
   const urlVer = `/informe/ver${consulta}`;
-  const descarga = (formato: "csv" | "xlsx") =>
+  const descarga = (formato: Formato) =>
     `/informe/descargar?${new URLSearchParams({ formato, ...(objetivo ? { objetivo } : {}) })}`;
+
+  async function descargar(formato: Formato) {
+    setError(null);
+    setDescargando(formato);
+    try {
+      const respuesta = await fetch(descarga(formato), { cache: "no-store" });
+      if (!respuesta.ok) {
+        // /informe/descargar responde los errores en texto plano, ya redactados.
+        // El detail de la API viene en minúscula ("no existe el objetivo …").
+        const texto = (await respuesta.text().catch(() => "")).trim();
+        const motivo = texto.charAt(0).toUpperCase() + texto.slice(1);
+        setError(`No se pudo descargar el ${NOMBRE[formato]}. ${motivo || `El servidor respondió ${respuesta.status}.`}`);
+        return;
+      }
+      guardar(await respuesta.blob(), nombreArchivo(respuesta, formato));
+    } catch {
+      setError(`No se pudo descargar el ${NOMBRE[formato]}: el dashboard no respondió. Recarga la página e intenta de nuevo.`);
+    } finally {
+      setDescargando(null);
+    }
+  }
 
   function imprimirPdf() {
     const ventana = marco.current?.contentWindow;
@@ -70,9 +102,13 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
             Abrir en otra pestaña
           </a>
           <DropdownMenu>
-            <DropdownMenuTrigger className={cn(buttonVariants(), "px-3", claseBotonPrincipal)}>
-              <Download aria-hidden />
-              Exportar informe
+            <DropdownMenuTrigger
+              disabled={descargando !== null}
+              aria-busy={descargando !== null}
+              className={cn(buttonVariants(), "px-3", claseBotonPrincipal)}
+            >
+              {descargando ? <LoaderCircle aria-hidden className="animate-spin" /> : <Download aria-hidden />}
+              {descargando ? `Preparando ${NOMBRE[descargando]}…` : "Exportar informe"}
               <ChevronDown aria-hidden className="transition-transform group-aria-expanded/button:rotate-180" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64">
@@ -82,18 +118,28 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
                 <Opcion titulo="PDF" detalle="El informe completo, desde el diálogo de impresión" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuLinkItem href={descarga("xlsx")} download closeOnClick>
+              <DropdownMenuItem onClick={() => descargar("xlsx")}>
                 <FileSpreadsheet aria-hidden className="text-muted-foreground" />
                 <Opcion titulo="Excel (XLSX)" detalle="Resumen, hallazgos con filtros y escaneos" />
-              </DropdownMenuLinkItem>
-              <DropdownMenuLinkItem href={descarga("csv")} download closeOnClick>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => descargar("csv")}>
                 <Sheet aria-hidden className="text-muted-foreground" />
                 <Opcion titulo="CSV" detalle="Un hallazgo por fila, para otras herramientas" />
-              </DropdownMenuLinkItem>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 flex items-start gap-3 rounded-md border border-sev-media/25 bg-sev-media-fondo px-3.5 py-3 text-sm text-sev-media"
+        >
+          <CircleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+          <p className="min-w-0 flex-1 leading-relaxed">{error}</p>
+        </div>
+      )}
 
       <div className="relative overflow-hidden rounded-lg border bg-card">
         {!cargado && (
@@ -113,6 +159,29 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
       </div>
     </>
   );
+}
+
+type Formato = "csv" | "xlsx";
+
+const NOMBRE: Record<Formato, string> = { csv: "CSV", xlsx: "Excel" };
+
+/** El nombre que puso la API en Content-Disposition (ej. informe_juiceshop-3000_20261124.xlsx). */
+function nombreArchivo(respuesta: Response, formato: Formato) {
+  const disposicion = respuesta.headers.get("content-disposition") ?? "";
+  return /filename="([^"]+)"/.exec(disposicion)?.[1] ?? `informe.${formato}`;
+}
+
+/** Entrega el archivo al navegador como descarga. */
+function guardar(archivo: Blob, nombre: string) {
+  const url = URL.createObjectURL(archivo);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.append(enlace);
+  enlace.click();
+  enlace.remove();
+  // Revocar en el mismo tick puede cortar la descarga en algunos navegadores.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function Opcion({ titulo, detalle }: { titulo: string; detalle: string }) {
