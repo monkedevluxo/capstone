@@ -18,7 +18,7 @@ export function Aviso({
 }) {
   return (
     <div className="rounded-lg border bg-card p-6">
-      <h2 className="font-semibold text-navy">{titulo}</h2>
+      <h2 className="font-semibold text-tinta">{titulo}</h2>
       {children && <p className="mt-1 text-sm text-muted-foreground">{children}</p>}
       {accion && <div className="mt-3">{accion}</div>}
     </div>

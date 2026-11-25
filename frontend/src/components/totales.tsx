@@ -57,9 +57,9 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
           clases={{
             base: "border-dashed border-muted-foreground/50 bg-card",
             enlace: "hover:border-muted-foreground focus-visible:ring-ring/40",
-            activo: "border-solid border-navy ring-2 ring-navy/20",
+            activo: "border-solid border-tinta ring-2 ring-tinta/20",
             etiqueta: "text-muted-foreground",
-            valor: "text-navy",
+            valor: "text-tinta",
             pista: "text-muted-foreground",
           }}
         />
@@ -75,7 +75,7 @@ function Tarjeta({ etiqueta, valor, marca }: { etiqueta: string; valor: number; 
         {marca && <span aria-hidden className={cn("size-2 rounded-full", marca)} />}
         {etiqueta}
       </span>
-      <span className="mt-1 block text-3xl font-semibold text-navy tabular-nums">{valor}</span>
+      <span className="mt-1 block text-3xl font-semibold text-tinta tabular-nums">{valor}</span>
     </div>
   );
 }

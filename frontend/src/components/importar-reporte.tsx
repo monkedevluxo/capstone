@@ -172,7 +172,7 @@ export function ImportarReporte({
   return (
     <div className="flex flex-col gap-4">
       <section aria-labelledby="titulo-importar" className="rounded-lg border bg-card p-5">
-        <h2 id="titulo-importar" className="font-semibold text-navy">
+        <h2 id="titulo-importar" className="font-semibold text-tinta">
           Importar reportes de ZAP
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -203,7 +203,7 @@ export function ImportarReporte({
           }}
           className={cn(
             "mt-4 flex flex-col items-center gap-3 rounded-lg border-2 border-dashed border-border bg-background px-4 py-8 text-center transition-colors",
-            arrastrando && "border-navy/60 bg-escaner-suave",
+            arrastrando && "border-tinta/60 bg-escaner-suave",
           )}
         >
           <FileUp aria-hidden className="size-6 text-escaner" />
@@ -248,7 +248,7 @@ export function ImportarReporte({
         {archivos.length > 0 && (
           <div className="mt-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 id="titulo-lista" className="text-sm font-medium text-navy">
+              <h3 id="titulo-lista" className="text-sm font-medium text-tinta">
                 {archivos.length === 1 ? "1 archivo" : `${archivos.length} archivos`}
               </h3>
               {!procesando && (
@@ -539,7 +539,7 @@ export function Mensaje({
         className={cn("mt-0.5 size-5 shrink-0", tono === "bloqueo" ? "text-sev-alta" : "text-escaner")}
       />
       <div className="min-w-0">
-        <h3 className="font-semibold text-navy">{titulo}</h3>
+        <h3 className="font-semibold text-tinta">{titulo}</h3>
         <p className="mt-1 text-sm leading-relaxed text-foreground">{children}</p>
         {accion && <div className="mt-3">{accion}</div>}
       </div>
@@ -555,7 +555,7 @@ function ReporteImportado({ resumen: r }: { resumen: ResumenImportacion }) {
       <div className="flex gap-3">
         <CircleCheck aria-hidden className="mt-0.5 size-5 shrink-0 text-emerald-700" />
         <div className="min-w-0">
-          <h3 id="titulo-importado" className="font-semibold text-navy">
+          <h3 id="titulo-importado" className="font-semibold text-tinta">
             Reporte importado
           </h3>
           <p className="mt-0.5 font-mono text-sm break-all text-escaner">{r.objetivo}</p>
@@ -576,7 +576,7 @@ function ReporteImportado({ resumen: r }: { resumen: ResumenImportacion }) {
             {severidades.map((s) => (
               <li key={s.valor} className="flex items-center gap-1.5">
                 <InsigniaSeveridad severidad={s.valor} />
-                <span className="text-sm font-medium text-navy tabular-nums">
+                <span className="text-sm font-medium text-tinta tabular-nums">
                   {r.por_severidad[s.valor]}
                 </span>
               </li>
@@ -615,7 +615,7 @@ function Cifra({
       <dd
         className={cn(
           "mt-0.5 text-xl font-semibold tabular-nums",
-          destacada ? "text-navy" : "text-foreground/80",
+          destacada ? "text-tinta" : "text-foreground/80",
         )}
       >
         {valor}

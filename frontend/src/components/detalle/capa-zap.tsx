@@ -56,11 +56,11 @@ export function CapaZap({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
         {instancias.length === 0 ? (
           <p className="text-sm text-muted-foreground">ZAP no informó instancias.</p>
         ) : (
-          <div className="overflow-hidden rounded-md bg-navy font-mono text-xs text-[#e3e9f0]">
+          <div className="overflow-hidden rounded-md border border-codigo-borde bg-codigo font-mono text-xs text-codigo-texto">
             <ListaInstancias instancias={instancias.slice(0, VISIBLES)} />
             {instancias.length > VISIBLES && (
               <details className="group border-t border-white/10">
-                <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 font-sans text-xs font-medium text-white/80 hover:text-white focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:outline-none focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 font-sans text-xs font-medium text-codigo-texto/80 hover:text-codigo-texto focus-visible:ring-2 focus-visible:ring-codigo-texto/60 focus-visible:outline-none focus-visible:ring-inset [&::-webkit-details-marker]:hidden">
                   <ChevronRight aria-hidden className="size-3.5 transition-transform group-open:rotate-90" />
                   <span className="group-open:hidden">Ver todas ({instancias.length})</span>
                   <span className="hidden group-open:inline">Ocultar las demás</span>
@@ -89,7 +89,7 @@ export function CapaZap({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
 
       {h.origen && (
         <details className="group rounded-md border">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-sm font-medium text-navy hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 px-3 py-2 text-sm font-medium text-tinta hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
             <ChevronRight aria-hidden className="size-4 transition-transform group-open:rotate-90" />
             Ver JSON original completo
           </summary>
@@ -106,7 +106,7 @@ function Dato({ etiqueta, valor, mono = false }: { etiqueta: string; valor: stri
   return (
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{etiqueta}</dt>
-      <dd className={mono ? "font-mono text-xs leading-6 text-navy" : "font-medium text-navy"}>
+      <dd className={mono ? "font-mono text-xs leading-6 text-tinta" : "font-medium text-tinta"}>
         {valor ?? "—"}
       </dd>
     </div>
@@ -119,7 +119,7 @@ function ListaInstancias({ instancias, desde = 0 }: { instancias: InstanciaConEv
       {instancias.map((i, n) => (
         <li key={`${desde + n}-${i.url}`} className="px-3 py-2.5">
           <div className="break-all">
-            <span className="font-medium text-white">{i.metodo ?? "—"}</span> {i.url}
+            <span className="font-medium text-codigo-texto">{i.metodo ?? "—"}</span> {i.url}
           </div>
           <dl className="mt-1 grid grid-cols-[5.5rem_1fr] gap-x-2 gap-y-0.5">
             {i.parametro && <Campo nombre="param" valor={i.parametro} />}
@@ -135,7 +135,7 @@ function ListaInstancias({ instancias, desde = 0 }: { instancias: InstanciaConEv
 function Campo({ nombre, valor }: { nombre: string; valor: string }) {
   return (
     <>
-      <dt className="text-[#9fb0c3]">{nombre}</dt>
+      <dt className="text-codigo-apagado">{nombre}</dt>
       {/* Texto que viene del sitio escaneado: siempre como texto, nunca HTML. */}
       <dd className="break-all whitespace-pre-wrap">{valor}</dd>
     </>
@@ -154,7 +154,7 @@ function Referencias({ enlaces }: { enlaces: string[] }) {
               href={url}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex max-w-full items-center gap-1 rounded-sm text-navy underline decoration-navy/30 underline-offset-4 hover:decoration-navy focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+              className="inline-flex max-w-full items-center gap-1 rounded-sm text-tinta underline decoration-tinta/30 underline-offset-4 hover:decoration-tinta focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
               <ExternalLink aria-hidden className="size-3.5 shrink-0" />

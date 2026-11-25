@@ -30,7 +30,7 @@ export function CabeceraHallazgo({ hallazgo: h }: { hallazgo: HallazgoDetalle })
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             <InsigniaSeveridad severidad={h.severidad} />
-            <span className="inline-flex h-6 items-center rounded-md border border-border bg-card px-2 text-xs font-medium text-navy">
+            <span className="inline-flex h-6 items-center rounded-md border border-border bg-card px-2 text-xs font-medium text-tinta">
               {ESTADO_HALLAZGO[h.estado]}
             </span>
             <span className="text-muted-foreground">
@@ -38,7 +38,7 @@ export function CabeceraHallazgo({ hallazgo: h }: { hallazgo: HallazgoDetalle })
               <time dateTime={h.primera_vez}>{fecha(h.primera_vez)}</time>
             </span>
           </div>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-balance text-navy">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-balance text-tinta">
             {h.titulo}
           </h1>
           <p className="mt-1.5 font-mono text-xs leading-relaxed text-escaner">
@@ -55,7 +55,7 @@ export function CabeceraHallazgo({ hallazgo: h }: { hallazgo: HallazgoDetalle })
         <dl className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-3 @4xl:w-[34rem]">
           <IndicadorOwasp hallazgo={h} />
           <Indicador etiqueta="Prioridad">
-            <dd className="font-mono text-lg font-semibold text-navy">
+            <dd className="font-mono text-lg font-semibold text-tinta">
               {h.referencia.prioridad_regla ?? "—"}
             </dd>
             <dd className="text-xs text-muted-foreground">
@@ -90,7 +90,7 @@ function IndicadorOwasp({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
   const ref = h.referencia.owasp_referencia;
   return (
     <Indicador etiqueta="OWASP de referencia">
-      <dd className="font-mono text-lg font-semibold text-navy">{ref ?? "—"}</dd>
+      <dd className="font-mono text-lg font-semibold text-tinta">{ref ?? "—"}</dd>
       <dd className="text-xs text-muted-foreground">
         {ref ? nombreOwasp(ref) : h.cwe ? "CWE fuera de la tabla" : "Sin CWE"}
       </dd>
@@ -139,7 +139,7 @@ function IndicadorCoincidencia({ hallazgo: h }: { hallazgo: HallazgoDetalle }) {
           "flex items-center gap-1.5 text-base font-semibold",
           tono === "bien" && "text-emerald-800",
           tono === "revisar" && "text-persona-fuerte",
-          tono === "neutro" && "text-navy",
+          tono === "neutro" && "text-tinta",
         )}
       >
         <Icono aria-hidden className="size-4 shrink-0" />

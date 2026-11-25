@@ -166,7 +166,7 @@ function Estado({
     <div className="flex gap-3">
       <Icono aria-hidden className="mt-0.5 size-5 shrink-0 text-ia" />
       <div>
-        <h3 className="font-semibold text-navy">{titulo}</h3>
+        <h3 className="font-semibold text-tinta">{titulo}</h3>
         <p className="mt-1 max-w-prose text-sm leading-relaxed text-foreground">{children}</p>
       </div>
     </div>

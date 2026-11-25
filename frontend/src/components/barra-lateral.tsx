@@ -17,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -59,8 +60,9 @@ export function BarraLateral() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
+      {/* Logo y botón de colapsar en la misma fila; colapsada, uno sobre otro. */}
+      <SidebarHeader className="flex-row items-center group-data-[collapsible=icon]:flex-col">
+        <SidebarMenu className="min-w-0 flex-1">
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
@@ -83,6 +85,7 @@ export function BarraLateral() {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <BotonColapsar />
       </SidebarHeader>
 
       <SidebarContent>
@@ -137,6 +140,32 @@ export function BarraLateral() {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+/**
+ * Colapsa o expande la barra desde la propia barra. En el teléfono la barra es
+ * un panel encima del contenido: este botón lo cierra y el de la franja
+ * superior lo abre. También responde a Ctrl/⌘ + B (SidebarProvider).
+ */
+function BotonColapsar() {
+  const { state, isMobile } = useSidebar();
+  const accion = isMobile ? "Cerrar la navegación" : state === "expanded" ? "Colapsar la navegación" : "Expandir la navegación";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <SidebarTrigger
+            aria-label={accion}
+            className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          />
+        }
+      />
+      <TooltipContent side="right" align="center">
+        {accion}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

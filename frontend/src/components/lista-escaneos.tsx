@@ -122,7 +122,7 @@ function ElementoEscaneo({ fila }: { fila: FilaEscaneo }) {
               <SinDato />
             ) : (
               <>
-                <span className="font-semibold text-navy">{hallazgos}</span>
+                <span className="font-semibold text-tinta">{hallazgos}</span>
                 {nuevos !== undefined && (
                   <span className="block text-xs text-muted-foreground">
                     {nuevos} {nuevos === 1 ? "nuevo" : "nuevos"}

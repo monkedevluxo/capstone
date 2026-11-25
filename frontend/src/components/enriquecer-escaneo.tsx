@@ -182,7 +182,7 @@ function Cifra({ etiqueta, valor }: { etiqueta: string; valor: number }) {
   return (
     <div className="flex items-baseline gap-1.5">
       <dt className="text-muted-foreground">{etiqueta}</dt>
-      <dd className="font-semibold text-navy tabular-nums">{valor}</dd>
+      <dd className="font-semibold text-tinta tabular-nums">{valor}</dd>
     </div>
   );
 }

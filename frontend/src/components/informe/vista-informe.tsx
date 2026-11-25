@@ -90,7 +90,7 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
     <>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-navy">Informe</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-tinta">Informe</h1>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
             Informe técnico del objetivo: resumen, escaneos de origen y una ficha por hallazgo con la
             evidencia de ZAP, la sugerencia de la IA y la decisión humana.

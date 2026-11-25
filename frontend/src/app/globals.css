@@ -5,14 +5,22 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Tema de SentinelAI. Por ahora solo claro.
+ * Tema de SentinelAI: Bronce claro (:root) y Bronce nocturno (.dark).
+ * Los colores salen del logo: cobre sobre grafito.
  *
  * Tres capas con color propio, que se usan igual en todo el dashboard:
- *   escáner -> gris  (lo que dijo la herramienta)
- *   ia      -> azul  (sugerencia del modelo, no decisión)
- *   persona -> naranjo (lo que decidió alguien)
- * El naranjo base (#E8833A) no alcanza contraste para texto sobre blanco:
- * para texto se usan las variantes oscuras.
+ *   escáner -> acero   (lo que dijo la herramienta)
+ *   ia      -> petróleo en claro, cian en oscuro (sugerencia, no decisión)
+ *   persona -> cobre   (lo que decidió alguien; el centinela del logo)
+ * Ningún otro elemento usa esos tonos: el marco y los botones son neutros.
+ *
+ * Variantes de cada color:
+ *   -suave      fondo tenue de la capa
+ *   -texto      texto sobre blanco o sobre -suave (AA)
+ *   -fuerte     texto con más peso (títulos de la capa)
+ *   -boton      fondo sólido de un botón; -contraste es el texto encima
+ * Todos los pares de texto y fondo cumplen WCAG AA (4,5:1) en los dos temas,
+ * y los bordes de los campos, 3:1.
  */
 @theme inline {
   --color-background: var(--background);
@@ -37,16 +45,29 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
-  /* Marca y capas */
-  --color-navy: var(--navy);
+  /* Marca, marco y capas */
+  --color-tinta: var(--tinta);
+  --color-boton: var(--boton);
+  --color-boton-texto: var(--boton-texto);
+  --color-marca: var(--marca);
+  --color-marca-claro: var(--marca-claro);
+  --color-codigo: var(--codigo);
+  --color-codigo-texto: var(--codigo-texto);
+  --color-codigo-apagado: var(--codigo-apagado);
+  --color-codigo-borde: var(--codigo-borde);
+  --color-exito: var(--exito);
+  --color-exito-fondo: var(--exito-fondo);
   --color-ia: var(--ia);
   --color-ia-suave: var(--ia-suave);
+  --color-ia-contraste: var(--ia-contraste);
   --color-escaner: var(--escaner);
   --color-escaner-suave: var(--escaner-suave);
   --color-persona: var(--persona);
   --color-persona-suave: var(--persona-suave);
   --color-persona-texto: var(--persona-texto);
   --color-persona-fuerte: var(--persona-fuerte);
+  --color-persona-boton: var(--persona-boton);
+  --color-persona-contraste: var(--persona-contraste);
   --color-revisar-fondo: var(--revisar-fondo);
 
   /* Navegación lateral (components/ui/sidebar.tsx) */
@@ -90,60 +111,133 @@
 }
 
 :root {
-  --navy: #14263d;
-  --ia: #1f4e79;
-  --ia-suave: #e7eef6;
-  --escaner: #4a5868;
-  --escaner-suave: #eef1f4;
-  --persona: #e8833a;
-  --persona-suave: #fdf0e6;
-  --persona-texto: #b35a14;
-  --persona-fuerte: #8a3b0b;
-  /* Fila que una persona debería mirar primero (requiere_revision) */
-  --revisar-fondo: #fffbf7;
+  /* ── Bronce claro ── */
+  --tinta: #1a1c1e;
+  --boton: #1c1f22;
+  --boton-texto: #ffffff;
+  --marca: #c08666;
+  --marca-claro: #eaac86;
+  /* Evidencia de ZAP: bloque oscuro en los dos temas, como una terminal */
+  --codigo: #1c1f22;
+  --codigo-texto: #e8e4df;
+  --codigo-apagado: #a9b0b8;
+  --codigo-borde: transparent;
+  --exito: #065f46;
+  --exito-fondo: #ecfdf5;
 
-  /*
-   * Navegación en navy, como la barra superior que reemplaza: el marco de la
-   * herramienta queda oscuro y los datos sobre fondo claro. El texto en reposo
-   * (#c5d0dc) tiene contraste 9,8:1 sobre el navy.
-   */
-  --sidebar: #14263d;
-  --sidebar-foreground: #c5d0dc;
-  --sidebar-accent: #233c5a;
+  --ia: #0e6a78;
+  --ia-suave: #e3f1f3;
+  --ia-contraste: #ffffff;
+  --escaner: #4b5058;
+  --escaner-suave: #ededeb;
+  --persona: #c08666;
+  --persona-suave: #f6eae2;
+  --persona-texto: #8c4a26;
+  --persona-fuerte: #73391a;
+  --persona-boton: #8c5941;
+  --persona-contraste: #ffffff;
+  /* Fila que una persona debería mirar primero: sin fondo, la marca va en la columna */
+  --revisar-fondo: transparent;
+
+  /* Barra lateral en grafito en los dos temas: ahí vive el logo de cobre */
+  --sidebar: #1c1f22;
+  --sidebar-foreground: #c9cdd2;
+  --sidebar-accent: #2a2e33;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a405a;
+  --sidebar-border: #2e3237;
   --sidebar-ring: rgb(255 255 255 / 0.7);
 
-  --background: #f5f7f9;
-  --foreground: #14263d;
+  --background: #f4f4f3;
+  --foreground: #1a1c1e;
   --card: #ffffff;
-  --card-foreground: #14263d;
+  --card-foreground: #1a1c1e;
   --popover: #ffffff;
-  --popover-foreground: #14263d;
-  --primary: #1f4e79;
+  --popover-foreground: #1a1c1e;
+  --primary: #1c1f22;
   --primary-foreground: #ffffff;
-  --secondary: #e7eef6;
-  --secondary-foreground: #14263d;
-  --muted: #eef1f4;
-  --muted-foreground: #556474;
-  --accent: #e7eef6;
-  --accent-foreground: #14263d;
+  --secondary: #ededeb;
+  --secondary-foreground: #1a1c1e;
+  --muted: #ededeb;
+  --muted-foreground: #5a6067;
+  --accent: #ededeb;
+  --accent-foreground: #1a1c1e;
   --destructive: #b42318;
-  --border: #d9e0e7;
-  --input: #d9e0e7;
-  --ring: #1f4e79;
+  --border: #dededb;
+  /* Borde de los campos: 3,26:1 sobre blanco (WCAG 1.4.11) */
+  --input: #8a8f96;
+  --ring: #1c1f22;
   --radius: 0.5rem;
 
   --sev-critica: #ffffff;
   --sev-critica-fondo: #8a1c1c;
   --sev-alta: #9b1c1c;
-  --sev-alta-fondo: #fce4e4;
-  --sev-media: #6b4e00;
-  --sev-media-fondo: #fff1c7;
-  --sev-baja: #3e4c5b;
-  --sev-baja-fondo: #e6ebf0;
-  --sev-informativa: #556474;
+  --sev-alta-fondo: #fbe3e1;
+  /* Media en oliva: el ámbar se confundía con el cobre de la persona */
+  --sev-media: #5c5a00;
+  --sev-media-fondo: #f3f1c8;
+  --sev-baja: #4b5058;
+  --sev-baja-fondo: #e9e9e6;
+  --sev-informativa: #5a6067;
   --sev-informativa-fondo: #ffffff;
+}
+
+.dark {
+  /* ── Bronce nocturno: grafito del fondo del logo ── */
+  color-scheme: dark;
+  --tinta: #e8e4df;
+  --boton: #d5d9de;
+  --boton-texto: #16191c;
+  --codigo: #121417;
+  --codigo-texto: #e8e4df;
+  --codigo-apagado: #9aa1a9;
+  --codigo-borde: #2e3339;
+  --exito: #6ee7b7;
+  --exito-fondo: #0b2a22;
+
+  --ia: #3fd8e6;
+  --ia-suave: #0b3237;
+  --ia-contraste: #16191c;
+  --escaner: #a9b0b8;
+  --escaner-suave: #2a2f35;
+  --persona-suave: #44301f;
+  --persona-texto: #eaac86;
+  --persona-fuerte: #f3c9ac;
+  --persona-boton: #c08666;
+  --persona-contraste: #16191c;
+
+  --sidebar: #16191c;
+  --sidebar-foreground: #a9b0b8;
+  --sidebar-accent: #262b30;
+  --sidebar-accent-foreground: #e8e4df;
+  --sidebar-border: #2a2f35;
+
+  --background: #16191c;
+  --foreground: #e8e4df;
+  --card: #1f2327;
+  --card-foreground: #e8e4df;
+  --popover: #1f2327;
+  --popover-foreground: #e8e4df;
+  --primary: #d5d9de;
+  --primary-foreground: #16191c;
+  --secondary: #2e3339;
+  --secondary-foreground: #e8e4df;
+  --muted: #2e3339;
+  --muted-foreground: #9aa1a9;
+  --accent: #2e3339;
+  --accent-foreground: #e8e4df;
+  --destructive: #ff6b76;
+  --border: #2e3339;
+  --input: #6b737c;
+  --ring: #d5d9de;
+
+  --sev-alta: #ff6b76;
+  --sev-alta-fondo: #3a0f14;
+  --sev-media: #f2d04b;
+  --sev-media-fondo: #352e08;
+  --sev-baja: #c9ced4;
+  --sev-baja-fondo: #2e3339;
+  --sev-informativa: #9aa1a9;
+  --sev-informativa-fondo: #1f2327;
 }
 
 @layer base {

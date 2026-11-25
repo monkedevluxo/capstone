@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils";
 
 /**
  * Las tres capas del detalle, cada una con su color en todo el dashboard:
- *   escáner -> gris y navy (lo que dijo la herramienta)
+ *   escáner -> acero (lo que dijo la herramienta)
  *   ia      -> azul        (sugerencia del modelo, no decisión)
  *   persona -> naranjo     (lo que decide alguien)
  */
 const TONO = {
-  escaner: { cabecera: "bg-escaner-suave", titulo: "text-navy", icono: "text-escaner" },
+  escaner: { cabecera: "bg-escaner-suave", titulo: "text-tinta", icono: "text-escaner" },
   ia: { cabecera: "bg-ia-suave", titulo: "text-ia", icono: "text-ia" },
   persona: { cabecera: "bg-persona-suave", titulo: "text-persona-fuerte", icono: "text-persona-texto" },
 } as const;

@@ -31,7 +31,7 @@ export default async function Inicio() {
   return (
     <Marco>
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-navy">Inicio</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-tinta">Inicio</h1>
         {/* ImportarReporte recibe el id del último escaneo: si es el que se
             acaba de importar, oculta el enlace repetido de "Último escaneo". */}
         <ImportarReporte ultimoEscaneoId={escaneo?.id ?? null}>
@@ -103,7 +103,7 @@ function UltimoEscaneo({ escaneo }: { escaneo: Escaneo | undefined }) {
 function TituloUltimo({ conEnlace = false }: { conEnlace?: boolean }) {
   return (
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-      <h2 id="titulo-ultimo" className="flex items-center gap-2 font-semibold text-navy">
+      <h2 id="titulo-ultimo" className="flex items-center gap-2 font-semibold text-tinta">
         <History aria-hidden className="size-4 text-escaner" />
         Último escaneo
       </h2>

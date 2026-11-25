@@ -57,7 +57,7 @@ export default async function PaginaHallazgos({
 
   return (
     <Marco>
-      <h1 className="mb-4 text-2xl font-semibold tracking-tight text-navy">Hallazgos</h1>
+      <h1 className="mb-4 text-2xl font-semibold tracking-tight text-tinta">Hallazgos</h1>
 
       <div className="mb-6 flex flex-col gap-4">
         <Totales resumen={resumen} filtros={filtros} />

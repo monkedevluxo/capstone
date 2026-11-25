@@ -32,7 +32,7 @@ export default async function PaginaInforme({
     if (!(error instanceof ErrorApi)) throw error;
     return (
       <Marco>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-navy">Informe</h1>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-tinta">Informe</h1>
         <AvisoApiCaida titulo="No se pudo preparar el informe" mensaje={error.message} />
       </Marco>
     );
@@ -41,7 +41,7 @@ export default async function PaginaInforme({
   if (total === 0) {
     return (
       <Marco>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-navy">Informe</h1>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-tinta">Informe</h1>
         <Aviso
           titulo="Todavía no hay informe"
           accion={
@@ -60,7 +60,7 @@ export default async function PaginaInforme({
   if (!existe) {
     return (
       <Marco>
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-navy">Informe</h1>
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-tinta">Informe</h1>
         <Aviso
           titulo="No existe ese objetivo"
           accion={
