@@ -4,6 +4,7 @@ import { CircleAlert, RotateCcw, Sparkles } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 
 import { enriquecerEscaneo, type ResultadoEnriquecimiento } from "@/app/acciones";
+import type { ResumenLote } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -46,14 +47,89 @@ export function EnriquecerEscaneo({ scanId }: { scanId: string }) {
   return <EstadoEnriquecimiento enCurso={enCurso} resultado={resultado} enriquecer={enriquecer} />;
 }
 
+/**
+ * "Enriquecer pendientes" de todos los escaneos importados en una misma tanda
+ * de Inicio. Los lotes van uno tras otro, nunca en paralelo: Ollama atiende de
+ * a uno y varios lotes a la vez se cortarían por tiempo. Cada lote usa
+ * solo_pendientes, así que reintentar sigue con lo que falta.
+ */
+export function EnriquecerTanda({ scanIds }: { scanIds: string[] }) {
+  const [resultado, setResultado] = useState<ResultadoEnriquecimiento | null>(null);
+  /** Escaneo en curso (1..n); 0 cuando no corre. */
+  const [actual, setActual] = useState(0);
+  const total = scanIds.length;
+
+  async function enriquecer() {
+    setResultado(null);
+    const suma: ResumenLote = {
+      scan_id: "", procesados: 0, enriquecidos: 0, fallidos: 0, omitidos: 0, detenido_por: null, hallazgos: [],
+    };
+    for (let i = 0; i < total; i++) {
+      setActual(i + 1);
+      let r: ResultadoEnriquecimiento;
+      try {
+        r = await enriquecerEscaneo(scanIds[i]);
+      } catch {
+        r = { tipo: "error", mensaje: "No se pudo contactar al servidor." };
+      }
+      if (r.tipo === "ok") {
+        suma.procesados += r.lote.procesados;
+        suma.enriquecidos += r.lote.enriquecidos;
+        suma.fallidos += r.lote.fallidos;
+        suma.omitidos += r.lote.omitidos;
+        suma.hallazgos.push(...r.lote.hallazgos);
+        if (r.lote.detenido_por) {
+          suma.detenido_por = r.lote.detenido_por;
+          break;
+        }
+        continue;
+      }
+      if (r.tipo === "no_existe") continue;
+      // Ollama se cayó después de procesar algún escaneo: se informa como
+      // detenido a la mitad, con lo ya hecho.
+      if (r.tipo === "ollama_apagado" && i > 0) {
+        suma.detenido_por = "ollama_no_disponible";
+        break;
+      }
+      setResultado(r);
+      setActual(0);
+      return;
+    }
+    setResultado({ tipo: "ok", lote: suma });
+    setActual(0);
+  }
+
+  const enCurso = actual > 0;
+  if (!enCurso && !resultado) {
+    return (
+      <BotonEnriquecer
+        onClick={enriquecer}
+        etiqueta={total === 1 ? "Enriquecer pendientes" : `Enriquecer pendientes de los ${total} escaneos`}
+        className="self-start px-4"
+        size="lg"
+      />
+    );
+  }
+  return (
+    <EstadoEnriquecimiento
+      enCurso={enCurso}
+      resultado={resultado}
+      enriquecer={enriquecer}
+      detalle={total > 1 ? `Escaneo ${actual} de ${total}` : undefined}
+    />
+  );
+}
+
 export function BotonEnriquecer({
   onClick,
   className,
   size = "default",
+  etiqueta = "Enriquecer pendientes",
 }: {
   onClick: () => void;
   className?: string;
   size?: "default" | "lg";
+  etiqueta?: string;
 }) {
   return (
     <Button
@@ -64,7 +140,7 @@ export function BotonEnriquecer({
       className={cn(claseBotonIA, className)}
     >
       <Sparkles aria-hidden />
-      Enriquecer pendientes
+      {etiqueta}
     </Button>
   );
 }
@@ -74,12 +150,15 @@ export function EstadoEnriquecimiento({
   enCurso,
   resultado,
   enriquecer,
+  detalle,
 }: {
   enCurso: boolean;
   resultado: ResultadoEnriquecimiento | null;
   enriquecer: () => void;
+  /** Ej. "Escaneo 2 de 3", cuando se enriquece una tanda. */
+  detalle?: string;
 }) {
-  if (enCurso) return <EnCurso />;
+  if (enCurso) return <EnCurso detalle={detalle} />;
   if (!resultado) return null;
 
   const reintentar = (
@@ -146,7 +225,7 @@ export function EstadoEnriquecimiento({
   }
 }
 
-function EnCurso() {
+function EnCurso({ detalle }: { detalle?: string }) {
   // Segundos desde que empezó: ayuda a saber que sigue vivo.
   const [segundos, setSegundos] = useState(0);
   useEffect(() => {
@@ -159,7 +238,10 @@ function EnCurso() {
   return (
     <div className="w-full" role="status" aria-live="polite">
       <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-medium text-ia">Enriqueciendo con el modelo local…</p>
+        <p className="text-sm font-medium text-ia">
+          Enriqueciendo con el modelo local…
+          {detalle && <span className="ml-2 font-normal text-muted-foreground">{detalle}</span>}
+        </p>
         <span className="font-mono text-xs text-muted-foreground tabular-nums" aria-hidden>
           {lleva}
         </span>

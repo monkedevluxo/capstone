@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { importarReporte, type ResultadoImportacion } from "@/app/acciones";
-import { EnriquecerEscaneo } from "@/components/enriquecer-escaneo";
+import { EnriquecerEscaneo, EnriquecerTanda } from "@/components/enriquecer-escaneo";
 import { AvisoApiCaida } from "@/components/marco";
 import { InsigniaSeveridad } from "@/components/severidad";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -161,6 +161,15 @@ export function ImportarReporte({
 
   // Con un solo archivo procesado se muestra el detalle completo, como antes.
   const unico = archivos.length === 1 && terminados.length === 1 ? terminados[0] : null;
+  // Escaneos importados en la tanda: con varios archivos, un solo botón los
+  // enriquece todos (la tarjeta del archivo único ya trae el suyo).
+  const importados = [
+    ...new Set(
+      terminados.flatMap(({ estado }) =>
+        estado.tipo === "listo" && estado.resultado.tipo === "ok" ? [estado.resultado.resumen.scan_id] : [],
+      ),
+    ),
+  ];
   const recienImportado =
     ultimoEscaneoId !== null &&
     terminados.some(({ estado }) => {
@@ -300,6 +309,19 @@ export function ImportarReporte({
                 )}
               </Button>
             </div>
+
+            {!unico && !procesando && importados.length > 0 && (
+              <div className="mt-4 flex flex-col gap-2 border-t pt-4">
+                <p className="text-sm text-muted-foreground">
+                  {importados.length === 1
+                    ? "Se importó 1 escaneo."
+                    : `Se importaron ${importados.length} escaneos.`}{" "}
+                  El modelo local puede sugerir la categoría, la prioridad y la remediación de sus
+                  hallazgos.
+                </p>
+                <EnriquecerTanda key={importados.join(",")} scanIds={importados} />
+              </div>
+            )}
           </div>
         )}
       </section>
