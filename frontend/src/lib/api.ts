@@ -115,6 +115,8 @@ export interface ResumenHallazgos {
   revisar: number;
   /** Sin enriquecimiento vigente, o con uno fallido. */
   sin_enriquecer: number;
+  /** De los sin enriquecer, los que tienen un enriquecimiento vigente que falló (T-040). */
+  fallidos: number;
 }
 
 /** `filtros` son los mismos que recibe obtenerResumen, para que cuadren. */

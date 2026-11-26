@@ -52,14 +52,19 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
         <TarjetaFiltro
           etiqueta="Sin enriquecer"
           valor={resumen.sin_enriquecer}
+          detalle={
+            resumen.fallidos > 0
+              ? `${resumen.fallidos} ${resumen.fallidos === 1 ? "falló" : "fallaron"}`
+              : undefined
+          }
           activo={filtros.sinEnriquecer}
           href={hrefHallazgos(filtros, { sinEnriquecer: !filtros.sinEnriquecer })}
           clases={{
             base: "border-dashed border-muted-foreground/50 bg-card",
             enlace: "hover:border-muted-foreground focus-visible:ring-ring/40",
-            activo: "border-solid border-navy ring-2 ring-navy/20",
+            activo: "border-solid border-tinta ring-2 ring-tinta/20",
             etiqueta: "text-muted-foreground",
-            valor: "text-navy",
+            valor: "text-tinta",
             pista: "text-muted-foreground",
           }}
         />
@@ -75,7 +80,7 @@ function Tarjeta({ etiqueta, valor, marca }: { etiqueta: string; valor: number; 
         {marca && <span aria-hidden className={cn("size-2 rounded-full", marca)} />}
         {etiqueta}
       </span>
-      <span className="mt-1 block text-3xl font-semibold text-navy tabular-nums">{valor}</span>
+      <span className="mt-1 block text-3xl font-semibold text-tinta tabular-nums">{valor}</span>
     </div>
   );
 }
@@ -88,12 +93,15 @@ function Tarjeta({ etiqueta, valor, marca }: { etiqueta: string; valor: number; 
 function TarjetaFiltro({
   etiqueta,
   valor,
+  detalle,
   activo,
   href,
   clases,
 }: {
   etiqueta: ReactNode;
   valor: number;
+  /** Texto chico junto al número. Ej. "2 fallaron". */
+  detalle?: string;
   activo: boolean;
   href: string;
   clases: Record<"base" | "enlace" | "activo" | "etiqueta" | "valor" | "pista", string>;
@@ -105,6 +113,12 @@ function TarjetaFiltro({
       </span>
       <span className={cn("mt-1 block text-3xl font-semibold tabular-nums", clases.valor)}>
         {valor}
+        {detalle && (
+          <span className="ml-2 text-sm font-medium text-muted-foreground">
+            <span className="sr-only">, de ellos </span>
+            {detalle}
+          </span>
+        )}
       </span>
       <span className={cn("mt-1 block text-xs", clases.pista, (activo || valor > 0) && "group-hover:underline")}>
         {activo ? "Quitar filtro" : valor > 0 ? "Ver solo estos" : "Ninguno"}

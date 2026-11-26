@@ -117,6 +117,7 @@ flowchart TB
 | Validación humana | `backend/app/validacion.py` | Fija el estado del hallazgo según la decisión más reciente |
 | Intercambio | `backend/app/intercambio.py` | Exporta e importa sugerencias y decisiones entre bases, y calcula las métricas |
 | Informe técnico | `backend/app/informe.py`, `informe_consulta.py` | Arma el informe exportable en HTML. Lo entrega `GET /informe` y lo usa también `scripts/informe.py`, así ambos generan lo mismo |
+| Exportación del informe | `backend/app/informe_export.py` | Convierte los mismos datos del informe a XLSX y CSV (`GET /informe.xlsx`, `GET /informe.csv`) y neutraliza los textos que una planilla ejecutaría como fórmula. El PDF es el HTML impreso desde el navegador |
 | Modelos de datos | `backend/app/models.py` | Las siete tablas y sus restricciones |
 
 ### Dashboard

@@ -224,7 +224,7 @@ export function FormularioDecision({
           className="min-w-0 rounded-md border border-ia/20 bg-ia-suave/40 p-3.5"
           aria-describedby={`${base}-ayuda-ia`}
         >
-          <legend className="px-1 text-sm font-semibold text-navy">¿Qué tal la sugerencia del modelo?</legend>
+          <legend className="px-1 text-sm font-semibold text-tinta">¿Qué tal la sugerencia del modelo?</legend>
           <p id={`${base}-ayuda-ia`} className="mb-3 text-xs text-muted-foreground">
             Esto alimenta las métricas del golden set. Responde por tu cuenta: no se muestran las
             respuestas de otros revisores.
@@ -299,7 +299,7 @@ export function FormularioDecision({
         <button
           type="submit"
           disabled={guardando}
-          className="inline-flex h-9 items-center justify-center gap-1.5 self-end rounded-lg bg-persona-fuerte px-4 text-sm font-medium text-white transition-colors hover:bg-persona-fuerte/90 focus-visible:ring-3 focus-visible:ring-persona/50 focus-visible:outline-none disabled:opacity-60 sm:mb-[1.375rem]"
+          className="inline-flex h-9 items-center justify-center gap-1.5 self-end rounded-lg bg-persona-boton px-4 text-sm font-medium text-persona-contraste transition-colors hover:bg-persona-boton/90 focus-visible:ring-3 focus-visible:ring-persona/50 focus-visible:outline-none disabled:opacity-60 sm:mb-[1.375rem]"
         >
           {guardando && <LoaderCircle aria-hidden className="size-4 animate-spin" />}
           {guardando ? "Guardando…" : "Guardar decisión"}
@@ -408,7 +408,7 @@ function OpcionDecision({
         "has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-persona/40",
         secundaria ? "items-center gap-1.5 rounded-full px-3 py-1" : "flex-col gap-0.5 px-3 py-2.5",
         elegida && "border-persona bg-persona-suave text-persona-fuerte",
-        !elegida && "text-navy",
+        !elegida && "text-tinta",
       )}
     >
       <input
@@ -455,7 +455,10 @@ function PreguntaIA({
             key={o.v}
             className={cn(
               "cursor-pointer border-l px-3 py-1 text-xs font-medium first:border-l-0 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring/60 has-[:focus-visible]:ring-inset",
-              valor === o.v ? "bg-navy text-white" : "text-navy hover:bg-muted",
+              // La respuesta la da una persona: va en su color, con contorno.
+              valor === o.v
+                ? "bg-persona-suave text-persona-fuerte shadow-[inset_0_0_0_1px_var(--persona-boton)]"
+                : "text-tinta hover:bg-muted",
             )}
           >
             <input

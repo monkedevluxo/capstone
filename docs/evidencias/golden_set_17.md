@@ -1,6 +1,6 @@
 # Golden set de 17 hallazgos con dos revisores
 
-**Tareas:** T-043, T-044, T-046 · **Revisores:** Felipe Cayún y Joaquín Herrera · **Actualizado:** 20-11-2026
+**Tareas:** T-043, T-044, T-046 · **Revisores:** Felipe Cayún y Joaquín Herrera · **Actualizado:** 25-11-2026
 
 Mide qué tan bien el modelo local clasifica, prioriza, propone remediación y se apega a la evidencia, con dos personas que revisan por separado las mismas 17 respuestas. Reemplaza la muestra de 10 hallazgos de octubre (`metricas_golden_set.md`), que tenía un solo revisor.
 
@@ -77,6 +77,8 @@ python3 backend/scripts/acuerdo_revisores.py \
 - **Prioridad, 1 caso:** Timestamp Disclosure. Felipe deja la de la regla (p3) y Joaquín la baja a p4 porque los números no revelan nada. Los dos aplican bien la regla; difieren en su prioridad final.
 - **Decisión, 1 caso:** Cross-Domain Misconfiguration. Felipe lo confirma (CORS abierto en rutas públicas) y Joaquín lo deja como riesgo aceptado (sin datos sensibles en la evidencia).
 - **Remediación útil, 5 casos:** Off-site Redirect, Session ID in URL, los dos User Agent Fuzzer y Private IP. Es la pregunta con más juicio: si una remediación correcta pero genérica sirve o no. La regla común la acotó, pero no la resolvió.
+
+**Cómo se cierran.** Estos 7 desacuerdos no se fuerzan a un solo valor y no cambian los resultados que se informan: la prioridad y la remediación útil se reportan como rango entre los dos revisores (24 % a 29 % y 71 % a 76 %, en la tabla siguiente), y la decisión de Cross-Domain (confirmado o riesgo aceptado) no altera el conteo de falsos positivos y duplicados, que es 9 para los dos. Quedan registrados aquí con el criterio de cada revisor.
 
 ### Resultado sobre el modelo
 

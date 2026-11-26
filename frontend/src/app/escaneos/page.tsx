@@ -35,6 +35,7 @@ export default async function PaginaEscaneos() {
     return {
       escaneo,
       sinEnriquecer: r.status === "fulfilled" ? r.value.sin_enriquecer : null,
+      fallidos: r.status === "fulfilled" ? r.value.fallidos : null,
       revisar: r.status === "fulfilled" ? r.value.revisar : null,
     };
   });
@@ -64,7 +65,7 @@ export default async function PaginaEscaneos() {
 function Encabezado({ conAccion = false }: { conAccion?: boolean }) {
   return (
     <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-      <h1 className="text-2xl font-semibold tracking-tight text-navy">Escaneos</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-tinta">Escaneos</h1>
       {conAccion && (
         <Link href="/" className={cn(buttonVariants(), "px-3", claseBotonPrincipal)}>
           <Upload aria-hidden />

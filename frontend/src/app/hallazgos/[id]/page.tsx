@@ -95,7 +95,7 @@ function EnlaceVolver({ href }: { href: string }) {
   return (
     <Link
       href={href}
-      className="mb-5 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-navy underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      className="mb-5 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-tinta underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       <ArrowLeft aria-hidden className="size-4" />
       Volver a hallazgos

@@ -242,10 +242,15 @@ curl "localhost:8000/findings?severidad=alta"
 | `POST /scans/import` | Importa un reporte de ZAP en una transacción. 403 si el host no es del laboratorio, 409 si el reporte ya se importó, 422 si no es un reporte de ZAP |
 | `GET /scans` | Lista los escaneos importados, del más reciente al más antiguo, con su objetivo |
 | `GET /findings` | Lista hallazgos con filtros por severidad, estado, escaneo, objetivo, categoría OWASP del modelo (`owasp`) o de la tabla CWE (`owasp_ref`), enriquecimiento, `revisar` y texto. Orden: severidad, después los marcados para revisar, después ocurrencias |
-| `GET /findings/resumen` | Total y conteos por severidad, por estado, para revisar y sin enriquecer, con los mismos filtros que `GET /findings` |
+| `GET /findings/resumen` | Total y conteos por severidad, por estado, para revisar, sin enriquecer y con el enriquecimiento fallido (`fallidos`), con los mismos filtros que `GET /findings`. Con `?scan_id=` da las métricas de un escaneo |
 | `GET /findings/{id}` | Detalle de un hallazgo, con la evidencia original, la capa de IA y las validaciones por separado |
 | `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
 | `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
+| `GET /informe` | Informe técnico de un objetivo en HTML autocontenido (`?objetivo=<base_url>`; sin él, el objetivo con más hallazgos). 404 si no hay escaneos o el objetivo no existe |
+| `GET /informe.xlsx` | El mismo informe como libro de Excel: hojas Resumen, Hallazgos (con filtros) y Escaneos. Mismos parámetros y 404 que `GET /informe` |
+| `GET /informe.csv` | El mismo informe como CSV, un hallazgo por fila, UTF-8 con BOM. Mismos parámetros y 404 que `GET /informe` |
+| `GET /health` | Comprueba que la API responde y que la base contesta una consulta real. 503 si la base no responde |
+| `GET /stats` | Conteos de objetivos, escaneos y hallazgos por severidad, para confirmar que una carga quedó bien |
 | `POST /findings/{id}/validaciones` | Registra la decisión de una persona (confirmado, falso positivo, riesgo aceptado, duplicado o requiere segunda opinión) y actualiza el estado del hallazgo en la misma transacción: cada decisión deja su estado homónimo, `duplicado` incluido (estado propio desde la migración `7c2e9d41b3a5`), y "requiere segunda opinión" lo deja `en_triage` (ciclo de vida en `docs/diseno/ESQUEMA_HALLAZGO.md`, sección 7). Guarda qué sugerencia del modelo se juzgó y las banderas del golden set. 409 si la sugerencia cambió mientras se decidía |
 
 Cada hallazgo del listado y del detalle trae `referencia`: la categoría OWASP según la tabla CWE → OWASP 2025, la prioridad por regla y la marca `requiere_revision` de la opción mixta. Se calcula al consultar; no se guarda.

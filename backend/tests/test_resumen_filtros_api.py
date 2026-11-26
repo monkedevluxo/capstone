@@ -235,6 +235,7 @@ def test_resumen_con_la_base_vacia_trae_todas_las_claves_en_cero():
         "por_estado": {e.value: 0 for e in EstadoHallazgo},
         "revisar": 0,
         "sin_enriquecer": 0,
+        "fallidos": 0,
     }
 
 
@@ -248,6 +249,7 @@ def test_resumen_despues_de_importar():
     assert d["por_severidad"]["alta"] == 3
     assert d["por_estado"]["nuevo"] == 18
     assert d["sin_enriquecer"] == 18
+    assert d["fallidos"] == 0
     assert d["revisar"] == 1, "sin IA solo se marca el CWE fuera de la tabla (Cross-Domain)"
 
 
@@ -258,6 +260,8 @@ def test_resumen_cuenta_revisar_y_sin_enriquecer():
     # Enriquecidos ok: SQL Injection, External Redirect, Modern Web Application
     # y Anti-clickjacking (su fallo posterior no reemplaza al ok).
     assert d["sin_enriquecer"] == 18 - 4, "un fallido sigue contando como sin enriquecer"
+    # Off-site Redirect y Cross-Domain. Anti-clickjacking no: su fallo no reemplazó al ok.
+    assert d["fallidos"] == 2
     assert d["revisar"] == 3
 
 
@@ -288,6 +292,9 @@ def test_resumen_y_listado_cuentan_lo_mismo_con_los_mismos_filtros(filtros):
         assert resumen["revisar"] == sum(i["referencia"]["requiere_revision"] for i in listado)
         assert resumen["sin_enriquecer"] == sum(
             i["ia"] is None or i["ia"]["estado"] == "failed" for i in listado
+        )
+        assert resumen["fallidos"] == sum(
+            i["ia"] is not None and i["ia"]["estado"] == "failed" for i in listado
         )
         for s in Severidad:
             assert resumen["por_severidad"][s.value] == sum(

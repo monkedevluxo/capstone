@@ -93,7 +93,7 @@ Después de cambiar el `.env`: `docker compose up -d api`.
 | 3. Enriquecer | Dashboard, botón **Enriquecer pendientes**. O `POST /scans/{id}/enrich` |
 | 4. Revisar | Dashboard, pantalla **Hallazgos**: filtros y "Revisar primero" |
 | 5. Decidir | Detalle del hallazgo, sección **Tu decisión** *(pull request #28)* |
-| 6. Informe | `docker compose exec -T api python scripts/informe.py > informe.html`, y abrirlo en el navegador. Para PDF: imprimir y guardar como PDF |
+| 6. Informe | En el dashboard, módulo Informe → Exportar informe (PDF, XLSX o CSV). Desde la terminal: `docker compose exec -T api python scripts/informe.py > informe.html` |
 
 ### Servicios
 

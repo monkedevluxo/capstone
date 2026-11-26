@@ -3,9 +3,10 @@ import localFont from "next/font/local";
 import { cookies } from "next/headers";
 
 import { BarraLateral } from "@/components/barra-lateral";
-import { FranjaSuperior } from "@/components/franja-superior";
+import { BarraMovil } from "@/components/barra-movil";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { COOKIE_TEMA, leerTema } from "@/lib/tema";
 import "./globals.css";
 
 // Fuentes empaquetadas (Fontsource), no Google Fonts: el dashboard tiene que
@@ -42,19 +43,23 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // La barra lateral recuerda si quedó colapsada (cookie que escribe
   // SidebarProvider). Leerla acá evita que parpadee al recargar.
-  const abierta = (await cookies()).get("sidebar_state")?.value !== "false";
+  const galletas = await cookies();
+  const abierta = galletas.get("sidebar_state")?.value !== "false";
+  // Tema elegido (cookie que escribe el botón de tema): la página sale del
+  // servidor ya con la clase puesta, sin destello al cargar.
+  const tema = leerTema(galletas.get(COOKIE_TEMA)?.value);
 
   return (
     <html
       lang="es"
-      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${plexSans.variable} ${plexMono.variable} h-full antialiased${tema === "oscuro" ? " dark" : ""}`}
     >
       <body className="min-h-full">
         <TooltipProvider>
           <SidebarProvider defaultOpen={abierta}>
-            <BarraLateral />
+            <BarraLateral tema={tema} />
             <SidebarInset className="min-w-0">
-              <FranjaSuperior />
+              <BarraMovil />
               {children}
             </SidebarInset>
           </SidebarProvider>

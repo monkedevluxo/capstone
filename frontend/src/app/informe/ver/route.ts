@@ -1,9 +1,9 @@
-// T-058 / T-059: el módulo "Informe" abre el informe técnico.
+// T-058 / T-059: el informe técnico en HTML, tal como lo arma la API (GET /informe).
 //
-// La página la arma la API (GET /informe) y es HTML autocontenido, pensado
-// para guardarlo o imprimirlo a PDF. Este handler la pide desde el servidor de
-// Next y la devuelve tal cual: el navegador no habla con la API directo, igual
-// que en el resto del dashboard.
+// Es HTML autocontenido. La pantalla Informe lo muestra en un iframe y lo
+// imprime a PDF desde ahí; "Abrir en otra pestaña" apunta acá directo. Este
+// handler lo pide desde el servidor de Next y lo devuelve tal cual: el
+// navegador no habla con la API directo, igual que en el resto del dashboard.
 
 import { API_URL, SIN_CONEXION } from "@/lib/api";
 

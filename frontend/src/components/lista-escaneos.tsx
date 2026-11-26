@@ -17,6 +17,8 @@ export interface FilaEscaneo {
   escaneo: Escaneo;
   /** null si GET /findings/resumen?scan_id= falló para este escaneo. */
   sinEnriquecer: number | null;
+  /** De los sin enriquecer, cuántos tienen un enriquecimiento que falló. */
+  fallidos: number | null;
   revisar: number | null;
 }
 
@@ -65,7 +67,7 @@ export function ListaEscaneos({ filas }: { filas: FilaEscaneo[] }) {
 }
 
 function ElementoEscaneo({ fila }: { fila: FilaEscaneo }) {
-  const { escaneo: e, sinEnriquecer, revisar } = fila;
+  const { escaneo: e, sinEnriquecer, fallidos, revisar } = fila;
   const { enCurso, resultado, enriquecer } = useEnriquecerEscaneo(e.id);
   const quedanPendientes = sinEnriquecer !== null && sinEnriquecer > 0;
   const hallazgos = e.stats?.hallazgos;
@@ -122,7 +124,7 @@ function ElementoEscaneo({ fila }: { fila: FilaEscaneo }) {
               <SinDato />
             ) : (
               <>
-                <span className="font-semibold text-navy">{hallazgos}</span>
+                <span className="font-semibold text-tinta">{hallazgos}</span>
                 {nuevos !== undefined && (
                   <span className="block text-xs text-muted-foreground">
                     {nuevos} {nuevos === 1 ? "nuevo" : "nuevos"}
@@ -135,9 +137,16 @@ function ElementoEscaneo({ fila }: { fila: FilaEscaneo }) {
             {sinEnriquecer === null ? (
               <SinDato />
             ) : (
-              <span className={sinEnriquecer > 0 ? "font-semibold text-ia" : "text-muted-foreground"}>
-                {sinEnriquecer}
-              </span>
+              <>
+                <span className={sinEnriquecer > 0 ? "font-semibold text-ia" : "text-muted-foreground"}>
+                  {sinEnriquecer}
+                </span>
+                {fallidos !== null && fallidos > 0 && (
+                  <span className="block text-xs text-muted-foreground">
+                    {fallidos} {fallidos === 1 ? "falló" : "fallaron"}
+                  </span>
+                )}
+              </>
             )}
           </Conteo>
           <Conteo etiqueta="Revisar" orden="@4xl:order-5">

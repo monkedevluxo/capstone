@@ -66,6 +66,22 @@ def test_ignora_enriquecimientos_historicos_o_fallidos():
     assert armar_datos(OBJETIVO, [], [f])["hallazgos"][0]["ia"] is None
 
 
+def test_cuenta_los_hallazgos_con_el_enriquecimiento_vigente_fallido():
+    # T-040: el fallido vigente se cuenta aparte; un fallo viejo (no vigente) no.
+    datos = armar_datos(OBJETIVO, [], [
+        hallazgo(1, enriquecimientos=[ia()]),
+        hallazgo(2, enriquecimientos=[ia(is_current=False), ia(state="failed")]),
+        hallazgo(3, enriquecimientos=[ia(state="failed", is_current=False), ia()]),
+        hallazgo(4),
+    ])
+    assert {h["id"]: h["ia_fallida"] for h in datos["hallazgos"]} == {
+        "1": False, "2": True, "3": False, "4": False,
+    }
+    assert datos["resumen"]["con_ia"] == 2
+    assert datos["resumen"]["ia_fallida"] == 1
+    assert "con el enriquecimiento fallido: 1" in renderizar_html(datos)
+
+
 def test_descartados_van_aparte_y_no_cuentan_como_vigentes():
     datos = armar_datos(OBJETIVO, [], [hallazgo(1), hallazgo(2, estado="falso_positivo"),
                                        hallazgo(3, estado="duplicado")])
@@ -144,7 +160,7 @@ def test_resumen_no_depende_del_plural():
     # Antes decía "1 tienen decisión humana"; la frase no debe cambiar con el número.
     f = hallazgo(1, validaciones=[validacion(1, revisor="Prueba")])
     pagina = renderizar_html(armar_datos(OBJETIVO, [], [f]))
-    assert "Con sugerencia de la IA: 0. Con decisión humana: 1." in pagina
+    assert "Con sugerencia de la IA: 0; con el enriquecimiento fallido: 0. Con decisión humana: 1." in pagina
     assert "1 tienen" not in pagina
 
 

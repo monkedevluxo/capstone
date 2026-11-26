@@ -62,7 +62,7 @@ export function Plegable({
           aria-expanded={abierto}
           aria-controls={id}
           onClick={() => setAbierto((v) => !v)}
-          className="mt-1.5 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-navy underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          className="mt-1.5 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-tinta underline-offset-4 hover:underline focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
           <ChevronDown
             aria-hidden

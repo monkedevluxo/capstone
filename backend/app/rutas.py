@@ -10,6 +10,8 @@ SentinelAI · Endpoints de ingesta y consulta (tareas T-022, T-023).
     POST /scans/{id}/enrich     enriquece los hallazgos de un escaneo, uno por uno
     POST /findings/{id}/validaciones  registra la decisión de una persona (T-057)
     GET  /informe            informe técnico de un objetivo, en HTML (T-058, T-059)
+    GET  /informe.csv        el mismo informe, un hallazgo por fila, en CSV
+    GET  /informe.xlsx       el mismo informe en Excel: resumen, hallazgos y escaneos
 
 Cada hallazgo trae además `referencia`: la categoría OWASP según la tabla
 CWE -> OWASP 2025, la prioridad por regla y la marca "revisar" de la opción
@@ -23,7 +25,7 @@ from dataclasses import dataclass
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
 from sqlalchemy import Integer, String, and_, case, cast, column, func, not_, or_, select, values
 from sqlalchemy.orm import Session, aliased, selectinload
@@ -39,6 +41,7 @@ from app.enriquecimiento import (
 from app.ia.cliente import ClienteOllama
 from app.ia.owasp_por_cwe import TABLA
 from app.informe_consulta import elegir_objetivo, generar
+from app.informe_export import TIPO_CSV, TIPO_XLSX, a_csv, a_xlsx, nombre_archivo
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.validacion import recalcular_estado
 from app.models import (
@@ -226,6 +229,8 @@ class _ConsultaHallazgos:
         self.sin_ia = case(
             (or_(ia.id.is_(None), ia.state == EstadoIA.failed), True), else_=False
         )
+        # "Fallido": hay un enriquecimiento vigente y falló. Es parte de sin_ia.
+        self.ia_fallida = case((ia.state == EstadoIA.failed, True), else_=False)
 
         condiciones = []
         if filtros.severidad:
@@ -336,6 +341,9 @@ def resumen_hallazgos(
     - `por_severidad` y `por_estado` traen todas las claves, aunque valgan 0.
     - `revisar`: marcados por la opción mixta (`requiere_revision`).
     - `sin_enriquecer`: sin enriquecimiento vigente o con uno fallido.
+    - `fallidos`: de esos, los que tienen un enriquecimiento vigente que falló
+      (T-040). Con `scan_id` dan las métricas de un escaneo: total, enriquecidos
+      (total - sin_enriquecer) y fallidos.
     """
     c = _ConsultaHallazgos(filtros)
     base = c.select(
@@ -343,13 +351,15 @@ def resumen_hallazgos(
         Finding.status.label("estado"),
         c.revisar.label("revisar"),
         c.sin_ia.label("sin_ia"),
+        c.ia_fallida.label("ia_fallida"),
     ).subquery()
 
-    total, revisar, sin_ia = db.execute(
+    total, revisar, sin_ia, fallidos = db.execute(
         select(
             func.count(),
             func.count().filter(base.c.revisar),
             func.count().filter(base.c.sin_ia),
+            func.count().filter(base.c.ia_fallida),
         )
     ).one()
     por_severidad = dict(db.execute(
@@ -365,6 +375,7 @@ def resumen_hallazgos(
         "por_estado": {e.value: por_estado.get(e, 0) for e in EstadoHallazgo},
         "revisar": revisar,
         "sin_enriquecer": sin_ia,
+        "fallidos": fallidos,
     }
 
 
@@ -640,10 +651,57 @@ def informe(
     - **200**: la página HTML
     - **404**: no hay hallazgos importados, o el objetivo no existe
     """
+    html, _ = generar(db, _objetivo_del_informe(db, objetivo))
+    return HTMLResponse(html)
+
+
+def _objetivo_del_informe(db: Session, objetivo: str | None):
     elegido = elegir_objetivo(db, objetivo)
     if elegido is None:
         detalle = (f"no existe el objetivo {objetivo}" if objetivo
                    else "no hay escaneos importados: importa uno primero")
         raise HTTPException(status_code=404, detail=detalle)
-    html, _ = generar(db, elegido)
-    return HTMLResponse(html)
+    return elegido
+
+
+def _descarga(contenido: bytes, tipo: str, archivo: str) -> Response:
+    return Response(contenido, media_type=tipo,
+                    headers={"Content-Disposition": f'attachment; filename="{archivo}"'})
+
+
+@router.get("/informe.csv", tags=["informe"], response_class=Response)
+def informe_csv(
+    objetivo: str | None = Query(
+        None, description="base_url del objetivo. Sin él, el que tiene más hallazgos"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    El informe como CSV: un hallazgo por fila (vigentes y después descartados),
+    con la prioridad final, la categoría de la tabla y la de la IA, y la última
+    decisión humana. UTF-8 con BOM, separado por comas.
+
+    - **200**: el archivo, como descarga
+    - **404**: igual que GET /informe
+    """
+    _, datos = generar(db, _objetivo_del_informe(db, objetivo))
+    return _descarga(a_csv(datos), TIPO_CSV, nombre_archivo(datos, "csv"))
+
+
+@router.get("/informe.xlsx", tags=["informe"], response_class=Response)
+def informe_xlsx(
+    objetivo: str | None = Query(
+        None, description="base_url del objetivo. Sin él, el que tiene más hallazgos"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    El informe como libro de Excel con tres hojas: Resumen (indicadores y
+    calidad de la IA), Hallazgos (las mismas columnas del CSV, con filtros) y
+    Escaneos (con la huella SHA-256 de cada reporte).
+
+    - **200**: el archivo, como descarga
+    - **404**: igual que GET /informe
+    """
+    _, datos = generar(db, _objetivo_del_informe(db, objetivo))
+    return _descarga(a_xlsx(datos), TIPO_XLSX, nombre_archivo(datos, "xlsx"))

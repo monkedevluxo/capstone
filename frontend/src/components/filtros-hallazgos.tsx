@@ -90,7 +90,7 @@ export function FiltrosHallazgos({
               <ToggleGroupItem
                 key={s.valor}
                 value={s.valor}
-                className="rounded-full aria-pressed:border-navy aria-pressed:bg-navy aria-pressed:text-white hover:aria-pressed:bg-navy/90"
+                className="rounded-full aria-pressed:border-boton aria-pressed:bg-boton aria-pressed:text-boton-texto hover:aria-pressed:bg-boton/90"
               >
                 {activa && <Check aria-hidden className="size-3.5" />}
                 {s.etiqueta}

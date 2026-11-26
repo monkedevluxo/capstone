@@ -1,6 +1,7 @@
 "use client";
 
-import { FileText, House, ListChecks, Radar, ShieldCheck, type LucideIcon } from "lucide-react";
+import { FileText, House, ListChecks, Radar, type LucideIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -16,9 +17,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { BotonTema } from "@/components/boton-tema";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import type { Tema } from "@/lib/tema";
 import { cn } from "@/lib/utils";
 
 interface Modulo {
@@ -34,8 +38,8 @@ export const MODULOS: Modulo[] = [
   { etiqueta: "Inicio", icono: House, href: "/" },
   { etiqueta: "Hallazgos", icono: ListChecks, href: "/hallazgos" },
   { etiqueta: "Escaneos", icono: Radar, href: "/escaneos" },
-  // T-058 / T-059: página HTML que arma la API, para guardar o imprimir.
-  { etiqueta: "Informe", icono: FileText, href: "/informe", pestanaNueva: true },
+  // T-058 / T-059: vista previa del informe técnico y exportación a PDF, XLSX y CSV.
+  { etiqueta: "Informe", icono: FileText, href: "/informe" },
 ];
 
 /** Módulo al que pertenece una ruta: /hallazgos/<id> es parte de Hallazgos. */
@@ -45,7 +49,7 @@ export function moduloActivo(ruta: string): Modulo | undefined {
   );
 }
 
-export function BarraLateral() {
+export function BarraLateral({ tema }: { tema: Tema }) {
   const ruta = usePathname();
   const activo = moduloActivo(ruta);
   const { isMobile, setOpenMobile } = useSidebar();
@@ -58,8 +62,9 @@ export function BarraLateral() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
+      {/* Logo y botón de colapsar en la misma fila; colapsada, uno sobre otro. */}
+      <SidebarHeader className="flex-row items-center group-data-[collapsible=icon]:flex-col">
+        <SidebarMenu className="min-w-0 flex-1">
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
@@ -67,13 +72,22 @@ export function BarraLateral() {
               render={<Link href="/" onClick={cerrarEnMovil} />}
               className="hover:bg-sidebar-accent/60"
             >
+              {/* Logo: casco y texto en cobre. Con la barra colapsada queda solo el casco. */}
               <span className="flex size-8 shrink-0 items-center justify-center">
-                <ShieldCheck aria-hidden className="size-5! text-persona" />
+                <Image src="/marca/casco.png" alt="" width={81} height={96} priority className="h-7.5 w-auto" />
               </span>
-              <span className="text-base font-semibold tracking-tight text-white">SentinelAI</span>
+              <Image
+                src="/marca/texto.png"
+                alt="SentinelAI"
+                width={294}
+                height={48}
+                priority
+                className="h-3.75 w-auto group-data-[collapsible=icon]:hidden"
+              />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <BotonColapsar />
       </SidebarHeader>
 
       <SidebarContent>
@@ -124,10 +138,37 @@ export function BarraLateral() {
       </SidebarContent>
 
       <SidebarFooter>
+        <BotonTema inicial={tema} />
         <IndicadorLaboratorio />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  );
+}
+
+/**
+ * Colapsa o expande la barra desde la propia barra. En el teléfono la barra es
+ * un panel encima del contenido: este botón lo cierra y el de la barra del
+ * teléfono (BarraMovil) lo abre. También responde a Ctrl/⌘ + B (SidebarProvider).
+ */
+function BotonColapsar() {
+  const { state, isMobile } = useSidebar();
+  const accion = isMobile ? "Cerrar la navegación" : state === "expanded" ? "Colapsar la navegación" : "Expandir la navegación";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <SidebarTrigger
+            aria-label={accion}
+            className="shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+          />
+        }
+      />
+      <TooltipContent side="right" align="center">
+        {accion}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -179,7 +220,7 @@ function IndicadorLaboratorio() {
       >
         <span aria-hidden className="size-2 shrink-0 rounded-full bg-emerald-400" />
         <span className={cn("truncate", colapsada && "sr-only")}>
-          Laboratorio aislado · <span className="font-mono text-white">juiceshop</span>
+          Laboratorio aislado · <span className="font-mono text-sidebar-accent-foreground">juiceshop</span>
         </span>
       </TooltipTrigger>
       <TooltipContent side="right" align="center" hidden={!colapsada}>
