@@ -47,7 +47,7 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 | ID | Requisito | Criterio | Verificación | Estado |
 |---|---|---|---|---|
 | RNF-14 | El modelo responde en un tiempo usable | Menos de 15 s por hallazgo con el modelo cargado | CP-13: mediana de 1,1 s por hallazgo en una RTX 3060 Ti; la primera llamada tarda 14 s mientras carga el modelo | ✅ |
-| RNF-15 | Un escaneo completo se enriquece en minutos | Menos de 2 minutos para los 17 hallazgos del golden set, con el modelo en GPU | Medición del lote real (T-039) | ⬜ |
+| RNF-15 | Un escaneo completo se enriquece en minutos | Menos de 2 minutos para los 17 hallazgos del golden set, con el modelo en GPU | 18 hallazgos (los 17 del golden set y 1 de un escaneo anterior) en 30,9 s, unos 35 hallazgos/min: mediana de 3 corridas (31,0 / 29,5 / 30,9 s), 54 de 54 respuestas válidas al primer intento. Cada hallazgo por la API real (`POST /findings/{id}/enrich`: prompt v2, validación y guardado), 1,3 a 2,2 s por hallazgo. Modelo cargado en RTX 3060 Ti. `lab/medir_lote.py`, medido el 26-11-2026 (T-039) | ✅ | 
 | RNF-16 | La importación es rápida | Menos de 5 s para el reporte más grande de los fixtures | `zap_juiceshop_ajax_auth_v1.json` (52 KB, 15 alertas): entre 91 y 103 ms en 5 importaciones, cada una sobre base vacía después de importar full_v1 y ajax_v2. API (Docker) y PostgreSQL 16 en el mismo equipo (WSL2, 16 núcleos), con el cliente dentro del contenedor de la API; medido el 25-11-2026 | ✅ |
 | RNF-17 | El sistema cabe en un equipo de estudiante | Opera con 16 GB de RAM, con el modelo en otro equipo o en GPU | Desarrollo en notebooks de 16 GB; `README.md`, sección "Presupuesto de memoria" | ✅ |
 
@@ -99,9 +99,9 @@ Los requisitos funcionales están expresados como historias de usuario en `docs/
 
 | Estado | Requisitos |
 |---|---|
-| ✅ Cumple | 28 |
+| ✅ Cumple | 29 |
 | 🔶 Parcial | 4 |
-| ⬜ Sin medir | 2 |
+| ⬜ Sin medir | 1 |
 | **Total** | **34** |
 
-Los parciales son los que se verificaron solo de forma manual. Los dos sin medir se cierran antes de la defensa: la medición del lote real (RNF-15) y la prueba sin conexión (RNF-31).
+Los parciales son los que se verificaron solo de forma manual. El que queda sin medir se cierra antes de la defensa: la prueba sin conexión (RNF-31).

@@ -65,6 +65,18 @@ El texto exacto está en `backend/app/ia/prompt.py`. Pide seis campos: `explicac
 
 Respuestas completas en `docs/evidencias/respuestas_modelo/`. Script de medición: `lab/prueba_prompt.py --prompt v1|v2`.
 
+**Re-medición sobre el golden set (T-047).** Misma muestra para las dos versiones: los 17 hallazgos únicos del golden set (fixtures `ajax_v2`, `full_v1` y `ajax_auth_v1`) × 2 repeticiones, mismo modelo y temperatura 0.1. La referencia no la decide una persona: categoría según la tabla oficial CWE → OWASP 2025 (13 de los 17 tienen referencia; los otros no traen CWE o su CWE no está en la tabla) y prioridad según la regla por severidad de ZAP. Script: `lab/comparar_prompts.py`, 26-11-2026.
+
+| | v1 | v2 |
+|---|---|---|
+| JSON válido con los 6 campos | 34/34 | 34/34 |
+| OWASP igual a la tabla oficial | 2/26 (8 %) | 11/26 (42 %) |
+| Prioridad igual a la regla | 14/34 (41 %) | 10/34 (29 %) |
+| Respuestas con numeración 2021 | 0 | 0 |
+| Latencia media | 1,88 s | 1,80 s |
+
+**Conclusión:** la v2 mejora la categoría de 2 a 11 aciertos de 26, pero sigue acertando menos de la mitad, y la prioridad empeora de 14 a 10 de 34 a pesar de la guía agregada. Ajustar el prompt mejora al modelo, pero no lo vuelve confiable para clasificar ni priorizar. Esto confirma la decisión mixta de la sección 5: la categoría sale de la tabla CWE → OWASP, la prioridad de la regla por severidad, y el modelo queda para explicar y proponer la remediación. Con 2 repeticiones y temperatura 0.1, el resultado puede variar en unas pocas respuestas entre corridas.
+
 ## 4. Validación y reintentos (T-030, T-031)
 
 Código en `backend/app/ia/`:
