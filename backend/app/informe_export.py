@@ -148,6 +148,7 @@ def a_xlsx(datos: dict) -> bytes:
         ("Hallazgos", [("Total", r["total"]), ("Vigentes", r["vigentes"]),
                        ("Descartados", r["descartados"]), ("Por revisar primero", r["por_revisar"]),
                        ("Con sugerencia de la IA", r["con_ia"]),
+                       ("Con el enriquecimiento fallido", r["ia_fallida"]),
                        ("Con decisión humana", r["con_decision"])]),
         ("Vigentes por severidad", [(ETIQUETA_SEVERIDAD.get(k, k), v)
                                     for k, v in r["por_severidad"].items()]),

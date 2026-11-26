@@ -35,6 +35,7 @@ export default async function PaginaEscaneos() {
     return {
       escaneo,
       sinEnriquecer: r.status === "fulfilled" ? r.value.sin_enriquecer : null,
+      fallidos: r.status === "fulfilled" ? r.value.fallidos : null,
       revisar: r.status === "fulfilled" ? r.value.revisar : null,
     };
   });

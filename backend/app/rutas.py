@@ -229,6 +229,8 @@ class _ConsultaHallazgos:
         self.sin_ia = case(
             (or_(ia.id.is_(None), ia.state == EstadoIA.failed), True), else_=False
         )
+        # "Fallido": hay un enriquecimiento vigente y falló. Es parte de sin_ia.
+        self.ia_fallida = case((ia.state == EstadoIA.failed, True), else_=False)
 
         condiciones = []
         if filtros.severidad:
@@ -339,6 +341,9 @@ def resumen_hallazgos(
     - `por_severidad` y `por_estado` traen todas las claves, aunque valgan 0.
     - `revisar`: marcados por la opción mixta (`requiere_revision`).
     - `sin_enriquecer`: sin enriquecimiento vigente o con uno fallido.
+    - `fallidos`: de esos, los que tienen un enriquecimiento vigente que falló
+      (T-040). Con `scan_id` dan las métricas de un escaneo: total, enriquecidos
+      (total - sin_enriquecer) y fallidos.
     """
     c = _ConsultaHallazgos(filtros)
     base = c.select(
@@ -346,13 +351,15 @@ def resumen_hallazgos(
         Finding.status.label("estado"),
         c.revisar.label("revisar"),
         c.sin_ia.label("sin_ia"),
+        c.ia_fallida.label("ia_fallida"),
     ).subquery()
 
-    total, revisar, sin_ia = db.execute(
+    total, revisar, sin_ia, fallidos = db.execute(
         select(
             func.count(),
             func.count().filter(base.c.revisar),
             func.count().filter(base.c.sin_ia),
+            func.count().filter(base.c.ia_fallida),
         )
     ).one()
     por_severidad = dict(db.execute(
@@ -368,6 +375,7 @@ def resumen_hallazgos(
         "por_estado": {e.value: por_estado.get(e, 0) for e in EstadoHallazgo},
         "revisar": revisar,
         "sin_enriquecer": sin_ia,
+        "fallidos": fallidos,
     }
 
 

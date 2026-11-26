@@ -52,6 +52,11 @@ def decision_vigente(validaciones: Iterable[Any]) -> Any | None:
     return max(validaciones, key=lambda v: v.reviewed_at) if validaciones else None
 
 
+def _ia_fallida(enriquecimientos: Iterable[Any]) -> bool:
+    """El enriquecimiento vigente existe y falló (cuenta como sin enriquecer)."""
+    return any(e.is_current and _valor(e.state) == "failed" for e in enriquecimientos or [])
+
+
 def _hallazgo(f: Any) -> dict:
     ia = enriquecimiento_vigente(f.enrichments)
     decision = decision_vigente(f.validations)
@@ -63,6 +68,7 @@ def _hallazgo(f: Any) -> dict:
 
     return {
         "id": str(f.id),
+        "ia_fallida": _ia_fallida(f.enrichments),
         "dedupe_key": f.dedupe_key,
         "titulo": f.titulo,
         "estado": _valor(f.status),
@@ -159,6 +165,7 @@ def armar_datos(objetivo: Any, escaneos: Iterable[Any], hallazgos: Iterable[Any]
             "por_prioridad": _contar(vigentes, "prioridad", ORDEN_PRIORIDAD),
             "por_estado": _contar(todos, "estado"),
             "con_ia": sum(1 for h in todos if h["ia"]),
+            "ia_fallida": sum(1 for h in todos if h["ia_fallida"]),
             "con_decision": sum(1 for h in todos if h["decision"]),
             "por_revisar": sum(1 for h in vigentes if h["revisar"]),
         },
@@ -617,7 +624,7 @@ La salida de la IA es una sugerencia; la decisión final la toma una persona.</p
 </div>
 <p><strong>{res['vigentes']}</strong> hallazgos vigentes y <strong>{res['descartados']}</strong>
 descartados (falsos positivos o duplicados), de {res['total']} en total.
-Con sugerencia de la IA: {res['con_ia']}. Con decisión humana: {res['con_decision']}.
+Con sugerencia de la IA: {res['con_ia']}; con el enriquecimiento fallido: {res['ia_fallida']}. Con decisión humana: {res['con_decision']}.
 Hallazgos marcados para revisar primero: {res['por_revisar']}, porque la categoría del modelo no
 coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
 <div class="tres">

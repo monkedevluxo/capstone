@@ -52,6 +52,11 @@ export function Totales({ resumen, filtros }: { resumen: ResumenHallazgos; filtr
         <TarjetaFiltro
           etiqueta="Sin enriquecer"
           valor={resumen.sin_enriquecer}
+          detalle={
+            resumen.fallidos > 0
+              ? `${resumen.fallidos} ${resumen.fallidos === 1 ? "falló" : "fallaron"}`
+              : undefined
+          }
           activo={filtros.sinEnriquecer}
           href={hrefHallazgos(filtros, { sinEnriquecer: !filtros.sinEnriquecer })}
           clases={{
@@ -88,12 +93,15 @@ function Tarjeta({ etiqueta, valor, marca }: { etiqueta: string; valor: number; 
 function TarjetaFiltro({
   etiqueta,
   valor,
+  detalle,
   activo,
   href,
   clases,
 }: {
   etiqueta: ReactNode;
   valor: number;
+  /** Texto chico junto al número. Ej. "2 fallaron". */
+  detalle?: string;
   activo: boolean;
   href: string;
   clases: Record<"base" | "enlace" | "activo" | "etiqueta" | "valor" | "pista", string>;
@@ -105,6 +113,12 @@ function TarjetaFiltro({
       </span>
       <span className={cn("mt-1 block text-3xl font-semibold tabular-nums", clases.valor)}>
         {valor}
+        {detalle && (
+          <span className="ml-2 text-sm font-medium text-muted-foreground">
+            <span className="sr-only">, de ellos </span>
+            {detalle}
+          </span>
+        )}
       </span>
       <span className={cn("mt-1 block text-xs", clases.pista, (activo || valor > 0) && "group-hover:underline")}>
         {activo ? "Quitar filtro" : valor > 0 ? "Ver solo estos" : "Ninguno"}
