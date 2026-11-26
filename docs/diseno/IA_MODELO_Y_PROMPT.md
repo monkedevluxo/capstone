@@ -120,10 +120,11 @@ python -m app.ia.enriquecer ..\lab\fixtures\zap_juiceshop_ajax_v1.json   # con O
 | La prioridad no sigue la regla pedida | 11/26 respuestas dentro del tramo según la severidad de ZAP | ídem |
 | La confianza no discrimina | 0.93 cuando acierta contra 0.90 cuando falla | sección 3 |
 | Contra la anotación humana | ver `evidencias/metricas_golden_set.md` (modelo contra regla fija) | T-045 |
+| Contra dos revisores con regla común | categoría 4/13, prioridad 4–5/17, inventó en 3/17 | `evidencias/golden_set_17.md` |
 
 ### 5.2 Las tres alternativas
 
-**A · El modelo decide todo (situación actual).**
+**A · El modelo decide todo (diseño inicial).**
 El modelo entrega categoría, prioridad, explicación y remediación. La persona que valida corrige lo que esté mal.
 
 **B · Reglas deterministas, el modelo solo redacta.**
@@ -147,6 +148,8 @@ La tabla CWE asigna la categoría de referencia y el modelo propone la suya. **S
 | Cómo se presenta el proyecto | "La IA clasifica y prioriza" | "La IA explica y recomienda" | "La IA explica, recomienda y señala lo dudoso" |
 
 ### 5.3 Recomendación: **Mixta para la categoría, regla fija para la prioridad**
+
+**Estado:** adoptada por el equipo (`docs/diseno/DISENO.md`, decisión D-05) e implementada en la API, el dashboard y el informe técnico. El golden set de 17 hallazgos con dos revisores la confirmó: el modelo acertó la categoría en 4 de 13 casos y la prioridad en 4 a 5 de 17 (`docs/evidencias/golden_set_17.md`).
 
 1. **Prioridad por regla** (High → p1, Medium → p2, Low → p3, Informational → p4), ajustable por la persona que valida. Es la parte donde el modelo rinde peor (11/26 dentro del tramo) y donde una regla simple es transparente y defendible.
 2. **Categoría mixta.** La tabla CWE da la categoría de referencia y el modelo la suya. Las discrepancias se convierten en el criterio para **ordenar la revisión humana**, que es justo lo que la confianza del modelo no logra hacer.

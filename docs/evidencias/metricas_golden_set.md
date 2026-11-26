@@ -1,5 +1,7 @@
 # Métricas del modelo contra el golden set (T-045)
 
+> **Medición de octubre, con un revisor y 10 hallazgos.** La medición final, con 17 hallazgos y dos revisores, está en `golden_set_17.md`.
+
 **Generado:** 14-10-2026 23:52 · **Modelo:** `llama3.1:8b-instruct-q4_K_M` · **Prompt:** v2 · **Corridas por hallazgo:** 2
 
 **Anotación humana:** `docs/evidencias/validacion_manual.csv` (Felipe, sin ver las respuestas del modelo).
