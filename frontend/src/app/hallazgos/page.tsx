@@ -96,10 +96,6 @@ export default async function PaginaHallazgos({
         <div className="flex flex-col gap-4">
           <TablaHallazgos hallazgos={pagina.items} filtros={filtros} />
           <Paginacion filtros={filtros} mostrados={pagina.items.length} total={pagina.total} />
-          <p className="max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            La confianza la declara el modelo. En el golden set fue igual de alta en aciertos
-            (0,90) que en errores (0,93): úsala como contexto, no para decidir.
-          </p>
         </div>
       )}
     </Marco>
