@@ -1,4 +1,5 @@
-// Descarga del informe en CSV o XLSX (GET /informe.csv y /informe.xlsx de la API).
+// Descarga del informe en PDF, CSV o XLSX (GET /informe.pdf, /informe.csv y
+// /informe.xlsx de la API).
 //
 // Igual que /informe/ver: el servidor de Next pide el archivo y lo entrega al
 // navegador con el nombre que puso la API, así el navegador nunca ve API_URL.
@@ -7,13 +8,13 @@ import { API_URL, SIN_CONEXION } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
-const FORMATOS = new Set(["csv", "xlsx"]);
+const FORMATOS = new Set(["pdf", "csv", "xlsx"]);
 
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const formato = params.get("formato") ?? "";
   if (!FORMATOS.has(formato)) {
-    return texto(400, "Formato no válido: usa csv o xlsx.");
+    return texto(400, "Formato no válido: usa pdf, csv o xlsx.");
   }
   const objetivo = params.get("objetivo");
   const ruta = `/informe.${formato}${objetivo ? `?${new URLSearchParams({ objetivo })}` : ""}`;

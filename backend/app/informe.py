@@ -242,18 +242,18 @@ _CSS = """
 }
 * { box-sizing: border-box; }
 html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { margin: 0; background: var(--fondo); color: var(--tinta);
+body { margin: 0; background: #fff; color: var(--tinta);
        font: 14px/1.55 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; }
 code, pre, .mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; }
 a { color: var(--ia); }
-.portada { background: var(--grafito); color: #fff; }
-.portada .contenido { max-width: 1000px; margin: 0 auto; padding: 28px 24px 26px; }
-.marca { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--cobre-claro); font-size: 13px;
+/* Portada en la misma hoja blanca del documento: el único color es el logo. */
+.portada .contenido { max-width: 1000px; margin: 0 auto; padding: 32px 24px 4px; }
+.marca { margin: 0; display: flex; align-items: center; gap: 10px; color: var(--persona-texto); font-size: 13px;
          letter-spacing: .06em; text-transform: uppercase; }
 .marca img { height: 30px; width: auto; }
 .portada h1 { margin: 10px 0 10px; font-size: 30px; line-height: 1.2; }
-.portada .meta { margin: 0; color: #c9cdd2; font-size: 13px; }
-.portada .meta code { color: #fff; }
+.portada .meta { margin: 0; color: var(--suave); font-size: 13px; }
+.portada .meta code { color: var(--tinta); }
 main { max-width: 1000px; margin: 0 auto; padding: 24px; }
 h2 { font-size: 20px; margin: 40px 0 14px; display: flex; align-items: baseline; gap: 10px; }
 h2 .num { color: var(--suave); font-weight: 500; }
@@ -332,6 +332,7 @@ pre { background: #fff; border: 1px solid var(--borde); border-radius: 6px; padd
       white-space: pre-wrap; word-break: break-all; margin: 0; max-height: 160px; overflow: auto; }
 .capa table { margin-top: 8px; border: 1px solid var(--borde); border-radius: 6px; font-size: 12.5px; }
 .capa table td code { word-break: break-all; }
+.solo-impresion { display: none; }
 details { margin-top: 8px; } summary { cursor: pointer; color: var(--ia); font-size: 13px; }
 details .texto-zap { margin-top: 6px; font-size: 13px; color: #3d434a; }
 .metricas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
@@ -345,37 +346,97 @@ footer { max-width: 1000px; margin: 32px auto 0; padding: 16px 24px 40px; color:
   .hallazgo .cabecera { flex-direction: column; } dl { grid-template-columns: 1fr; }
   .indice .opcional { display: none; }
 }
+/* Hoja impresa: la misma para "Imprimir" del navegador y para el PDF que arma
+   la API (WeasyPrint, app/informe_export.a_pdf). Chrome ignora los márgenes
+   con el número de página; WeasyPrint los dibuja. */
+@page { size: A4; margin: 14mm 13mm 16mm;
+  @bottom-left { content: "SentinelAI · Informe técnico"; font: 8.5px "IBM Plex Sans", sans-serif; color: #5a6067; }
+  @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 8.5px "IBM Plex Sans", sans-serif; color: #5a6067; } }
 @media print {
-  body { background: #fff; font-size: 12px; } main { padding: 0 8px; }
-  .portada .contenido { padding: 20px 8px; }
-  h2 { break-after: avoid; } .capa details > summary, .abrir, .controles-fichas { display: none; }
-  /* Respaldo si se imprime sin que corra el script: el contenido de un <details>
-     cerrado también sale (navegadores con ::details-content). */
-  details::details-content { content-visibility: visible; display: contents; }
-  pre { max-height: none; } a { text-decoration: none; }
-  .tabla, .hallazgo, .kpi, .tarjeta { break-inside: avoid; }
+  body { background: #fff; font-size: 11px; line-height: 1.45; }
+  main, .portada .contenido { max-width: none; padding-left: 0; padding-right: 0; }
+  main { padding-top: 14px; } .portada .contenido { padding-top: 0; }
+  .portada h1 { font-size: 24px; margin: 6px 0; }
+  h2 { font-size: 15px; margin: 22px 0 10px; break-after: avoid; }
+  code, pre, .mono { font-size: 10px; }
+  .abrir, .controles-fichas { display: none; }
+  .aviso { padding: 8px 12px; }
+  /* Una hoja A4 o Carta mide ~720 px: sin esto se aplicaría el diseño de celular
+     (etiqueta y valor en líneas separadas), que casi duplica el largo. */
+  .kpis, .metricas { grid-template-columns: repeat(4, 1fr); } .tres { grid-template-columns: repeat(3, 1fr); }
+  .indice .opcional { display: table-cell; }
+  .kpi, .tarjeta { padding: 10px 12px; } .kpi .valor { font-size: 22px; } .kpi .rotulo, .barra { font-size: 11px; }
+  th, td { padding: 4px 8px; } th { font-size: 9.5px; } .indice td { font-size: 11px; }
+  .tabla, .kpi, .tarjeta { break-inside: avoid; } .tabla.indice { break-inside: auto; margin-bottom: 18px; }
+
+  /* Fichas compactas: sin cajas de color, una línea fina sobre cada capa, y las
+     capas del escáner y de la IA lado a lado. La de la persona va debajo, a lo
+     ancho. Una ficha puede seguir en la hoja siguiente; una capa no se corta. */
+  .hallazgo, .hallazgo.revisar { border: 0; border-top: 1.5px solid var(--tinta); border-radius: 0; overflow: visible;
+              margin: 0 0 16px; break-inside: auto; }
+  .hallazgo .cabecera { flex-direction: row; padding: 6px 0 4px; border-bottom: 0; break-after: avoid; }
+  .hallazgo h3 { font-size: 13.5px; margin: 0 0 3px; }
+  .chip { font-size: 9.5px; padding: 0 6px; margin: 0 3px 3px 0; }
+  .etiqueta, .prio { font-size: 10px; }
+  .revisar-marca { font-size: 10.5px; margin: 1px 0 0; }
+  /* Tabla y no grilla ni columnas: WeasyPrint no corta una grilla entre hojas
+     y equilibrar columnas lo hace muy lento. La capa de la persona es el pie. */
+  .capas { padding: 0; display: table; width: 100%; table-layout: fixed; border-collapse: collapse; }
+  .capa:not(.persona) { display: table-cell; width: 50%; }
+  .capa:first-child { padding-right: 18px; }
+  .capa, .capa.ia, .capa.persona { background: none; border: 0; border-top: 1px solid var(--borde); border-radius: 0;
+                                   margin: 0; padding: 5px 0 4px; break-inside: avoid; }
+  .capa.persona { display: table-caption; caption-side: bottom; }
+  .capa h4 { font-size: 9px; margin: 0 0 3px; }
+  .capa.persona h4, .capa.persona p { display: inline; margin: 0 10px 0 0; }
+  dl { display: block; } dt { float: left; clear: left; width: 72px; font-size: 10px; }
+  dd { margin: 0 0 2px 80px; }
+  dd ol { margin: 2px 0 0; padding-left: 16px; }
+  pre { max-height: none; padding: 3px 6px; }
+  .capa table { font-size: 10px; margin-top: 5px; } .capa th, .capa td { padding: 2px 5px; }
+  a { text-decoration: none; }
+  /* La descripción y la solución genéricas de ZAP (en inglés) y las URLs
+     después de las primeras quedan solo en el informe en línea. Con una sola
+     URL, la tabla repite la ubicación de arriba. */
+  .capa details, .capa tr.extra, .capa table.una-url { display: none; }
+  .solo-impresion { display: table-row; }
+  /* Respaldo si se imprime sin que corra el script: el contenido de una ficha
+     cerrada también sale (navegadores con ::details-content). */
+  .ficha::details-content { content-visibility: visible; display: contents; }
 }
 """
 
-# Al imprimir se abren las descripciones de ZAP, para que el PDF las incluya.
+# IBM Plex, la tipografía del dashboard (licencia OFL, ver recursos/fuentes/OFL.txt).
+# Solo las usa el PDF: el contenedor de la API no tiene fuentes del sistema.
+_DIR_FUENTES = Path(__file__).parent / "recursos" / "fuentes"
+_FUENTES = "".join(
+    f'@font-face {{ font-family: "{familia}"; font-weight: {peso}; '
+    f'src: url("{(_DIR_FUENTES / archivo).as_uri()}") format("woff2"); }}'
+    for familia, peso, archivo in (
+        ("IBM Plex Sans", "100 700", "ibm-plex-sans-latin-wght-normal.woff2"),
+        ("IBM Plex Mono", "400", "ibm-plex-mono-latin-400-normal.woff2"),
+        ("IBM Plex Mono", "600", "ibm-plex-mono-latin-600-normal.woff2"),
+    )
+)
+
 _CONTROLES_FICHAS = (
     '<div class="controles-fichas"><button type="button" data-fichas="abrir">Abrir todas</button>'
     '<button type="button" data-fichas="cerrar">Cerrar todas</button></div>'
 )
 
-# Sin dependencias: abre todo al imprimir y lo deja como estaba después; abre
+# Sin dependencias: abre las fichas al imprimir y las deja como estaban después; abre
 # la ficha a la que se salta desde el índice; botones para abrir o cerrar todas.
 _SCRIPT = """
 (function () {
   var guardado = null;
   addEventListener('beforeprint', function () {
-    var todos = document.querySelectorAll('details');
+    var todos = document.querySelectorAll('details.ficha');
     guardado = Array.prototype.map.call(todos, function (d) { return d.open; });
     todos.forEach(function (d) { d.open = true; });
   });
   addEventListener('afterprint', function () {
     if (!guardado) return;
-    document.querySelectorAll('details').forEach(function (d, i) { d.open = guardado[i]; });
+    document.querySelectorAll('details.ficha').forEach(function (d, i) { d.open = guardado[i]; });
     guardado = null;
   });
   function abrirDestino() {
@@ -469,22 +530,35 @@ def _indice(hallazgos: list[dict]) -> str:
     )
 
 
-def _seccion_hallazgo(h: dict, n: int) -> str:
+# URLs de cada hallazgo que entran en el PDF.
+_URLS_IMPRESAS = 5
+_EXTRA = ' class="extra"'
+_UNA_URL = ' class="una-url"'
+
+
+def _seccion_hallazgo(h: dict, n: int, pdf: bool = False) -> str:
     ub = h["ubicacion"]
     ev = h["evidencia"]
     origen = {"persona": "decidida por una persona", "regla": "según la regla",
               "ia": "sugerida por la IA"}.get(h["prioridad_origen"], h["prioridad_origen"])
     fragmento = f"<pre>{_e(ev['fragmento'])}</pre>" if ev["fragmento"] else "—"
+    # En pantalla se ven todas las URLs; en el PDF solo las primeras (ver _CSS).
     instancias = "".join(
-        f"<tr><td>{_e(i['metodo'])}</td><td><code>{_e(i['url'])}</code></td>"
-        f"<td>{_e(i['parametro'])}</td></tr>"
-        for i in ev["instancias"]
+        f"<tr{_EXTRA if n_i >= _URLS_IMPRESAS else ''}><td>{_e(i['metodo'])}</td>"
+        f"<td><code>{_e(i['url'])}</code></td><td>{_e(i['parametro'])}</td></tr>"
+        for n_i, i in enumerate(ev["instancias"])
     )
+    resto = len(ev["instancias"]) - _URLS_IMPRESAS
+    if resto > 0:
+        instancias += (f'<tr class="solo-impresion"><td colspan="3" class="suave">… y {resto} '
+                       f'{"URL" if resto == 1 else "URLs"} más en el informe en línea.</td></tr>')
     partes = [
         f'<article class="hallazgo{" revisar" if h["revisar"] else ""}" id="h-{_e(h["dedupe_key"])}">',
         # Cerrada por defecto: se ve la cabecera y las capas se abren con un clic.
-        # Al imprimir se abren todas (ver _SCRIPT), así el PDF sale completo.
-        '<details class="ficha"><summary class="cabecera"><div>',
+        # Al imprimir se abren todas (ver _SCRIPT); la descripción de ZAP no entra al PDF.
+        # En el PDF de la API no hay clics: la ficha es un bloque abierto.
+        '<div class="ficha"><div class="cabecera"><div>' if pdf
+        else '<details class="ficha"><summary class="cabecera"><div>',
         f'<h3><span class="n">{n}.</span>{_e(h["titulo"])}</h3>',
         f'<span class="chip">CWE {_e(h["cwe"])}</span>'
         f'<span class="chip">OWASP de referencia {_e(h["owasp_referencia"])}</span>'
@@ -493,7 +567,7 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
         (f'<p class="revisar-marca">⚠ Revisar · {_e(MOTIVO_REVISION.get(h["motivo_revision"], h["motivo_revision"]))}</p>'
          if h["revisar"] else ""),
         f'</div><div class="insignias">{_sev(h["severidad"])} {_prio(h["prioridad"])}'
-        '<span class="abrir" aria-hidden="true"></span></div></summary>',
+        '<span class="abrir" aria-hidden="true"></span></div>' + ("</div>" if pdf else "</summary>"),
         '<div class="capas">',
         '<div class="capa"><h4>Evidencia original (ZAP)</h4><dl>',
         f"<dt>Ubicación</dt><dd><code>{_e(ub['metodo'])} {_e(ub['ruta'])}</code></dd>",
@@ -505,15 +579,17 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
     ]
     if instancias:
         partes.append(
-            "<table><thead><tr><th>Método</th><th>URL</th><th>Parámetro</th></tr></thead>"
+            f"<table{_UNA_URL if len(ev['instancias']) == 1 else ''}>"
+            "<thead><tr><th>Método</th><th>URL</th><th>Parámetro</th></tr></thead>"
             f"<tbody>{instancias}</tbody></table>"
         )
-    partes.append(
-        "<details><summary>Descripción y solución que entrega ZAP (en inglés)</summary>"
-        f'<div class="texto-zap"><p><strong>Descripción:</strong> {_texto_zap(ev["descripcion"])}</p>'
-        f'<p><strong>Solución propuesta por ZAP:</strong> {_texto_zap(ev["solucion"])}</p></div></details>'
-        "</div>"
-    )
+    if not pdf:
+        partes.append(
+            "<details><summary>Descripción y solución que entrega ZAP (en inglés)</summary>"
+            f'<div class="texto-zap"><p><strong>Descripción:</strong> {_texto_zap(ev["descripcion"])}</p>'
+            f'<p><strong>Solución propuesta por ZAP:</strong> {_texto_zap(ev["solucion"])}</p></div></details>'
+        )
+    partes.append("</div>")
 
     ia = h["ia"]
     if ia:
@@ -551,7 +627,7 @@ def _seccion_hallazgo(h: dict, n: int) -> str:
     else:
         partes.append('<div class="capa persona"><h4>Decisión humana</h4><p>Pendiente de revisión.</p></div>')
 
-    partes.append("</div></details></article>")
+    partes.append("</div></div></article>" if pdf else "</div></details></article>")
     return "".join(partes)
 
 
@@ -578,8 +654,12 @@ def _seccion_metricas(m: dict) -> str:
     )
 
 
-def renderizar_html(datos: dict) -> str:
-    """El informe completo como una página HTML autocontenida e imprimible."""
+def renderizar_html(datos: dict, pdf: bool = False) -> str:
+    """El informe completo como una página HTML autocontenida e imprimible.
+
+    Con pdf=True es la versión que convierte WeasyPrint: sin script ni botones,
+    las fichas abiertas y las fuentes IBM Plex del propio backend.
+    """
     obj = datos["objetivo"]
     res = datos["resumen"]
     escaneos = "".join(
@@ -587,7 +667,9 @@ def renderizar_html(datos: dict) -> str:
         f'<td><code class="hash">{_e(s["sha256"])}</code></td></tr>'
         for s in datos["escaneos"]
     )
-    vigentes = "".join(_seccion_hallazgo(h, i) for i, h in enumerate(datos["hallazgos"], 1))
+    vigentes = "".join(_seccion_hallazgo(h, i, pdf) for i, h in enumerate(datos["hallazgos"], 1))
+    cabeza = f"<style>{_FUENTES}</style>" if pdf else f"<script>{_SCRIPT}</script>"
+    como_se_ven = "" if pdf else " Las fichas se abren con un clic; al imprimir salen todas abiertas."
     descartados = "".join(
         f"<tr><td>{_e(h['titulo'])}</td><td><code>{_e(h['ubicacion']['ruta'])}</code></td>"
         f"<td>{_e(ETIQUETA_ESTADO.get(h['estado'], h['estado']))}</td>"
@@ -603,7 +685,7 @@ def renderizar_html(datos: dict) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Informe técnico · {_e(obj['nombre'])}</title>
 <style>{_CSS}</style>
-<script>{_SCRIPT}</script>
+{cabeza}
 </head>
 <body>
 <header class="portada"><div class="contenido">
@@ -640,9 +722,9 @@ coincide con la tabla CWE → OWASP o el CWE no está en ella.</p>
 
 <h2>3. Hallazgos</h2>
 <p class="suave">Ordenados por prioridad y severidad. Cada ficha muestra tres capas: lo que entregó el escáner,
-lo que sugiere la IA y lo que decidió una persona. Las fichas se abren con un clic; al imprimir salen todas abiertas.</p>
+lo que sugiere la IA y lo que decidió una persona.{como_se_ven}</p>
 {_indice(datos['hallazgos'])}
-{_CONTROLES_FICHAS if datos['hallazgos'] else ''}
+{_CONTROLES_FICHAS if datos['hallazgos'] and not pdf else ''}
 {vigentes or '<p>No hay hallazgos vigentes.</p>'}
 
 <h2>4. Descartados</h2>

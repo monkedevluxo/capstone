@@ -247,6 +247,7 @@ curl "localhost:8000/findings?severidad=alta"
 | `POST /findings/{id}/enrich` | Enriquece un hallazgo con el modelo local y guarda el resultado con modelo, versión y hash del prompt. 503 si Ollama no responde |
 | `POST /scans/{id}/enrich` | Enriquece uno por uno los hallazgos de un escaneo; por defecto se salta los que ya tienen un enriquecimiento válido |
 | `GET /informe` | Informe técnico de un objetivo en HTML autocontenido (`?objetivo=<base_url>`; sin él, el objetivo con más hallazgos). 404 si no hay escaneos o el objetivo no existe |
+| `GET /informe.pdf` | El mismo informe en PDF (A4, con número de página). Mismos parámetros y 404 que `GET /informe` |
 | `GET /informe.xlsx` | El mismo informe como libro de Excel: hojas Resumen, Hallazgos (con filtros) y Escaneos. Mismos parámetros y 404 que `GET /informe` |
 | `GET /informe.csv` | El mismo informe como CSV, un hallazgo por fila, UTF-8 con BOM. Mismos parámetros y 404 que `GET /informe` |
 | `GET /health` | Comprueba que la API responde y que la base contesta una consulta real. 503 si la base no responde |

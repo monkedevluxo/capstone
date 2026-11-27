@@ -1,4 +1,4 @@
-"""Tests de la exportación del informe a CSV y XLSX (app/informe_export.py).
+"""Tests de la exportación del informe a PDF, CSV y XLSX (app/informe_export.py).
 No necesitan base de datos: arman los datos con los mismos objetos simples
 que test_informe.py."""
 
@@ -6,10 +6,11 @@ import csv
 import io
 from datetime import datetime, timezone
 
+import pytest
 from openpyxl import load_workbook
 
-from app.informe import armar_datos
-from app.informe_export import COLUMNAS, a_csv, a_xlsx, nombre_archivo
+from app.informe import armar_datos, renderizar_html
+from app.informe_export import COLUMNAS, a_csv, a_pdf, a_xlsx, nombre_archivo
 from tests.test_informe import ESCANEO, OBJETIVO, hallazgo, ia, validacion
 
 GENERADO = datetime(2026, 11, 24, 15, 0, tzinfo=timezone.utc)
@@ -106,3 +107,16 @@ def test_la_fecha_del_nombre_de_archivo_es_la_de_chile_no_la_de_utc():
     invierno = armar_datos(OBJETIVO, [ESCANEO], [hallazgo(1)],
                            generado_en=datetime(2026, 7, 1, 3, 30, tzinfo=timezone.utc))
     assert nombre_archivo(invierno, "csv") == "informe_juiceshop-3000_20260630.csv"
+
+
+def test_pdf_en_a4_con_una_ficha_por_hallazgo():
+    # WeasyPrint necesita Pango del sistema (está en la imagen de la API).
+    try:
+        from weasyprint import HTML
+    except OSError as e:
+        pytest.skip(f"WeasyPrint sin Pango en esta máquina: {e}")
+    datos = _datos(hallazgo(1, enriquecimientos=[ia()]), hallazgo(2, titulo="XSS"))
+    assert a_pdf(datos).startswith(b"%PDF-")
+    hoja = HTML(string=renderizar_html(datos, pdf=True)).render().pages[0]
+    assert (round(hoja.width * 25.4 / 96), round(hoja.height * 25.4 / 96)) == (210, 297)  # A4, en mm
+    assert nombre_archivo(datos, "pdf") == "informe_juiceshop-3000_20261124.pdf"

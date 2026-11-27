@@ -1,7 +1,9 @@
 """Tests del informe técnico (app/informe.py). No necesitan base de datos:
 usan objetos simples con los mismos atributos que los modelos."""
 
+import re
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from types import SimpleNamespace as O
 
 from app.informe import armar_datos, metricas_golden_set, renderizar_html
@@ -117,6 +119,22 @@ def test_el_html_escapa_la_evidencia():
     pagina = renderizar_html(datos)
     assert "<script>alert(1)</script>" not in pagina
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in pagina
+
+
+def test_la_version_pdf_trae_las_fichas_abiertas_sin_script_y_con_las_fuentes():
+    f = hallazgo(1, enriquecimientos=[ia()], validaciones=[validacion(1)])
+    datos = armar_datos(OBJETIVO, [ESCANEO], [f])
+    pantalla, pdf = renderizar_html(datos), renderizar_html(datos, pdf=True)
+    assert "<details" in pantalla and "<script>" in pantalla
+    assert "<details" not in pdf and "<script>" not in pdf and "Abrir todas" not in pdf
+    assert '<div class="ficha">' in pdf and "@font-face" in pdf
+    # Las fuentes existen: si no, WeasyPrint usaría otra sin avisar.
+    for url in re.findall(r'url\("file://([^"]+)"\)', pdf):
+        assert Path(url).is_file(), url
+    # Las tres capas siguen en el PDF; la descripción genérica de ZAP no.
+    for texto in ("Evidencia original (ZAP)", "Sugerencia de la IA", "Decisión humana"):
+        assert texto in pdf
+    assert "Descripción y solución que entrega ZAP" not in pdf
 
 
 def test_el_html_trae_las_secciones_y_el_hash_del_reporte():

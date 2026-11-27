@@ -7,3 +7,4 @@ pydantic==2.10.4
 pydantic-settings==2.7.0
 openpyxl==3.1.5    # exportar el informe a XLSX
 tzdata==2025.2     # zonas horarias para ZoneInfo si la imagen base no las trae
+weasyprint==66.0   # exportar el informe a PDF (necesita Pango: ver Dockerfile)
