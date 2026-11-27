@@ -2,7 +2,7 @@
 
 **Tareas:** T-058 y T-059 · **Responsable:** Felipe Cayún
 
-El informe técnico reúne, para un objetivo, todo lo que el sistema sabe de sus hallazgos: la evidencia original del escáner, la sugerencia de la IA y la decisión humana. Se genera como una página HTML autocontenida (sin dependencias externas), lista para abrir en el navegador o guardar como PDF, y se exporta también a Excel (XLSX) y CSV.
+El informe técnico reúne, para un objetivo, todo lo que el sistema sabe de sus hallazgos: la evidencia original del escáner, la sugerencia de la IA y la decisión humana. Se genera como una página HTML autocontenida (sin dependencias externas) y se exporta a PDF, Excel (XLSX) y CSV.
 
 ## Cómo generarlo
 
@@ -14,13 +14,13 @@ El botón **Exportar informe** despliega tres formatos:
 
 | Formato | Cómo se genera | Contenido |
 |---|---|---|
-| PDF | Abre el diálogo de impresión del navegador sobre la vista previa → Guardar como PDF | El informe completo, con la hoja de estilos de impresión |
+| PDF | Lo genera la API (`GET /informe.pdf`, con WeasyPrint) y se descarga | El informe en A4 con número de página, en fichas compactas: las capas del escáner y de la IA lado a lado y la decisión humana debajo. Con los 17 hallazgos de la demo son 11 páginas |
 | Excel (XLSX) | Lo genera la API (`GET /informe.xlsx`) y se descarga | Tres hojas: Resumen (indicadores y calidad de la IA), Hallazgos (una fila por hallazgo, con filtros) y Escaneos (con el SHA-256 de cada reporte) |
 | CSV | Lo genera la API (`GET /informe.csv`) y se descarga | Un hallazgo por fila, con las mismas columnas de la hoja Hallazgos. UTF-8 con BOM, separado por comas |
 
-El PDF no se genera en el servidor a propósito: el HTML ya está diseñado para imprimirse y así no se agregan librerías de sistema a la imagen de la API. **Abrir en otra pestaña** muestra el HTML solo, como antes.
+El PDF sale del mismo HTML, con su hoja de impresión: imprimir desde **Abrir en otra pestaña** da el mismo resultado. Para que no se alargue, deja fuera la descripción y la solución genéricas de ZAP (en inglés) y las URLs después de las cinco primeras de cada hallazgo; esas quedan en el HTML. WeasyPrint necesita Pango y HarfBuzz del sistema, que instala el `Dockerfile` de la API; las fuentes IBM Plex van en `backend/app/recursos/fuentes/` (licencia OFL).
 
-Por debajo, el dashboard pide la página y los archivos a la API (`GET /informe`, `/informe.xlsx` y `/informe.csv`, con `?objetivo=<base_url>` opcional) desde su servidor, igual que el resto de los datos: el navegador no habla con la API directo.
+Por debajo, el dashboard pide la página y los archivos a la API (`GET /informe`, `/informe.pdf`, `/informe.xlsx` y `/informe.csv`, con `?objetivo=<base_url>` opcional) desde su servidor, igual que el resto de los datos: el navegador no habla con la API directo.
 
 ### Desde la terminal
 
@@ -37,7 +37,7 @@ docker compose exec -T api python scripts/informe.py > informe.html
 docker compose exec -T api python scripts/informe.py --objetivo http://juiceshop:3000 > informe.html
 ```
 
-Para PDF: abrir `informe.html` en el navegador → Imprimir (Ctrl + P) → Guardar como PDF.
+Para PDF: el botón **Exportar informe** del dashboard, o `curl -OJ http://127.0.0.1:8000/informe.pdf`.
 
 El HTML sale por la salida estándar y los avisos por la salida de errores, así que la redirección `>` deja solo el informe en el archivo. **El informe no se versiona**: se genera cuando se necesita, a partir de la base.
 
@@ -53,7 +53,7 @@ El HTML sale por la salida estándar y los avisos por la salida de errores, así
 
 Cada ficha de hallazgo tiene tres capas separadas:
 
-1. **Evidencia original (ZAP):** ubicación, fragmento, descripción, solución propuesta e instancias, tal como los entregó la herramienta (T-059).
+1. **Evidencia original (ZAP):** ubicación, fragmento, descripción, solución propuesta e instancias, tal como los entregó la herramienta (T-059). En el PDF van la ubicación, el fragmento y hasta cinco URLs.
 2. **Sugerencia de la IA:** explicación, impacto, categoría, prioridad y remediación, con el modelo, la versión del prompt y la confianza declarada.
 3. **Decisión humana:** la última validación, con revisor, fecha y comentario.
 
@@ -78,14 +78,14 @@ En las exportaciones el riesgo es otro: una celda que empieza con `=`, `+`, `-` 
 | `backend/app/informe.py` | Arma los datos y la página. No consulta la base, así que se prueba sin PostgreSQL |
 | `backend/app/informe_consulta.py` | Elige el objetivo y carga sus escaneos y hallazgos. Lo usan la terminal y la API, así las dos entregan el mismo informe |
 | `backend/scripts/informe.py` | Línea de comandos: escribe el HTML en la salida estándar |
-| `backend/app/informe_export.py` | Arma el CSV y el XLSX a partir de los mismos datos que el HTML |
-| `backend/app/rutas.py` | `GET /informe`, `/informe.csv` y `/informe.xlsx` (404 si no hay escaneos o el objetivo no existe) |
+| `backend/app/informe_export.py` | Arma el PDF (WeasyPrint), el CSV y el XLSX a partir de los mismos datos que el HTML |
+| `backend/app/rutas.py` | `GET /informe`, `/informe.pdf`, `/informe.csv` y `/informe.xlsx` (404 si no hay escaneos o el objetivo no existe) |
 | `frontend/src/app/informe/page.tsx` | Pantalla Informe: vista previa y botón **Exportar informe** (`components/informe/vista-informe.tsx`) |
 | `frontend/src/app/informe/ver/route.ts` | Pide el HTML a la API para la vista previa y para abrirlo en otra pestaña |
-| `frontend/src/app/informe/descargar/route.ts` | Pide el CSV o el XLSX a la API y lo entrega como descarga |
+| `frontend/src/app/informe/descargar/route.ts` | Pide el PDF, el CSV o el XLSX a la API y lo entrega como descarga |
 | `backend/tests/test_informe.py` | Tests sin base: prioridad, decisión vigente, descartados, orden, métricas, marca "Revisar" y escape HTML |
-| `backend/tests/test_informe_export.py` | Tests sin base del CSV y el XLSX: columnas, orden, hojas, nombre del archivo e inyección de fórmulas |
-| `backend/tests/test_informe_api.py` | 8 tests contra PostgreSQL: respuesta HTML, objetivo, 404, que la API y la terminal generen lo mismo, y las descargas CSV y XLSX |
+| `backend/tests/test_informe_export.py` | Tests sin base del PDF, el CSV y el XLSX: tamaño A4, columnas, orden, hojas, nombre del archivo e inyección de fórmulas |
+| `backend/tests/test_informe_api.py` | 9 tests contra PostgreSQL: respuesta HTML, objetivo, 404, que la API y la terminal generen lo mismo, y las descargas PDF, CSV y XLSX |
 
 ## Pendiente
 

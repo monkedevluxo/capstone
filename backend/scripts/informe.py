@@ -1,6 +1,6 @@
 """
 Genera el informe técnico de un objetivo como una página HTML autocontenida
-(tareas T-058 y T-059). Para PDF: abrir el HTML en el navegador e imprimir.
+(tareas T-058 y T-059). En PDF: GET /informe.pdf o el botón "Exportar informe".
 El dashboard muestra el mismo informe con el botón "Informe" (GET /informe).
 
 Uso (desde la raíz del repositorio, con el laboratorio arriba):

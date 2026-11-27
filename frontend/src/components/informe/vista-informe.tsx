@@ -28,11 +28,9 @@ import { cn } from "@/lib/utils";
 /**
  * Pantalla Informe: la vista previa del informe técnico y el botón Exportar.
  *
- * El HTML viene de /informe/ver (mismo origen que el dashboard), así que el PDF
- * se saca imprimiendo el iframe: el informe ya trae su hoja de estilos para
- * imprimir y abre las descripciones de ZAP antes de hacerlo. CSV y XLSX los
- * genera la API y se descargan por /informe/descargar: se piden con fetch para
- * poder avisar acá si fallan (con un enlace de descarga, el error no se ve).
+ * La vista previa es el HTML de /informe/ver. PDF, XLSX y CSV los genera la
+ * API y se descargan por /informe/descargar: se piden con fetch para poder
+ * avisar acá si fallan (con un enlace de descarga, el error no se ve).
  */
 export function VistaInforme({ objetivo }: { objetivo?: string }) {
   const marco = useRef<HTMLIFrameElement>(null);
@@ -75,17 +73,6 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
     }
   }
 
-  function imprimirPdf() {
-    const ventana = marco.current?.contentWindow;
-    if (cargado && ventana) {
-      ventana.focus();
-      ventana.print();
-    } else {
-      // Si la vista previa todavía no carga, se imprime desde otra pestaña.
-      window.open(urlVer, "_blank", "noopener");
-    }
-  }
-
   return (
     <>
       <div className="mb-6 flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
@@ -113,9 +100,9 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64">
               <DropdownMenuLabel>Formato</DropdownMenuLabel>
-              <DropdownMenuItem onClick={imprimirPdf}>
+              <DropdownMenuItem onClick={() => descargar("pdf")}>
                 <FileText aria-hidden className="text-muted-foreground" />
-                <Opcion titulo="PDF" detalle="El informe completo, desde el diálogo de impresión" />
+                <Opcion titulo="PDF" detalle="El informe con una ficha por hallazgo, en A4" />
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => descargar("xlsx")}>
@@ -162,9 +149,9 @@ export function VistaInforme({ objetivo }: { objetivo?: string }) {
   );
 }
 
-type Formato = "csv" | "xlsx";
+type Formato = "pdf" | "csv" | "xlsx";
 
-const NOMBRE: Record<Formato, string> = { csv: "CSV", xlsx: "Excel" };
+const NOMBRE: Record<Formato, string> = { pdf: "PDF", csv: "CSV", xlsx: "Excel" };
 
 /** El nombre que puso la API en Content-Disposition (ej. informe_juiceshop-3000_20261124.xlsx). */
 function nombreArchivo(respuesta: Response, formato: Formato) {

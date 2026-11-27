@@ -41,7 +41,7 @@ from app.enriquecimiento import (
 from app.ia.cliente import ClienteOllama
 from app.ia.owasp_por_cwe import TABLA
 from app.informe_consulta import elegir_objetivo, generar
-from app.informe_export import TIPO_CSV, TIPO_XLSX, a_csv, a_xlsx, nombre_archivo
+from app.informe_export import TIPO_CSV, TIPO_PDF, TIPO_XLSX, a_csv, a_pdf, a_xlsx, nombre_archivo
 from app.ingesta import ErrorIngesta, importar_reporte
 from app.validacion import recalcular_estado
 from app.models import (
@@ -645,8 +645,7 @@ def informe(
     Informe técnico de un objetivo como página HTML autocontenida: resumen,
     escaneos, una ficha por hallazgo con su evidencia original, la sugerencia
     de la IA y la decisión humana, los descartados y la calidad de la IA.
-    Es el mismo que genera `scripts/informe.py`. Para PDF: imprimir desde el
-    navegador.
+    Es el mismo que genera `scripts/informe.py`. En PDF: GET /informe.pdf.
 
     - **200**: la página HTML
     - **404**: no hay hallazgos importados, o el objetivo no existe
@@ -667,6 +666,26 @@ def _objetivo_del_informe(db: Session, objetivo: str | None):
 def _descarga(contenido: bytes, tipo: str, archivo: str) -> Response:
     return Response(contenido, media_type=tipo,
                     headers={"Content-Disposition": f'attachment; filename="{archivo}"'})
+
+
+@router.get("/informe.pdf", tags=["informe"], response_class=Response)
+def informe_pdf(
+    objetivo: str | None = Query(
+        None, description="base_url del objetivo. Sin él, el que tiene más hallazgos"
+    ),
+    db: Session = Depends(get_db),
+):
+    """
+    El informe en PDF (A4): el mismo HTML con su hoja de impresión compacta,
+    con las fichas abiertas y el número de página al pie. La descripción
+    genérica de ZAP y las URLs después de las cinco primeras quedan solo en
+    el HTML.
+
+    - **200**: el archivo, como descarga
+    - **404**: igual que GET /informe
+    """
+    _, datos = generar(db, _objetivo_del_informe(db, objetivo))
+    return _descarga(a_pdf(datos), TIPO_PDF, nombre_archivo(datos, "pdf"))
 
 
 @router.get("/informe.csv", tags=["informe"], response_class=Response)

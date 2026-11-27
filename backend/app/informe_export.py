@@ -1,11 +1,11 @@
 """
-SentinelAI · Exportar el informe técnico a CSV y XLSX.
+SentinelAI · Exportar el informe técnico a PDF, CSV y XLSX.
 
 Parte de los mismos datos que el informe HTML (app/informe.armar_datos), así
 que los tres formatos cuentan lo mismo: un hallazgo por fila, con la prioridad
 final, la referencia de la tabla CWE → OWASP, la sugerencia vigente de la IA y
-la última decisión humana. El PDF no se genera acá: es el mismo HTML impreso
-desde el navegador.
+la última decisión humana. El PDF es el mismo HTML con su hoja de impresión,
+convertido con WeasyPrint.
 
 Los textos vienen de ZAP, de la IA o de una persona, y la evidencia de ZAP trae
 payloads reales. Para que una celda que empieza con "=", "+", "-" o "@" no se
@@ -28,10 +28,12 @@ from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from app.informe import ETIQUETA_DECISION, ETIQUETA_ESTADO, ETIQUETA_SEVERIDAD, MOTIVO_REVISION
+from app.informe import (ETIQUETA_DECISION, ETIQUETA_ESTADO, ETIQUETA_SEVERIDAD, MOTIVO_REVISION,
+                         renderizar_html)
 
 TIPO_XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 TIPO_CSV = "text/csv; charset=utf-8"
+TIPO_PDF = "application/pdf"
 
 # Zona del equipo y del laboratorio, para la fecha del nombre de archivo.
 ZONA_LOCAL = ZoneInfo("America/Santiago")
@@ -196,6 +198,17 @@ def a_xlsx(datos: dict) -> bytes:
     salida = io.BytesIO()
     libro.save(salida)
     return salida.getvalue()
+
+
+def a_pdf(datos: dict) -> bytes:
+    """El informe en PDF (A4, con número de página), desde la versión pdf del HTML.
+
+    WeasyPrint se importa acá y no arriba: necesita Pango del sistema, y así la
+    API arranca igual en una máquina sin esas librerías (solo falla el PDF).
+    """
+    from weasyprint import HTML
+
+    return HTML(string=renderizar_html(datos, pdf=True)).write_pdf()
 
 
 def nombre_archivo(datos: dict, extension: str) -> str:

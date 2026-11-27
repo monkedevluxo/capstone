@@ -11,6 +11,13 @@ WORKDIR /app
 # Las dependencias se copian primero y en su propia capa: mientras
 # requirements.txt no cambie, Docker reutiliza esta capa y el build
 # tarda segundos en vez de minutos.
+# Pango y HarfBuzz para WeasyPrint (el informe en PDF). DejaVu solo como
+# respaldo para símbolos que IBM Plex no trae (⚠, →); Plex viene en
+# app/recursos/fuentes.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz-subset0 fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

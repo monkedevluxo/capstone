@@ -132,6 +132,20 @@ def test_exporta_el_informe_en_xlsx_con_tres_hojas():
     assert libro["Hallazgos"].max_row == nuevos + 1
 
 
+def test_exporta_el_informe_en_pdf():
+    try:
+        import weasyprint  # noqa: F401
+    except OSError as e:
+        pytest.skip(f"WeasyPrint sin Pango en esta máquina: {e}")
+    _importar()
+    r = api.get("/informe.pdf", params={"objetivo": OBJETIVO})
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert r.headers["content-disposition"].endswith('.pdf"')
+    assert r.content.startswith(b"%PDF-")
+
+
 def test_exportar_sin_escaneos_responde_404():
     assert api.get("/informe.csv").status_code == 404
     assert api.get("/informe.xlsx").status_code == 404
+    assert api.get("/informe.pdf").status_code == 404
